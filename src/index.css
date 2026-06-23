@@ -1,0 +1,234 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,400&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  /* Surfaces — warm, paper-like */
+  --color-surface-base: #FAFAF8;
+  --color-surface-elevated: #F5F5F3;
+  --color-surface-accent: #EEEEE8;
+  --color-surface-inset: #DCDCD4;
+
+  /* Text hierarchy */
+  --color-text-primary: #1A1A18;
+  --color-text-secondary: #6B6B63;
+  --color-text-tertiary: #9A9A92;
+  --color-text-muted: #BFBFB7;
+
+  /* Editorial red accent */
+  --color-accent-primary: #C41E3A;
+  --color-accent-hover: #A01730;
+  --color-accent-light: #E8D5D9;
+
+  /* States */
+  --color-success: #2D7C5A;
+  --color-warning: #C97B1D;
+  --color-error: #C41E3A;
+
+  /* Section palette (matches prensaobrera.com section CSS variables) */
+  --color-section-aniversarios: #333333;
+  --color-section-politicas: #e64a19;
+  --color-section-mujer: #8bc34a;
+  --color-section-ambiente: #587c2f;
+  --color-section-internacionales: #880e4f;
+  --color-section-juventud: #512da8;
+  --color-section-sindicales: #ff9800;
+  --color-section-historia: #ffee33;
+  --color-section-rojoprensa: #f44336;
+  --color-section-cultura: #1976d2;
+  --color-section-educacion: #e72679;
+  --color-section-movimiento-piquetero: #000000;
+  --color-section-libertades-democraticas: #00796b;
+  --color-section-opinion: #666666;
+  --color-section-partido: #cf141c;
+  --color-section-partido-obrero: #cf141c;
+  --color-section-sociedad: #308090;
+
+  /* Editorial typography */
+  --font-serif: Georgia, ui-serif, serif;
+  --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, Menlo, Monaco, monospace;
+
+  --text-xs: 12px;
+  --text-xs--line-height: 1.5;
+  --text-sm: 14px;
+  --text-sm--line-height: 1.5;
+  --text-base: 15px;
+  --text-base--line-height: 1.6;
+  --text-lg: 17px;
+  --text-lg--line-height: 1.6;
+  --text-xl: 20px;
+  --text-xl--line-height: 1.4;
+  --text-xl--letter-spacing: -0.5px;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 1.3;
+  --text-2xl--letter-spacing: -0.75px;
+  --text-3xl: 32px;
+  --text-3xl--line-height: 1.2;
+  --text-3xl--letter-spacing: -1px;
+
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Named spacing (4px base) — used as p-xs, m-md, gap-xl, etc. */
+  --spacing-xs: 2px;
+  --spacing-sm: 4px;
+  --spacing-md: 8px;
+  --spacing-lg: 12px;
+  --spacing-xl: 16px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+  --spacing-4xl: 48px;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+
+  /* Editorial: borders only, no shadows */
+  --shadow-none: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background-color: var(--surface-base);
+  color: var(--text-primary);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+  margin-block-start: 0;
+  margin-block-end: 0;
+  font-family: 'Roboto', sans-serif;
+}
+
+p {
+  margin: 0;
+}
+
+label,
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* INPUTS */
+input[type="text"],
+input[type="url"],
+input[type="search"],
+select,
+textarea {
+  font-family: 'Roboto', inherit;
+  font-size: 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  border-radius: var(--radius-lg);
+  transition: all 150ms ease-out;
+}
+
+input[type="text"]::placeholder,
+input[type="url"]::placeholder,
+input[type="search"]::placeholder,
+textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus,
+input[type="search"]:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+/* BUTTONS */
+button {
+  font-family: 'Roboto', inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+  transition: all 120ms ease-out;
+  letter-spacing: 0;
+}
+
+button:hover {
+  background: var(--surface-secondary);
+}
+
+button.primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+  font-weight: 500;
+}
+
+button.primary:hover {
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Cards */
+.card {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Utilities */
+.text-subtle {
+  color: var(--text-tertiary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.accent-text {
+  color: var(--accent);
+}
+
+.accent-bg {
+  background: var(--accent-light);
+  color: var(--accent);
+}
