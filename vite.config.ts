@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/po-builder/',
   plugins: [react(), tailwindcss()],
   server: {
     allowedHosts: ['perchromic-karlee-aggregative.ngrok-free.dev'],
