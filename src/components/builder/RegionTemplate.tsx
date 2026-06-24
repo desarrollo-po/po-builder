@@ -78,9 +78,8 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block }: SlotCellPro
   return (
     <div
       ref={setNodeRef}
-      className={`relative overflow-hidden transition ${stateClass} ${minHeightClassFor(variant)} ${
-        isSourceOfActiveSlot ? "opacity-40" : "opacity-100"
-      }`}
+      className={`relative overflow-hidden transition ${stateClass} ${minHeightClassFor(variant)} ${isSourceOfActiveSlot ? "opacity-40" : "opacity-100"
+        }`}
       style={{ gridArea }}
     >
       {block ? (
@@ -127,9 +126,8 @@ function EmptySlotHint({
 }) {
   return (
     <div
-      className={`flex h-full flex-col items-center justify-center gap-1 p-3 text-center text-xs ${
-        isOver ? "font-semibold text-accent-primary" : "font-medium text-text-tertiary"
-      }`}
+      className={`flex h-full flex-col items-center justify-center gap-1 p-3 text-center text-xs ${isOver ? "font-semibold text-accent-primary" : "font-medium text-text-tertiary"
+        }`}
     >
       <span>{emptyHintForVariant(variant, active)}</span>
       <span className="text-[10px] opacity-80">{variantLabel(variant)}</span>
@@ -233,9 +231,8 @@ function SlotBannerBody({
         onPointerDown={(e) => e.stopPropagation()}
       >
         <span
-          className={`whitespace-nowrap text-[10.5px] font-semibold uppercase tracking-[0.5px] ${
-            linkInvalid ? "text-amber-700" : "text-text-secondary"
-          }`}
+          className={`whitespace-nowrap text-[10.5px] font-semibold uppercase tracking-[0.5px] ${linkInvalid ? "text-amber-700" : "text-text-secondary"
+            }`}
         >
           URL
         </span>
@@ -244,9 +241,8 @@ function SlotBannerBody({
           value={banner.linkUrl}
           onChange={(e) => updateBannerLinkUrl(regionId, slotIndex, e.target.value)}
           placeholder="https://…"
-          className={`min-w-0 flex-1 rounded-sm bg-white px-2 py-[5px] text-xs text-text-primary outline-none ${
-            linkInvalid ? "border border-amber-500" : "border border-text-muted"
-          }`}
+          className={`min-w-0 flex-1 rounded-sm bg-white px-2 py-[5px] text-xs text-text-primary outline-none ${linkInvalid ? "border border-amber-500" : "border border-text-muted"
+            }`}
         />
       </div>
     </div>

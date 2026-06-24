@@ -91,8 +91,11 @@
   --shadow-none: none;
 }
 
+<<<<<<< HEAD
 @layer base {
 
+=======
+>>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
 * {
   box-sizing: border-box;
 }
@@ -234,5 +237,8 @@ button:disabled {
   background: var(--accent-light);
   color: var(--accent);
 }
+<<<<<<< HEAD
 
 }
+=======
+>>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
