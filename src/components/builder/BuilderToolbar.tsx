@@ -84,77 +84,55 @@ export default function BuilderToolbar() {
   };
 
   const stateBadge = isDirty
-    ? { label: "Borrador", bg: "rgba(0,112,243,0.09)", color: "#0070f3", dot: "#0070f3" }
+    ? {
+      label: "Borrador",
+      className: "bg-[#0070f3]/10 text-[#0070f3]",
+      dotClassName: "bg-[#0070f3]",
+    }
     : layout?.is_published
-    ? { label: "Publicado", bg: "rgba(16,185,129,0.09)", color: "#059669", dot: "#10b981" }
-    : { label: "Guardado", bg: "var(--surface-secondary)", color: "var(--text-secondary)", dot: "#9ca3af" };
+      ? {
+        label: "Publicado",
+        className: "bg-emerald-500/10 text-emerald-700",
+        dotClassName: "bg-emerald-500",
+      }
+      : {
+        label: "Guardado",
+        className: "bg-surface-accent text-text-secondary",
+        dotClassName: "bg-gray-400",
+      };
 
   const localSaveLabel = formatLocalSaveAge(lastLocalSave, now);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flexShrink: 0 }}>
+    <div className="flex shrink-0 flex-col">
       <div
-        style={{
-          borderBottom: draftRestored ? "1px solid #fcd34d" : "1px solid var(--border)",
-          padding: "0 24px",
-          height: "56px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "24px",
-          background: "#ffffff",
-          boxShadow: "var(--shadow-xs)",
-          position: "relative",
-          zIndex: 10,
-        }}
+        className={`relative z-10 flex h-14 items-center justify-between gap-6 bg-white px-6 ${draftRestored ? "border-b border-amber-300" : "border-b border-surface-inset"
+          }`}
       >
         {/* Left: Brand + Title + State */}
-        <div style={{ display: "flex", alignItems: "center", gap: "16px", minWidth: 0 }}>
-          {/* Brand mark */}
+        <div className="flex min-w-0 items-center gap-4">
           <img
             src="/favicon-32x32.png"
             alt="Prensa Obrera"
             width={28}
             height={28}
-            style={{
-              borderRadius: "var(--radius-lg)",
-              flexShrink: 0,
-              objectFit: "contain",
-            }}
+            className="shrink-0 rounded-lg object-contain"
           />
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-            <span style={{ fontSize: "14px", fontWeight: 600, color: "#000000", letterSpacing: "-0.2px" }}>
+          <div className="flex flex-col gap-px">
+            <span className="text-sm font-semibold tracking-[-0.2px] text-black">
               {layout?.slug ?? "Page Builder"}
             </span>
-            <span style={{ fontSize: "11px", color: "var(--text-tertiary)", fontWeight: 400 }}>
+            <span className="text-[11px] font-normal text-text-tertiary">
               Home Builder | PrensaObrera.com
             </span>
           </div>
 
           {/* State badge */}
           <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "4px 10px",
-              borderRadius: "99px",
-              background: stateBadge.bg,
-              color: stateBadge.color,
-              fontSize: "12px",
-              fontWeight: 500,
-            }}
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${stateBadge.className}`}
           >
-            <div
-              style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: stateBadge.dot,
-                flexShrink: 0,
-              }}
-            />
+            <div className={`h-1.5 w-1.5 shrink-0 rounded-full ${stateBadge.dotClassName}`} />
             {stateBadge.label}
           </div>
 
@@ -162,15 +140,7 @@ export default function BuilderToolbar() {
           {localSaveLabel && (
             <span
               title="Los cambios se guardan automáticamente en tu navegador. Apretá Guardar para subirlos a Supabase."
-              style={{
-                fontSize: "11px",
-                fontWeight: 500,
-                color: "var(--text-tertiary)",
-                whiteSpace: "nowrap",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
+              className="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-text-tertiary"
             >
               <svg
                 width="11"
@@ -194,37 +164,20 @@ export default function BuilderToolbar() {
         {/* Center: transient message */}
         {message && (
           <div
-            style={{
-              position: "absolute",
-              left: "50%",
-              transform: "translateX(-50%)",
-              fontSize: "12px",
-              fontWeight: 500,
-              padding: "6px 14px",
-              borderRadius: "99px",
-              border: `1px solid ${message.type === "success" ? "var(--border)" : "rgba(0,112,243,0.3)"}`,
-              background: message.type === "success" ? "var(--surface-secondary)" : "rgba(0,112,243,0.08)",
-              color: message.type === "success" ? "var(--text-secondary)" : "#0070f3",
-              whiteSpace: "nowrap",
-            }}
+            className={`absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-medium ${message.type === "success"
+                ? "border-surface-inset bg-surface-accent text-text-secondary"
+                : "border-[#0070f3]/30 bg-[#0070f3]/10 text-[#0070f3]"
+              }`}
           >
-            {message.type === "success" ? "✓ " : "⚠ "}{message.text}
+            {message.type === "success" ? "✓ " : "⚠ "}
+            {message.text}
           </div>
         )}
 
         {/* Right: Controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div className="flex items-center gap-2">
           {/* Undo / Redo */}
-          <div
-            style={{
-              display: "flex",
-              gap: "2px",
-              padding: "2px",
-              background: "var(--surface-secondary)",
-              borderRadius: "var(--radius-lg)",
-              border: "1px solid var(--border)",
-            }}
-          >
+          <div className="flex gap-0.5 rounded-lg border border-surface-inset bg-surface-accent p-0.5">
             {[
               { fn: undo, can: canUndo, icon: "↶", title: "Deshacer" },
               { fn: redo, can: canRedo, icon: "↷", title: "Rehacer" },
@@ -234,57 +187,20 @@ export default function BuilderToolbar() {
                 onClick={fn}
                 disabled={!can()}
                 title={title}
-                style={{
-                  width: "30px",
-                  height: "28px",
-                  padding: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  opacity: can() ? 1 : 0.35,
-                  cursor: can() ? "pointer" : "not-allowed",
-                  border: "none",
-                  background: "transparent",
-                  borderRadius: "var(--radius-md)",
-                  fontSize: "15px",
-                  color: "var(--text-secondary)",
-                }}
-                onMouseEnter={(e) => {
-                  if (can()) (e.currentTarget as HTMLButtonElement).style.background = "#ffffff";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-                }}
+                className="flex h-7 w-[30px] items-center justify-center rounded-md border-none bg-transparent p-0 text-[15px] text-text-secondary enabled:hover:bg-white disabled:cursor-not-allowed disabled:opacity-[0.35]"
               >
                 {icon}
               </button>
             ))}
           </div>
 
-          <div style={{ width: "1px", height: "20px", background: "var(--border)" }} />
+          <div className="h-5 w-px bg-surface-inset" />
 
           {/* Save */}
           <button
             onClick={handleSave}
             disabled={isSaving}
-            style={{
-              padding: "7px 14px",
-              fontSize: "13px",
-              fontWeight: 500,
-              borderRadius: "var(--radius-lg)",
-              border: "1px solid var(--border-strong)",
-              background: "#ffffff",
-              color: "#000000",
-              cursor: isSaving ? "not-allowed" : "pointer",
-              opacity: isSaving ? 0.6 : 1,
-              transition: "all 120ms",
-            }}
-            onMouseEnter={(e) => {
-              if (!isSaving) (e.currentTarget as HTMLButtonElement).style.background = "var(--surface-secondary)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "#ffffff";
-            }}
+            className="rounded-lg border border-text-muted bg-white px-3.5 py-[7px] text-[13px] font-medium text-black transition enabled:hover:bg-surface-accent disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSaving ? "Guardando…" : "Guardar"}
           </button>
@@ -293,14 +209,7 @@ export default function BuilderToolbar() {
           <button
             onClick={handlePublish}
             disabled={isPublishing}
-            className="primary"
-            style={{
-              padding: "7px 14px",
-              fontSize: "13px",
-              borderRadius: "var(--radius-lg)",
-              cursor: isPublishing ? "not-allowed" : "pointer",
-              opacity: isPublishing ? 0.6 : 1,
-            }}
+            className="rounded-lg border border-accent-primary bg-accent-primary px-3.5 py-[7px] text-[13px] font-medium text-white transition enabled:hover:border-accent-hover enabled:hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPublishing ? "Publicando…" : "Publicar"}
           </button>
@@ -309,21 +218,8 @@ export default function BuilderToolbar() {
 
       {/* Draft-restored banner */}
       {draftRestored && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "16px",
-            padding: "10px 24px",
-            background: "rgba(245, 158, 11, 0.10)",
-            borderBottom: "1px solid #fcd34d",
-            color: "#92400e",
-            fontSize: "12.5px",
-            fontWeight: 500,
-          }}
-        >
-          <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div className="flex items-center justify-between gap-4 border-b border-amber-300 bg-amber-500/10 px-6 py-2.5 text-[12.5px] font-medium text-amber-800">
+          <span className="flex items-center gap-2">
             <svg
               width="14"
               height="14"
@@ -343,18 +239,7 @@ export default function BuilderToolbar() {
           <button
             onClick={handleDiscardDraft}
             disabled={isDiscarding}
-            style={{
-              padding: "5px 12px",
-              fontSize: "12px",
-              fontWeight: 600,
-              borderRadius: "var(--radius-md)",
-              border: "1px solid #fcd34d",
-              background: "#ffffff",
-              color: "#92400e",
-              cursor: isDiscarding ? "not-allowed" : "pointer",
-              opacity: isDiscarding ? 0.6 : 1,
-              whiteSpace: "nowrap",
-            }}
+            className="whitespace-nowrap rounded-md border border-amber-300 bg-white px-3 py-[5px] text-xs font-semibold text-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isDiscarding ? "Cargando…" : "Cargar versión guardada"}
           </button>

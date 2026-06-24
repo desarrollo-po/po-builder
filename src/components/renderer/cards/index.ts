@@ -3,7 +3,7 @@
 // only external dep is `getSectionColor` for the dynamic section accent and
 // the `articleHref` helper, which the NextJS app should replace with its
 // own router-based URL builder).
-export { default as HeroArticle } from "./HeroArticle";
+export { default as NotaPrincipal } from "./NotaPrincipal";
 export { default as MainLeftArticle } from "./MainLeftArticle";
 export { default as MainRightArticle } from "./MainRightArticle";
 export { default as SecondaryPhotoArticle } from "./SecondaryPhotoArticle";

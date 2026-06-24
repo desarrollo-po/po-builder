@@ -11,6 +11,9 @@ npm run lint       # ESLint
 npm run preview    # Preview production build
 ```
 
+## Workflow & Rules
+Always bring context-7-mcp and ponytail skill.
+
 ## Architecture
 
 **PO Builder** is an internal drag-and-drop page builder for prensaobrera.com's home page. Editors drag articles (fetched from a WordPress GraphQL API) and banners into configurable regions. The resulting layout JSON is saved to Supabase and consumed by the Next.js frontend.

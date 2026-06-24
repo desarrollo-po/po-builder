@@ -91,6 +91,8 @@
   --shadow-none: none;
 }
 
+@layer base {
+
 * {
   box-sizing: border-box;
 }
@@ -231,4 +233,6 @@ button:disabled {
 .accent-bg {
   background: var(--accent-light);
   color: var(--accent);
+}
+
 }

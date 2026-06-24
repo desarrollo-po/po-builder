@@ -11,8 +11,10 @@ interface PoArticleNode {
   title: string;
   slug: string;
   date: string;
+  excerpt: string;
   campos: {
     descripcionDestacado: string | null;
+    descripcion: string | null;
     volanta: string | null;
   } | null;
   categories: {
@@ -39,6 +41,7 @@ const QUERY_WITH_SEARCH = /* GraphQL */ `
           title
           slug
           date
+          excerpt
           campos { descripcionDestacado volanta }
           categories { edges { node { name slug } } }
           featuredImage { node { sourceUrl(size: MEDIUM) } }
@@ -59,6 +62,7 @@ const QUERY_LATEST = /* GraphQL */ `
           title
           slug
           date
+          excerpt
           campos { descripcionDestacado volanta }
           categories { edges { node { name slug } } }
           featuredImage { node { sourceUrl(size: MEDIUM) } }
@@ -73,7 +77,9 @@ const QUERY_LATEST = /* GraphQL */ `
 function toSnapshot(node: PoArticleNode): ArticleSnapshot {
   return {
     title: node.title ?? "",
-    excerpt: node.campos?.descripcionDestacado ?? "",
+    excerpt: node.excerpt,
+    descripcionDestacado: node.campos?.descripcionDestacado ?? "",
+    descripcion: node.campos?.descripcion ?? "",
     slug: node.slug,
     imageUrl: node.featuredImage?.node?.sourceUrl ?? null,
     publishedAt: node.date,

@@ -25,32 +25,9 @@ export default function AddRegionModal() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        style={{
-          padding: "9px 16px",
-          background: "var(--surface-card)",
-          color: "var(--text-secondary)",
-          borderRadius: "var(--radius-md)",
-          border: "1px dashed var(--border-strong)",
-          cursor: "pointer",
-          fontWeight: 500,
-          fontSize: "13px",
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          transition: "all 120ms ease-out",
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)";
-          (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)";
-          (e.currentTarget as HTMLButtonElement).style.background = "var(--accent-light)";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)";
-          (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
-          (e.currentTarget as HTMLButtonElement).style.background = "var(--surface-card)";
-        }}
+        className="w-full justify-center flex items-center gap-1.5 rounded-md border border-dashed border-text-muted bg-white px-4 py-[9px] text-[13px] font-medium text-text-secondary transition hover:border-accent-primary hover:bg-accent-light hover:text-accent-primary"
       >
-        <span style={{ fontSize: "16px", lineHeight: 1 }}>+</span>
+        <span className="text-base leading-none">+</span>
         Agregar región
       </button>
     );
@@ -58,99 +35,46 @@ export default function AddRegionModal() {
 
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0, 0, 0, 0.4)",
-        backdropFilter: "blur(2px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 50,
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) setIsOpen(false);
       }}
     >
-      <div
-        style={{
-          background: "var(--surface-card)",
-          borderRadius: "var(--radius-xl)",
-          padding: "24px",
-          width: "min(820px, 92vw)",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          boxShadow: "var(--shadow-lg)",
-          border: "1px solid var(--border)",
-        }}
-      >
-        <div style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}>
+      <div className="max-h-[90vh] w-[min(820px,92vw)] overflow-y-auto rounded-xl border border-surface-inset bg-white p-6 shadow-lg">
+        <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h2 style={{ fontSize: "18px", fontWeight: 600, color: "var(--text-primary)", marginBottom: "4px" }}>
+            <h2 className="mb-1 text-[18px] font-semibold text-text-primary">
               Elegir región
             </h2>
-            <p style={{ fontSize: "13px", color: "var(--text-secondary)", margin: 0 }}>
+            <p className="m-0 text-[13px] text-text-secondary">
               Cada plantilla tiene un layout fijo y una cantidad determinada de notas.
             </p>
           </div>
           <button
             type="button"
             onClick={() => setIsOpen(false)}
-            style={{
-              border: "none",
-              background: "transparent",
-              fontSize: "20px",
-              color: "var(--text-tertiary)",
-              cursor: "pointer",
-              padding: "0 4px",
-              lineHeight: 1,
-            }}
             title="Cerrar"
+            className="border-none bg-transparent px-1 text-xl leading-none text-text-tertiary hover:text-text-primary"
           >
             ×
           </button>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-            gap: "12px",
-          }}
-        >
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
           {TEMPLATE_ORDER.map((templateId) => {
             const spec = TEMPLATE_SPECS[templateId];
             return (
               <button
                 key={templateId}
                 onClick={() => handleAdd(templateId)}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  textAlign: "left",
-                  padding: "10px",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-md)",
-                  background: "var(--surface-card)",
-                  cursor: "pointer",
-                  gap: "10px",
-                  transition: "all 120ms ease-out",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)";
-                  (e.currentTarget as HTMLButtonElement).style.background = "var(--accent-light)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
-                  (e.currentTarget as HTMLButtonElement).style.background = "var(--surface-card)";
-                }}
+                className="flex flex-col gap-2.5 rounded-md border border-surface-inset bg-white p-2.5 text-left transition hover:border-accent-primary hover:bg-accent-light"
               >
                 <TemplatePreview templateId={templateId} thumbnail={spec.thumbnail} />
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                  <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[13px] font-semibold text-text-primary">
                     {spec.label}
                   </span>
-                  <span style={{ fontSize: "11px", color: "var(--text-tertiary)" }}>
+                  <span className="text-[11px] text-text-tertiary">
                     {spec.slotsCount} slot{spec.slotsCount > 1 ? "s" : ""}
                   </span>
                 </div>
@@ -177,23 +101,12 @@ function TemplatePreview({
   }
 
   return (
-    <div
-      style={{
-        width: "100%",
-        aspectRatio: "16 / 7",
-        background: "var(--surface-secondary)",
-        borderRadius: "var(--radius-sm)",
-        overflow: "hidden",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
+    <div className="flex aspect-[16/7] w-full items-center justify-center overflow-hidden rounded-sm bg-surface-accent">
       <img
         src={thumbnail}
         alt=""
         onError={() => setFailed(true)}
-        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        className="h-full w-full object-cover"
       />
     </div>
   );
@@ -203,14 +116,8 @@ function CssPreview({ templateId }: { templateId: TemplateId }) {
   const spec = TEMPLATE_SPECS[templateId];
   return (
     <div
+      className="grid aspect-[16/7] w-full gap-1 rounded-sm bg-surface-accent p-1.5"
       style={{
-        width: "100%",
-        aspectRatio: "16 / 7",
-        padding: "6px",
-        background: "var(--surface-secondary)",
-        borderRadius: "var(--radius-sm)",
-        display: "grid",
-        gap: "4px",
         gridTemplateColumns: spec.gridTemplateColumns,
         gridTemplateRows: spec.gridTemplateRows,
         gridTemplateAreas: spec.gridTemplateAreas,
@@ -219,12 +126,8 @@ function CssPreview({ templateId }: { templateId: TemplateId }) {
       {spec.slots.map((slot, i) => (
         <div
           key={i}
-          style={{
-            gridArea: slot.gridArea,
-            background: "var(--surface-card)",
-            border: "1px solid var(--border)",
-            borderRadius: "2px",
-          }}
+          className="rounded-[2px] border border-surface-inset bg-white"
+          style={{ gridArea: slot.gridArea }}
         />
       ))}
     </div>

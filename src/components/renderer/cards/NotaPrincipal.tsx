@@ -10,7 +10,7 @@ const NotaPrincipal = ({ article }: Props) => {
 	const { snapshot } = article;
 	return (
 		<section
-			className="flex flex-row w-full h-auto bg-white overflow-hidden group gap-5"
+			className="flex flex-row w-full h-auto bg-gray-100 overflow-hidden group gap-5"
 		>
 			<a
 				href={articleHref(snapshot)}
@@ -28,7 +28,7 @@ const NotaPrincipal = ({ article }: Props) => {
 			</a>
 
 			{/* Contenido derecho */}
-			<div className="flex flex-col justify-start gap-2 py-3 w-full overflow-hidden">
+			<div className="flex flex-col justify-start gap-2 py-3 pr-3 w-full overflow-hidden">
 
 				{/* Sección y Volanta */}
 				<div className="flex flex-col gap-0">
@@ -45,18 +45,18 @@ const NotaPrincipal = ({ article }: Props) => {
 					{snapshot.title}
 				</h2>
 
-				{/* Descripción destacada (subtítulo en itálica) */}
-				{snapshot.excerpt && (
-					<p className="text-base italic text-gray-700 leading-snug">
-						{snapshot.excerpt}
+				{snapshot.descripcionDestacado && (
+					<p className="text-[17px] italic text-black font-medium leading-snug">
+						{snapshot.descripcionDestacado}
 					</p>
 				)}
-				{/* Descripción (cuerpo)
-				{descripcion && (
-					<p className="text-[13px] text-gray-600 leading-snug line-clamp-5">
-						{descripcion}
-					</p>
-				)} */}
+
+				{snapshot.excerpt && (
+					<p
+						className="text-[17px] font-light text-gray-700 leading-tight"
+						dangerouslySetInnerHTML={{ __html: snapshot.excerpt }}
+					/>
+				)}
 			</div>
 		</section>
 	);

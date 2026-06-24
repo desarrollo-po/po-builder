@@ -19,7 +19,7 @@ export type TemplateId =
   | "banner";
 
 export type SlotVariant =
-  | "hero"
+  | "nota-principal"
   | "main-left"
   | "main-right"
   | "secondary-photo"
@@ -55,6 +55,8 @@ export interface ArticleBlock {
   snapshot: {
     title: string;
     excerpt: string;
+    descripcion?: string;
+    descripcionDestacado?: string | null;
     slug: string;
     imageUrl: string | null;
     publishedAt: string;
@@ -87,8 +89,8 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
     thumbnail: "/regiones/nota principal.png",
     slotsCount: 1,
     gridTemplateColumns: "1fr",
-    slots: [{ variant: "hero", gridArea: "hero" }],
-    gridTemplateAreas: `"hero"`,
+    slots: [{ variant: "nota-principal", gridArea: "nota-principal" }],
+    gridTemplateAreas: `"nota-principal"`,
   },
   "tres-notas-principales": {
     label: "3 notas principales",

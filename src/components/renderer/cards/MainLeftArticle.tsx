@@ -18,7 +18,7 @@ export default function MainLeftArticle({ article }: Props) {
       className="flex h-full flex-col text-inherit no-underline"
     >
       {snapshot.imageUrl && (
-        <div className="w-full flex-[1_1_65%] overflow-hidden bg-[var(--surface-secondary)]">
+        <div className="w-full h-[420px] flex-[1_1_65%] overflow-hidden bg-[var(--surface-secondary)]">
           <img
             src={snapshot.imageUrl}
             alt={snapshot.title}
@@ -35,7 +35,7 @@ export default function MainLeftArticle({ article }: Props) {
             {snapshot.volanta}
           </span>
         )}
-        <h3 className="m-0 line-clamp-3 text-[30px] font-extrabold leading-[1.2] text-[var(--text-primary)]">
+        <h3 className="m-0 text-[30px] font-extrabold leading-[1.2] text-[var(--text-primary)]">
           {snapshot.title}
         </h3>
       </div>

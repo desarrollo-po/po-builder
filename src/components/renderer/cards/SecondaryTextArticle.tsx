@@ -21,17 +21,16 @@ export default function SecondaryTextArticle({ article }: Props) {
       {snapshot.volanta && (
         <span
           className="text-[10.5px] font-extrabold uppercase tracking-[0.7px]"
-          style={{ color: accent }}
         >
           {snapshot.volanta}
         </span>
       )}
-      <h4 className="m-0 line-clamp-4 text-[14px] font-extrabold leading-[1.25] text-[var(--text-primary)]">
+      <h4 className="m-0 line-clamp-4 text-[18px] font-semibold leading-tight text-[var(--text-primary)]">
         {snapshot.title}
       </h4>
-      {snapshot.excerpt && (
-        <p className="m-0 line-clamp-2 text-[11.5px] leading-[1.4] text-[var(--text-secondary)]">
-          {snapshot.excerpt}
+      {snapshot.descripcionDestacado && (
+        <p className="m-0 text-[15px] leading-tight text-[var(--text-secondary)]">
+          {snapshot.descripcionDestacado}
         </p>
       )}
     </a>

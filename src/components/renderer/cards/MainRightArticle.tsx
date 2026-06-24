@@ -38,8 +38,8 @@ export default function MainRightArticle({ article }: Props) {
         <h4 className="m-0 line-clamp-3 text-[18px] font-bold leading-[1.25] text-[var(--text-primary)]">
           {snapshot.title}
         </h4>
-        {snapshot.excerpt && (
-          <span className="text-[14px] font-extralight leading-[1.2]">{snapshot.excerpt}</span>
+        {snapshot.descripcionDestacado && (
+          <span className="text-[14px] font-extralight leading-[1.2]">{snapshot.descripcionDestacado}</span>
         )}
       </div>
     </a>
