@@ -1,8 +1,6 @@
 // Barrel for the public render cards. Each card lives in its own file so
 // it can be ported to the NextJS app one-by-one (just copy the .tsx — the
-// only external dep is `getSectionColor` for the dynamic section accent and
-// the `articleHref` helper, which the NextJS app should replace with its
-// own router-based URL builder).
+// only external dep is `getSectionColor` for the dynamic section accent).
 export { default as NotaPrincipal } from "./NotaPrincipal";
 export { default as MainLeftArticle } from "./MainLeftArticle";
 export { default as MainRightArticle } from "./MainRightArticle";

@@ -1,6 +1,5 @@
 import type { ArticleBlock } from "../../../types/layout";
 import { getSectionColor } from "../../../lib/sectionColors";
-import { articleHref } from "./articleHref";
 
 interface Props {
   article: ArticleBlock;
@@ -11,11 +10,8 @@ export default function SecondaryTextArticle({ article }: Props) {
   const accent = getSectionColor(snapshot.categoryName);
 
   return (
-    <a
-      href={articleHref(snapshot)}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="@container flex h-full flex-col gap-2 px-[14px] pb-[12px] pt-[14px] text-inherit no-underline shadow-[0_0_15px_0_rgba(0,0,0,0.10)]"
+    <article
+      className="@container bg-white flex h-full flex-col gap-2 px-[14px] pb-[12px] pt-[14px] shadow-[0_0_15px_0_rgba(0,0,0,0.10)]"
       style={{ borderTop: `3px solid ${accent}` }}
     >
       {snapshot.volanta && (
@@ -33,6 +29,6 @@ export default function SecondaryTextArticle({ article }: Props) {
           {snapshot.descripcionDestacado}
         </p>
       )}
-    </a>
+    </article>
   );
 }

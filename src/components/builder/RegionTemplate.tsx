@@ -69,10 +69,12 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block }: SlotCellPro
     activeData.regionId === regionId &&
     activeData.slotIndex === slotIndex;
 
-  const stateClass = block
-    ? "border border-surface-inset bg-white"
-    : isOver
-      ? "border-2 border-accent-primary bg-accent-light"
+  const isDropTarget = isOver && !isSourceOfActiveSlot;
+
+  const stateClass = isDropTarget
+    ? "border-2 border-accent-primary bg-accent-light ring-2 ring-accent-primary/40"
+    : block
+      ? "border border-surface-inset bg-white"
       : "border-2 border-dashed border-surface-inset bg-surface-base";
 
   return (

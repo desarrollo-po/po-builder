@@ -1,6 +1,5 @@
 import type { ArticleBlock } from "../../../types/layout";
 import { pickImage } from "../../../lib/wpImage";
-import { articleHref } from "./articleHref";
 
 // NotaPrincipal.tsx
 interface Props {
@@ -10,13 +9,10 @@ interface Props {
 const NotaPrincipal = ({ article }: Props) => {
 	const { snapshot } = article;
 	return (
-		<section
+		<article
 			className="@container flex flex-row @max-md:flex-col w-full h-auto bg-gray-100 overflow-hidden group gap-5 @max-md:gap-0"
 		>
-			<a
-				href={articleHref(snapshot)}
-				className="relative w-[53%] @max-md:w-full shrink-0 overflow-hidden"
-			>
+			<div className="relative w-[53%] @max-md:w-full shrink-0 overflow-hidden">
 				{/* Imagen izquierda */}
 				{snapshot.imageUrl && (
 					<img
@@ -26,7 +22,7 @@ const NotaPrincipal = ({ article }: Props) => {
 					/>
 				)}
 
-			</a>
+			</div>
 
 			{/* Contenido derecho */}
 			<div className="flex flex-col justify-start gap-2 py-3 pr-3 @max-md:px-3 w-full overflow-hidden">
@@ -59,7 +55,7 @@ const NotaPrincipal = ({ article }: Props) => {
 					/>
 				)}
 			</div>
-		</section>
+		</article>
 	);
 };
 

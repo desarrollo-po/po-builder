@@ -1,7 +1,6 @@
 import type { ArticleBlock } from "../../../types/layout";
 import { getSectionColor } from "../../../lib/sectionColors";
 import { pickImage } from "../../../lib/wpImage";
-import { articleHref } from "./articleHref";
 
 interface Props {
   article: ArticleBlock;
@@ -12,11 +11,8 @@ export default function HeroArticle({ article }: Props) {
   const sectionColor = getSectionColor(snapshot.categoryName);
 
   return (
-    <a
-      href={articleHref(snapshot)}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="@container flex @max-md:flex-col h-full gap-[14px] @max-md:gap-0 text-inherit no-underline"
+    <article
+      className="@container flex @max-md:flex-col h-full gap-[14px] @max-md:gap-0"
     >
       {snapshot.imageUrl && (
         <div className="w-[45%] @max-md:w-full flex-shrink-0 overflow-hidden bg-[var(--surface-secondary)]">
@@ -45,6 +41,6 @@ export default function HeroArticle({ article }: Props) {
           </p>
         )}
       </div>
-    </a>
+    </article>
   );
 }

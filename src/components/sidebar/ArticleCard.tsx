@@ -24,13 +24,6 @@ export default function ArticleCard({ articleId, snapshot }: Props) {
     },
   });
 
-  const date = snapshot.publishedAt
-    ? new Date(snapshot.publishedAt).toLocaleDateString("es-AR", {
-        day: "2-digit",
-        month: "short",
-      })
-    : null;
-
   return (
     <div
       ref={setNodeRef}
@@ -136,12 +129,11 @@ export default function ArticleCard({ articleId, snapshot }: Props) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
-          {snapshot.volanta ? (
+          {snapshot.volanta && (
             <span
               style={{
                 fontSize: "9px",
                 fontWeight: 700,
-                color: sectionColor,
                 textTransform: "uppercase",
                 letterSpacing: "0.6px",
                 whiteSpace: "nowrap",
@@ -152,40 +144,8 @@ export default function ArticleCard({ articleId, snapshot }: Props) {
             >
               {snapshot.volanta}
             </span>
-          ) : snapshot.categoryName ? (
-            <span
-              style={{
-                fontSize: "9px",
-                fontWeight: 700,
-                color: sectionColor,
-                textTransform: "uppercase",
-                letterSpacing: "0.6px",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                lineHeight: 1,
-              }}
-            >
-              {snapshot.categoryName}
-            </span>
-          ) : (
-            <span />
           )}
 
-          {date && (
-            <span
-              style={{
-                fontSize: "9px",
-                color: "#aaa",
-                fontWeight: 500,
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-                lineHeight: 1,
-              }}
-            >
-              {date}
-            </span>
-          )}
         </div>
 
         <p
@@ -205,15 +165,16 @@ export default function ArticleCard({ articleId, snapshot }: Props) {
           {snapshot.title}
         </p>
 
-        {snapshot.volanta && snapshot.categoryName && (
+        {snapshot.categoryName && (
           <div>
             <span
               style={{
                 display: "inline-block",
                 fontSize: "9px",
                 fontWeight: 600,
-                color: "#666",
-                background: "#f2f2f2",
+                color: sectionColor,
+                background: "#fafafa",
+                border: `1px solid ${sectionColor}`,
                 padding: "2px 6px",
                 borderRadius: "3px",
                 letterSpacing: "0.3px",

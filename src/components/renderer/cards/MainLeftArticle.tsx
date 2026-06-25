@@ -1,7 +1,6 @@
 import type { ArticleBlock } from "../../../types/layout";
 import { getSectionColor } from "../../../lib/sectionColors";
 import { pickImage } from "../../../lib/wpImage";
-import { articleHref } from "./articleHref";
 
 interface Props {
   article: ArticleBlock;
@@ -13,11 +12,8 @@ export default function MainLeftArticle({ article }: Props) {
   const accent = getSectionColor(snapshot.categoryName);
 
   return (
-    <a
-      href={articleHref(snapshot)}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="@container flex h-full flex-col text-inherit no-underline shadow-[0_0_15px_0_rgba(0,0,0,0.10)]"
+    <article
+      className="@container bg-white flex h-full flex-col shadow-[0_0_15px_0_rgba(0,0,0,0.10)]"
       style={{ borderTop: `3px solid ${accent}` }}
     >
       {snapshot.imageUrl && (
@@ -45,6 +41,6 @@ export default function MainLeftArticle({ article }: Props) {
           <span className="text-[16px] font-extralight leading-tight">{snapshot.descripcionDestacado}</span>
         )}
       </div>
-    </a>
+    </article>
   );
 }
