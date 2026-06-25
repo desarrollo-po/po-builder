@@ -12,6 +12,30 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+export async function signInWithGoogle() {
+  return supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: window.location.origin },
+  });
+}
+
+export async function signOutAll() {
+  await supabase.auth.signOut();
+}
+
+export async function isEmailAllowed(email: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("allowed_users")
+    .select("email")
+    .eq("email", email)
+    .maybeSingle();
+  if (error) {
+    console.error("Error checking allowlist:", error);
+    return false;
+  }
+  return !!data;
+}
+
 export async function loadLayout(slug: string): Promise<PageLayout | null> {
   const { data, error } = await supabase
     .from("page_layouts")

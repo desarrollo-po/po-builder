@@ -210,7 +210,7 @@ Pendientes:
 ### Pendientes generales
 - [ ] Toast/feedback global en lugar del mensaje inline en toolbar
 - [ ] Sombras en tarjetas
-- [ ] Autenticación
+- [x] Autenticación
 - [ ] Poder guardar layout como plantilla
 - [ ] Cargar plantillas guardadas
 - [ ] Retry/backoff en errores de Supabase

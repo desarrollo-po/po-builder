@@ -18,13 +18,24 @@ import BuilderToolbar from "./components/builder/BuilderToolbar";
 import DragOverlayContent from "./components/DragOverlayContent";
 import PageRenderer from "./components/renderer/PageRenderer";
 import useDragHandlers from "./hooks/useDragHandlers";
+import AuthGate from "./components/auth/AuthGate";
+import { useAuthStore } from "./store/authStore";
 
 type Mode = "edit" | "preview";
 
 function App() {
+  return (
+    <AuthGate>
+      <Builder />
+    </AuthGate>
+  );
+}
+
+function Builder() {
   const { initializeLayout, layout } = useLayoutStore();
   const { handleDragEnd } = useDragHandlers();
   const [mode, setMode] = useState<Mode>("edit");
+  const authStatus = useAuthStore((s) => s.status);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -32,13 +43,16 @@ function App() {
   );
 
   useEffect(() => {
+    // ponytail: only fetch once authenticated, so the request carries the JWT
+    // and the tightened RLS policy returns rows instead of an empty result.
+    if (authStatus !== "authenticated") return;
     const loadPageLayout = async () => {
       const existingLayout = await loadLayout("home");
       initializeLayout("home", existingLayout);
     };
 
     loadPageLayout();
-  }, [initializeLayout]);
+  }, [initializeLayout, authStatus]);
 
   const handleAppDragEnd = (event: DragEndEvent) => {
     handleDragEnd(event);

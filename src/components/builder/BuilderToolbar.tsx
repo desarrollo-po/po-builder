@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLayoutStore } from "../../store/layoutStore";
+import { useAuthStore } from "../../store/authStore";
+import { signOutAll } from "../../lib/supabase";
 
 function formatLocalSaveAge(lastLocalSave: string | null, now: number): string | null {
   if (!lastLocalSave) return null;
@@ -27,6 +29,7 @@ export default function BuilderToolbar() {
     draftRestored,
     discardLocalDraft,
   } = useLayoutStore();
+  const email = useAuthStore((s) => s.email);
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isDiscarding, setIsDiscarding] = useState(false);
@@ -213,6 +216,27 @@ export default function BuilderToolbar() {
           >
             {isPublishing ? "Publicando…" : "Publicar"}
           </button>
+
+          <div className="h-5 w-px bg-surface-inset" />
+
+          {/* User + Logout */}
+          {email && (
+            <div className="flex items-center gap-2">
+              <span
+                title={email}
+                className="max-w-[180px] truncate text-[11px] font-medium text-text-tertiary"
+              >
+                {email}
+              </span>
+              <button
+                onClick={() => signOutAll()}
+                title="Cerrar sesión"
+                className="rounded-md border border-surface-inset bg-white px-2.5 py-[5px] text-[11px] font-medium text-text-secondary hover:bg-surface-accent"
+              >
+                Salir
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
