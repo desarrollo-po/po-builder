@@ -97,7 +97,6 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
     thumbnail: "/regiones/tres-notas-principáles.png",
     slotsCount: 3,
     gridTemplateColumns: "2fr 1fr",
-    gridTemplateRows: "1fr 1fr",
     gridTemplateAreas: `"main top-right" "main bottom-right"`,
     slots: [
       { variant: "main-left", gridArea: "main" },

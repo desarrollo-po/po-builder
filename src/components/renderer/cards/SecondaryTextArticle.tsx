@@ -15,7 +15,7 @@ export default function SecondaryTextArticle({ article }: Props) {
       href={articleHref(snapshot)}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex h-full flex-col gap-2 px-[14px] pb-[12px] pt-[14px] text-inherit no-underline"
+      className="@container flex h-full flex-col gap-2 px-[14px] pb-[12px] pt-[14px] text-inherit no-underline shadow-[0_0_15px_0_rgba(0,0,0,0.10)]"
       style={{ borderTop: `3px solid ${accent}` }}
     >
       {snapshot.volanta && (
@@ -25,9 +25,9 @@ export default function SecondaryTextArticle({ article }: Props) {
           {snapshot.volanta}
         </span>
       )}
-      <h4 className="m-0 line-clamp-4 text-[18px] font-semibold leading-tight text-[var(--text-primary)]">
+      <h2 className="m-0 text-[18px] @max-md:text-[18px] @max-md:font-extrabold @max-md:leading-tight @max-md:tracking-tight font-semibold leading-tight text-[var(--text-primary)]">
         {snapshot.title}
-      </h4>
+      </h2>
       {snapshot.descripcionDestacado && (
         <p className="m-0 text-[15px] leading-tight text-[var(--text-secondary)]">
           {snapshot.descripcionDestacado}

@@ -15,11 +15,11 @@ export default function SecondarySmallArticle({ article }: Props) {
       href={articleHref(snapshot)}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex h-full flex-col text-inherit no-underline"
+      className="@container flex h-full flex-col text-inherit no-underline shadow-[0_0_15px_0_rgba(0,0,0,0.10)]"
       style={{ borderTop: `3px solid ${accent}` }}
     >
       {snapshot.imageUrl && (
-        <div className="w-full flex-[1_1_55%] overflow-hidden bg-[--surface-secondary]">
+        <div className="w-full shrink-0 overflow-hidden h-[200px] bg-[--surface-secondary]">
           <img
             src={snapshot.imageUrl}
             alt={snapshot.title}
@@ -27,12 +27,12 @@ export default function SecondarySmallArticle({ article }: Props) {
           />
         </div>
       )}
-      <div className="flex flex-col gap-[3px] px-3 py-[10px]">
-        <h4 className="text-[18px] font-extrabold leading-tight text-gray-900 tracking-tight">
+      <div className="flex flex-col gap-[10px] p-[15px]">
+        <h2 className="text-[18px] font-extrabold leading-tight text-gray-900 tracking-tight">
           {snapshot.title}
-        </h4>
+        </h2>
         {snapshot.descripcionDestacado && (
-          <p className="m-0 text-[15px] leading-tight text-[var(--text-secondary)]">
+          <p className="m-0 text-[15px] leading-tight">
             {snapshot.descripcionDestacado}
           </p>
         )}

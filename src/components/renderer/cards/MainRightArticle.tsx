@@ -9,16 +9,18 @@ interface Props {
 export default function MainRightArticle({ article }: Props) {
   const { snapshot } = article;
   const sectionColor = getSectionColor(snapshot.categoryName);
+  const accent = getSectionColor(snapshot.categoryName);
 
   return (
     <a
       href={articleHref(snapshot)}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex h-full flex-col text-inherit no-underline"
+      className="flex h-full flex-col text-inherit no-underline shadow-[0_0_15px_0_rgba(0,0,0,0.10)]"
+      style={{ borderTop: `3px solid ${accent}` }}
     >
       {snapshot.imageUrl && (
-        <div className="h-[150px] w-full flex-shrink-0 overflow-hidden bg-[var(--surface-secondary)]">
+        <div className="h-[150px] @max-md:h-auto @max-md:w-full @max-md:flex-[1_1] w-full flex-shrink-0 overflow-hidden bg-[var(--surface-secondary)]">
           <img
             src={snapshot.imageUrl}
             alt={snapshot.title}
@@ -35,9 +37,9 @@ export default function MainRightArticle({ article }: Props) {
             {snapshot.volanta}
           </span>
         )}
-        <h4 className="m-0 line-clamp-3 text-[18px] font-bold leading-[1.25] text-[var(--text-primary)]">
+        <h2 className="m-0 text-[18px] @max-md:text-[18px] @max-md:font-extrabold @max-md:leading-tight @max-md:tracking-tight font-bold leading-[1.25] text-[var(--text-primary)]">
           {snapshot.title}
-        </h4>
+        </h2>
         {snapshot.descripcionDestacado && (
           <span className="text-[14px] font-extralight leading-[1.2]">{snapshot.descripcionDestacado}</span>
         )}

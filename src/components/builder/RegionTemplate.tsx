@@ -26,7 +26,7 @@ export default function RegionTemplate({ region }: Props) {
 
   return (
     <div
-      className="grid min-h-[120px] gap-2.5"
+      className="grid min-h-[120px] gap-2.5 @max-md:grid-cols-1! @max-md:[grid-template-rows:none]! @max-md:[grid-template-areas:none]!"
       style={{
         gridTemplateColumns: spec.gridTemplateColumns,
         gridTemplateRows: spec.gridTemplateRows,
@@ -78,7 +78,7 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block }: SlotCellPro
   return (
     <div
       ref={setNodeRef}
-      className={`relative overflow-hidden transition ${stateClass} ${minHeightClassFor(variant)} ${isSourceOfActiveSlot ? "opacity-40" : "opacity-100"
+      className={`relative overflow-hidden transition @max-md:[grid-area:auto]! ${stateClass} ${minHeightClassFor(variant)} ${isSourceOfActiveSlot ? "opacity-40" : "opacity-100"
         }`}
       style={{ gridArea }}
     >

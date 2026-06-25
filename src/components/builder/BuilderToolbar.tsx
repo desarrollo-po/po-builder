@@ -84,7 +84,6 @@ export default function BuilderToolbar() {
   };
 
   const stateBadge = isDirty
-<<<<<<< HEAD
     ? {
       label: "Borrador",
       className: "bg-[#0070f3]/10 text-[#0070f3]",
@@ -101,17 +100,10 @@ export default function BuilderToolbar() {
         className: "bg-surface-accent text-text-secondary",
         dotClassName: "bg-gray-400",
       };
-=======
-    ? { label: "Borrador", bg: "rgba(0,112,243,0.09)", color: "#0070f3", dot: "#0070f3" }
-    : layout?.is_published
-    ? { label: "Publicado", bg: "rgba(16,185,129,0.09)", color: "#059669", dot: "#10b981" }
-    : { label: "Guardado", bg: "var(--surface-secondary)", color: "var(--text-secondary)", dot: "#9ca3af" };
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
 
   const localSaveLabel = formatLocalSaveAge(lastLocalSave, now);
 
   return (
-<<<<<<< HEAD
     <div className="flex shrink-0 flex-col">
       <div
         className={`relative z-10 flex h-14 items-center justify-between gap-6 bg-white px-6 ${draftRestored ? "border-b border-amber-300" : "border-b border-surface-inset"
@@ -119,33 +111,11 @@ export default function BuilderToolbar() {
       >
         {/* Left: Brand + Title + State */}
         <div className="flex min-w-0 items-center gap-4">
-=======
-    <div style={{ display: "flex", flexDirection: "column", flexShrink: 0 }}>
-      <div
-        style={{
-          borderBottom: draftRestored ? "1px solid #fcd34d" : "1px solid var(--border)",
-          padding: "0 24px",
-          height: "56px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "24px",
-          background: "#ffffff",
-          boxShadow: "var(--shadow-xs)",
-          position: "relative",
-          zIndex: 10,
-        }}
-      >
-        {/* Left: Brand + Title + State */}
-        <div style={{ display: "flex", alignItems: "center", gap: "16px", minWidth: 0 }}>
-          {/* Brand mark */}
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
           <img
             src="/favicon-32x32.png"
             alt="Prensa Obrera"
             width={28}
             height={28}
-<<<<<<< HEAD
             className="shrink-0 rounded-lg object-contain"
           />
 
@@ -154,53 +124,15 @@ export default function BuilderToolbar() {
               {layout?.slug ?? "Page Builder"}
             </span>
             <span className="text-[11px] font-normal text-text-tertiary">
-=======
-            style={{
-              borderRadius: "var(--radius-lg)",
-              flexShrink: 0,
-              objectFit: "contain",
-            }}
-          />
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-            <span style={{ fontSize: "14px", fontWeight: 600, color: "#000000", letterSpacing: "-0.2px" }}>
-              {layout?.slug ?? "Page Builder"}
-            </span>
-            <span style={{ fontSize: "11px", color: "var(--text-tertiary)", fontWeight: 400 }}>
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
               Home Builder | PrensaObrera.com
             </span>
           </div>
 
           {/* State badge */}
           <div
-<<<<<<< HEAD
             className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${stateBadge.className}`}
           >
             <div className={`h-1.5 w-1.5 shrink-0 rounded-full ${stateBadge.dotClassName}`} />
-=======
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "4px 10px",
-              borderRadius: "99px",
-              background: stateBadge.bg,
-              color: stateBadge.color,
-              fontSize: "12px",
-              fontWeight: 500,
-            }}
-          >
-            <div
-              style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: stateBadge.dot,
-                flexShrink: 0,
-              }}
-            />
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
             {stateBadge.label}
           </div>
 
@@ -208,19 +140,7 @@ export default function BuilderToolbar() {
           {localSaveLabel && (
             <span
               title="Los cambios se guardan automáticamente en tu navegador. Apretá Guardar para subirlos a Supabase."
-<<<<<<< HEAD
               className="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-text-tertiary"
-=======
-              style={{
-                fontSize: "11px",
-                fontWeight: 500,
-                color: "var(--text-tertiary)",
-                whiteSpace: "nowrap",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
             >
               <svg
                 width="11"
@@ -244,53 +164,20 @@ export default function BuilderToolbar() {
         {/* Center: transient message */}
         {message && (
           <div
-<<<<<<< HEAD
             className={`absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-medium ${message.type === "success"
-                ? "border-surface-inset bg-surface-accent text-text-secondary"
-                : "border-[#0070f3]/30 bg-[#0070f3]/10 text-[#0070f3]"
+              ? "border-surface-inset bg-surface-accent text-text-secondary"
+              : "border-[#0070f3]/30 bg-[#0070f3]/10 text-[#0070f3]"
               }`}
           >
             {message.type === "success" ? "✓ " : "⚠ "}
             {message.text}
-=======
-            style={{
-              position: "absolute",
-              left: "50%",
-              transform: "translateX(-50%)",
-              fontSize: "12px",
-              fontWeight: 500,
-              padding: "6px 14px",
-              borderRadius: "99px",
-              border: `1px solid ${message.type === "success" ? "var(--border)" : "rgba(0,112,243,0.3)"}`,
-              background: message.type === "success" ? "var(--surface-secondary)" : "rgba(0,112,243,0.08)",
-              color: message.type === "success" ? "var(--text-secondary)" : "#0070f3",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {message.type === "success" ? "✓ " : "⚠ "}{message.text}
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
           </div>
         )}
 
         {/* Right: Controls */}
-<<<<<<< HEAD
         <div className="flex items-center gap-2">
           {/* Undo / Redo */}
           <div className="flex gap-0.5 rounded-lg border border-surface-inset bg-surface-accent p-0.5">
-=======
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {/* Undo / Redo */}
-          <div
-            style={{
-              display: "flex",
-              gap: "2px",
-              padding: "2px",
-              background: "var(--surface-secondary)",
-              borderRadius: "var(--radius-lg)",
-              border: "1px solid var(--border)",
-            }}
-          >
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
             {[
               { fn: undo, can: canUndo, icon: "↶", title: "Deshacer" },
               { fn: redo, can: canRedo, icon: "↷", title: "Rehacer" },
@@ -300,69 +187,20 @@ export default function BuilderToolbar() {
                 onClick={fn}
                 disabled={!can()}
                 title={title}
-<<<<<<< HEAD
                 className="flex h-7 w-[30px] items-center justify-center rounded-md border-none bg-transparent p-0 text-[15px] text-text-secondary enabled:hover:bg-white disabled:cursor-not-allowed disabled:opacity-[0.35]"
-=======
-                style={{
-                  width: "30px",
-                  height: "28px",
-                  padding: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  opacity: can() ? 1 : 0.35,
-                  cursor: can() ? "pointer" : "not-allowed",
-                  border: "none",
-                  background: "transparent",
-                  borderRadius: "var(--radius-md)",
-                  fontSize: "15px",
-                  color: "var(--text-secondary)",
-                }}
-                onMouseEnter={(e) => {
-                  if (can()) (e.currentTarget as HTMLButtonElement).style.background = "#ffffff";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-                }}
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
               >
                 {icon}
               </button>
             ))}
           </div>
 
-<<<<<<< HEAD
           <div className="h-5 w-px bg-surface-inset" />
-=======
-          <div style={{ width: "1px", height: "20px", background: "var(--border)" }} />
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
 
           {/* Save */}
           <button
             onClick={handleSave}
             disabled={isSaving}
-<<<<<<< HEAD
             className="rounded-lg border border-text-muted bg-white px-3.5 py-[7px] text-[13px] font-medium text-black transition enabled:hover:bg-surface-accent disabled:cursor-not-allowed disabled:opacity-60"
-=======
-            style={{
-              padding: "7px 14px",
-              fontSize: "13px",
-              fontWeight: 500,
-              borderRadius: "var(--radius-lg)",
-              border: "1px solid var(--border-strong)",
-              background: "#ffffff",
-              color: "#000000",
-              cursor: isSaving ? "not-allowed" : "pointer",
-              opacity: isSaving ? 0.6 : 1,
-              transition: "all 120ms",
-            }}
-            onMouseEnter={(e) => {
-              if (!isSaving) (e.currentTarget as HTMLButtonElement).style.background = "var(--surface-secondary)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "#ffffff";
-            }}
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
           >
             {isSaving ? "Guardando…" : "Guardar"}
           </button>
@@ -371,18 +209,7 @@ export default function BuilderToolbar() {
           <button
             onClick={handlePublish}
             disabled={isPublishing}
-<<<<<<< HEAD
             className="rounded-lg border border-accent-primary bg-accent-primary px-3.5 py-[7px] text-[13px] font-medium text-white transition enabled:hover:border-accent-hover enabled:hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
-=======
-            className="primary"
-            style={{
-              padding: "7px 14px",
-              fontSize: "13px",
-              borderRadius: "var(--radius-lg)",
-              cursor: isPublishing ? "not-allowed" : "pointer",
-              opacity: isPublishing ? 0.6 : 1,
-            }}
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
           >
             {isPublishing ? "Publicando…" : "Publicar"}
           </button>
@@ -391,26 +218,8 @@ export default function BuilderToolbar() {
 
       {/* Draft-restored banner */}
       {draftRestored && (
-<<<<<<< HEAD
         <div className="flex items-center justify-between gap-4 border-b border-amber-300 bg-amber-500/10 px-6 py-2.5 text-[12.5px] font-medium text-amber-800">
           <span className="flex items-center gap-2">
-=======
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "16px",
-            padding: "10px 24px",
-            background: "rgba(245, 158, 11, 0.10)",
-            borderBottom: "1px solid #fcd34d",
-            color: "#92400e",
-            fontSize: "12.5px",
-            fontWeight: 500,
-          }}
-        >
-          <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
             <svg
               width="14"
               height="14"
@@ -430,22 +239,7 @@ export default function BuilderToolbar() {
           <button
             onClick={handleDiscardDraft}
             disabled={isDiscarding}
-<<<<<<< HEAD
             className="whitespace-nowrap rounded-md border border-amber-300 bg-white px-3 py-[5px] text-xs font-semibold text-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
-=======
-            style={{
-              padding: "5px 12px",
-              fontSize: "12px",
-              fontWeight: 600,
-              borderRadius: "var(--radius-md)",
-              border: "1px solid #fcd34d",
-              background: "#ffffff",
-              color: "#92400e",
-              cursor: isDiscarding ? "not-allowed" : "pointer",
-              opacity: isDiscarding ? 0.6 : 1,
-              whiteSpace: "nowrap",
-            }}
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
           >
             {isDiscarding ? "Cargando…" : "Cargar versión guardada"}
           </button>

@@ -135,14 +135,14 @@ Hecho:
 Pendientes:
 
 - [ ] Toast/feedback global en lugar del mensaje inline en toolbar
-- [ ] Confirmación antes de borrar región (hoy borra directo)
-- [ ] Atajo `Ctrl+S` → `save`
+- [ ] Sombras en tarjetas
+- [ ] Autenticación
+- [ ] Poder guardar layout como plantilla
+- [ ] Cargar plantillas guardadas
 - [ ] Retry/backoff en errores de Supabase
 - [ ] Loading skeletons en `ArticleBrowser` / `BannerLibrary`
 
 ### Phase 4.5 — Persistencia local y autosave
-
-**Objetivo:** no perder el draft cuando el navegador se cierra, el tab se recarga o el usuario se va sin apretar "Guardar". El botón "Guardar" sigue siendo la acción explícita hacia Supabase; esta capa agrega persistencia local automática.
 
 **Implementación (Opción A — sólo localStorage):**
 
@@ -206,6 +206,15 @@ Pendientes:
    - Una entrada por `TemplateId` con el `gridTemplateAreas` real del sitio (puede diferir del preview del builder en márgenes/espaciados)
    - Una entrada por `SlotVariant` que mapea a una card del design system de PO (hero, main-left, secondary-photo, etc.)
 4. Banners: render `<a href={banner.linkUrl} target={banner.openInNewTab ? "_blank" : undefined}><img src={banner.imageUrl} alt={banner.altText} /></a>`.
+
+### Pendientes generales
+- [ ] Toast/feedback global en lugar del mensaje inline en toolbar
+- [ ] Sombras en tarjetas
+- [ ] Autenticación
+- [ ] Poder guardar layout como plantilla
+- [ ] Cargar plantillas guardadas
+- [ ] Retry/backoff en errores de Supabase
+- [ ] Loading skeletons en `ArticleBrowser` / `BannerLibrary`
 
 ---
 

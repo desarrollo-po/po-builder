@@ -2,22 +2,13 @@ import type { ComponentType } from "react";
 import type { ArticleBlock, Block, SlotVariant } from "../../types/layout";
 import {
   BannerCard,
-<<<<<<< HEAD
-=======
-  HeroArticle,
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
   MainLeftArticle,
   MainRightArticle,
   SecondaryPhotoArticle,
   SecondarySmallArticle,
   SecondaryTextArticle,
-<<<<<<< HEAD
   NotaPrincipal
 } from "./cards";
-=======
-} from "./cards";
-import NotaPrincipal from "./cards/NotaPrincipal";
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
 
 // Article cards per slot variant. Each variant has one visual that the
 // designer locked in Figma — this map is the single point of truth.
@@ -28,11 +19,7 @@ const ARTICLE_CARDS: Record<
   SlotVariant,
   ComponentType<{ article: ArticleBlock }> | null
 > = {
-<<<<<<< HEAD
   "nota-principal": NotaPrincipal,
-=======
-  hero: NotaPrincipal,
->>>>>>> a083ef1efc04d81c9d9879f259476ed598a6406d
   "main-left": MainLeftArticle,
   "main-right": MainRightArticle,
   "secondary-photo": SecondaryPhotoArticle,

@@ -19,6 +19,7 @@ export async function loadLayout(slug: string): Promise<PageLayout | null> {
     .eq("slug", slug)
     .eq("is_published", false)
     .order("version", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(1)
     .single();
 

@@ -18,6 +18,7 @@ export default function PageRenderer({ layout }: Props) {
 
   return (
     <main
+      className="@container"
       style={{
         maxWidth: "1200px",
         margin: "0 auto",

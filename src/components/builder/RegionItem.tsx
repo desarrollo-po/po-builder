@@ -138,7 +138,7 @@ export default function RegionItem({ region }: Props) {
         </button>
       </div>
 
-      <div style={{ padding: "12px" }}>
+      <div className="@container" style={{ padding: "12px" }}>
         <RegionTemplate region={region} />
       </div>
     </div>

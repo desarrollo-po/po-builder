@@ -8,6 +8,7 @@ import type {
   TemplateId,
 } from "../types/layout";
 import { TEMPLATE_SPECS } from "../types/layout";
+import { saveLayout, publishLayout, loadLayout } from "../lib/supabase";
 
 interface LayoutState {
   layout: PageLayout | null;
@@ -300,12 +301,17 @@ export const useLayoutStore = create<LayoutState>()(
           const state = get();
           if (!state.layout) return { success: false, error: "No layout loaded" };
           try {
-            const { saveLayout } = await import("../lib/supabase");
-            const result = await saveLayout(state.layout);
+            // ponytail: single-editor assumption — bump locally. Upgrade to
+            // SELECT max(version) WHERE slug=... if concurrent editing ships.
+            const nextLayout: PageLayout = {
+              ...state.layout,
+              version: state.layout.version + 1,
+              updated_at: new Date().toISOString(),
+            };
+            const result = await saveLayout(nextLayout);
             if (result.success) {
-              // A successful remote save clears the local "dirty" marker so the
-              // draft-recovery prompt doesn't trigger on the next load.
               set({
+                layout: nextLayout,
                 isDirty: false,
                 lastLocalSave: null,
                 draftRestored: false,
@@ -342,7 +348,6 @@ export const useLayoutStore = create<LayoutState>()(
           }
 
           try {
-            const { publishLayout } = await import("../lib/supabase");
             return await publishLayout(state.layout.slug, state.layout.version);
           } catch (error) {
             return {
@@ -357,7 +362,6 @@ export const useLayoutStore = create<LayoutState>()(
         discardLocalDraft: async () => {
           const state = get();
           const slug = state.slug || "home";
-          const { loadLayout } = await import("../lib/supabase");
           const remote = await loadLayout(slug);
           const layout = isValidTemplateLayout(remote)
             ? (remote as PageLayout)

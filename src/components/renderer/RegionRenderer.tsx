@@ -16,16 +16,20 @@ export default function RegionRenderer({ region }: Props) {
   return (
     <section
       data-region-template={region.template}
+      className="grid @max-md:grid-cols-1! @max-md:grid-rows-none! @max-md:[grid-template-areas:none]!"
       style={{
-        display: "grid",
-        gap: "10px",
+        gap: "18px",
         gridTemplateColumns: spec.gridTemplateColumns,
         gridTemplateRows: spec.gridTemplateRows,
         gridTemplateAreas: spec.gridTemplateAreas,
       }}
     >
       {spec.slots.map((slot, slotIndex) => (
-        <div key={slotIndex} style={{ gridArea: slot.gridArea, overflow: "hidden" }}>
+        <div
+          key={slotIndex}
+          className="@max-md:[grid-area:auto]!"
+          style={{ gridArea: slot.gridArea }}
+        >
           <BlockRenderer
             block={region.blocks[slotIndex] ?? null}
             variant={slot.variant}
