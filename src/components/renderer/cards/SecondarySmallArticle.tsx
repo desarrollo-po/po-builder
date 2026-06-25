@@ -1,4 +1,5 @@
 import { getSectionColor } from "../../../lib/sectionColors";
+import { pickImage } from "../../../lib/wpImage";
 import type { ArticleBlock } from "../../../types/layout";
 import { articleHref } from "./articleHref";
 
@@ -21,7 +22,7 @@ export default function SecondarySmallArticle({ article }: Props) {
       {snapshot.imageUrl && (
         <div className="w-full shrink-0 overflow-hidden h-[200px] bg-[--surface-secondary]">
           <img
-            src={snapshot.imageUrl}
+            src={pickImage(snapshot, "medium", "medium_large")}
             alt={snapshot.title}
             className="h-full w-full object-cover"
           />

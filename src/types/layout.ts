@@ -59,6 +59,9 @@ export interface ArticleBlock {
     descripcionDestacado?: string | null;
     slug: string;
     imageUrl: string | null;
+    // WP `mediaDetails.sizes` keyed by name (medium, medium_large, large, full…).
+    // Optional: old snapshots in Supabase only have imageUrl.
+    imageSizes?: Record<string, string> | null;
     publishedAt: string;
     categoryName: string | null;
     volanta: string | null;

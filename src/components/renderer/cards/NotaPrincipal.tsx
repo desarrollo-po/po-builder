@@ -1,4 +1,5 @@
 import type { ArticleBlock } from "../../../types/layout";
+import { pickImage } from "../../../lib/wpImage";
 import { articleHref } from "./articleHref";
 
 // NotaPrincipal.tsx
@@ -19,7 +20,7 @@ const NotaPrincipal = ({ article }: Props) => {
 				{/* Imagen izquierda */}
 				{snapshot.imageUrl && (
 					<img
-						src={snapshot.imageUrl}
+						src={pickImage(snapshot, "large", "medium_large")}
 						alt={snapshot.title}
 						className="w-full h-full object-cover transition-transform duration-300"
 					/>

@@ -1,5 +1,6 @@
 import type { ArticleBlock } from "../../../types/layout";
 import { getSectionColor } from "../../../lib/sectionColors";
+import { pickImage } from "../../../lib/wpImage";
 import { articleHref } from "./articleHref";
 
 interface Props {
@@ -20,7 +21,7 @@ export default function HeroArticle({ article }: Props) {
       {snapshot.imageUrl && (
         <div className="w-[45%] @max-md:w-full flex-shrink-0 overflow-hidden bg-[var(--surface-secondary)]">
           <img
-            src={snapshot.imageUrl}
+            src={pickImage(snapshot, "medium_large", "large")}
             alt={snapshot.title}
             className="h-full w-full object-cover"
           />

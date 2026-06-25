@@ -1,5 +1,6 @@
 import type { ArticleBlock } from "../../../types/layout";
 import { getSectionColor } from "../../../lib/sectionColors";
+import { pickImage } from "../../../lib/wpImage";
 import { articleHref } from "./articleHref";
 
 interface Props {
@@ -22,7 +23,7 @@ export default function MainRightArticle({ article }: Props) {
       {snapshot.imageUrl && (
         <div className="h-[150px] @max-md:h-auto @max-md:w-full @max-md:flex-[1_1] w-full flex-shrink-0 overflow-hidden bg-[var(--surface-secondary)]">
           <img
-            src={snapshot.imageUrl}
+            src={pickImage(snapshot, "medium", "medium_large")}
             alt={snapshot.title}
             className="h-full w-full object-cover"
           />

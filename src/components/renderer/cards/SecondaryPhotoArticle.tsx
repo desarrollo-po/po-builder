@@ -1,4 +1,5 @@
 import { getSectionColor } from "../../../lib/sectionColors";
+import { pickImage } from "../../../lib/wpImage";
 import type { ArticleBlock } from "../../../types/layout";
 import { articleHref } from "./articleHref";
 
@@ -20,7 +21,7 @@ export default function SecondaryPhotoArticle({ article }: Props) {
       {snapshot.imageUrl && (
         <div className="w-full h-[420px] @max-md:flex-[1_1_55%] overflow-hidden">
           <img
-            src={snapshot.imageUrl}
+            src={pickImage(snapshot, "medium_large", "large")}
             alt={snapshot.title}
             className="h-full w-full object-cover"
           />

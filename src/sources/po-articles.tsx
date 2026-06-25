@@ -1,4 +1,5 @@
 import { fetchGraphQL } from "../lib/graphql";
+import { sizesFromMediaDetails } from "../lib/wpImage";
 import ArticleCard from "../components/sidebar/ArticleCard";
 import type { ArticleBlock } from "../types/layout";
 import type { ContentPage, ContentSource } from "./types";
@@ -21,7 +22,12 @@ interface PoArticleNode {
     edges: Array<{ node: { name: string; slug: string } }>;
   } | null;
   featuredImage: {
-    node: { sourceUrl: string | null } | null;
+    node: {
+      sourceUrl: string | null;
+      mediaDetails: {
+        sizes: Array<{ name: string | null; sourceUrl: string | null }> | null;
+      } | null;
+    } | null;
   } | null;
 }
 
@@ -44,7 +50,12 @@ const QUERY_WITH_SEARCH = /* GraphQL */ `
           excerpt
           campos { descripcionDestacado volanta }
           categories { edges { node { name slug } } }
-          featuredImage { node { sourceUrl(size: MEDIUM) } }
+          featuredImage {
+            node {
+              sourceUrl
+              mediaDetails { sizes { name sourceUrl } }
+            }
+          }
         }
         cursor
       }
@@ -65,7 +76,12 @@ const QUERY_LATEST = /* GraphQL */ `
           excerpt
           campos { descripcionDestacado volanta }
           categories { edges { node { name slug } } }
-          featuredImage { node { sourceUrl(size: MEDIUM) } }
+          featuredImage {
+            node {
+              sourceUrl
+              mediaDetails { sizes { name sourceUrl } }
+            }
+          }
         }
         cursor
       }
@@ -82,6 +98,7 @@ function toSnapshot(node: PoArticleNode): ArticleSnapshot {
     descripcion: node.campos?.descripcion ?? "",
     slug: node.slug,
     imageUrl: node.featuredImage?.node?.sourceUrl ?? null,
+    imageSizes: sizesFromMediaDetails(node.featuredImage?.node?.mediaDetails?.sizes),
     publishedAt: node.date,
     categoryName: node.categories?.edges?.[0]?.node?.name ?? null,
     volanta: node.campos?.volanta ?? null,

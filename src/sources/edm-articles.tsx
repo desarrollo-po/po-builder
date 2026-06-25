@@ -1,4 +1,5 @@
 import { fetchGraphQL } from "../lib/graphql";
+import { sizesFromMediaDetails } from "../lib/wpImage";
 import ArticleCard from "../components/sidebar/ArticleCard";
 import type { ArticleBlock } from "../types/layout";
 import type { ContentPage, ContentSource } from "./types";
@@ -25,7 +26,12 @@ interface EdmArticleNode {
     edges: Array<{ node: { name: string; slug: string } }>;
   } | null;
   featuredImage: {
-    node: { sourceUrl: string | null } | null;
+    node: {
+      sourceUrl: string | null;
+      mediaDetails: {
+        sizes: Array<{ name: string | null; sourceUrl: string | null }> | null;
+      } | null;
+    } | null;
   } | null;
 }
 
@@ -61,7 +67,12 @@ const QUERY_WITH_SEARCH = /* GraphQL */ `
           autores { edges { node { name } } }
           campos_de_entrada { bajada volanta }
           categories { edges { node { name slug } } }
-          featuredImage { node { sourceUrl(size: MEDIUM) } }
+          featuredImage {
+            node {
+              sourceUrl
+              mediaDetails { sizes { name sourceUrl } }
+            }
+          }
         }
         cursor
       }
@@ -91,7 +102,12 @@ const QUERY_LATEST = /* GraphQL */ `
           autores { edges { node { name } } }
           campos_de_entrada { bajada volanta }
           categories { edges { node { name slug } } }
-          featuredImage { node { sourceUrl(size: MEDIUM) } }
+          featuredImage {
+            node {
+              sourceUrl
+              mediaDetails { sizes { name sourceUrl } }
+            }
+          }
         }
         cursor
       }
@@ -112,6 +128,7 @@ function toSnapshot(node: EdmArticleNode): ArticleSnapshot {
     excerpt: node.campos_de_entrada?.bajada ?? "",
     slug: node.slug,
     imageUrl: node.featuredImage?.node?.sourceUrl ?? null,
+    imageSizes: sizesFromMediaDetails(node.featuredImage?.node?.mediaDetails?.sizes),
     publishedAt: node.date,
     categoryName: node.categories?.edges?.[0]?.node?.name ?? "EDM Digital",
     volanta,
