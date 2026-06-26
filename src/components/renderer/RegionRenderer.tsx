@@ -11,10 +11,13 @@ interface Props {
 // null on missing blocks (so the layout stays empty rather than showing a
 // dashed placeholder, which is a builder-only concern).
 export default function RegionRenderer({ region }: Props) {
-  // ponytail: composite layout for cuadricula. Mirror of the builder's
-  // CuadriculaTemplate branch. Generalize when 2nd composite template appears.
+  // ponytail: composite layouts handled inline. Mirror of the builder's
+  // RegionTemplate branches. Generalize when a 3rd composite template appears.
   if (region.template === "cuadricula") {
     return <CuadriculaRender region={region} />;
+  }
+  if (region.template === "mas-notas-edm") {
+    return <MasNotasEdmRender region={region} />;
   }
 
   const spec = TEMPLATE_SPECS[region.template];
@@ -42,6 +45,43 @@ export default function RegionRenderer({ region }: Props) {
           />
         </div>
       ))}
+    </section>
+  );
+}
+
+function MasNotasEdmRender({ region }: { region: Region }) {
+  const spec = TEMPLATE_SPECS["mas-notas-edm"];
+  const leftSlots = spec.slots.slice(0, 9);
+  const rightSlots = spec.slots.slice(9, 15);
+
+  return (
+    <section
+      data-region-template={region.template}
+      className="flex flex-col gap-[18px] @md:flex-row @md:items-stretch"
+    >
+      <div
+        className="grid flex-[3] gap-[18px] @max-md:grid-cols-1!"
+        style={{ gridTemplateColumns: "1fr 1fr 1fr" }}
+      >
+        {leftSlots.map((slot, i) => (
+          <div key={i}>
+            <BlockRenderer block={region.blocks[i] ?? null} variant={slot.variant} />
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-[1.3] flex-col gap-3 bg-red-600 p-3">
+        {rightSlots.map((slot, i) => {
+          const slotIndex = 9 + i;
+          return (
+            <div key={slotIndex}>
+              <BlockRenderer
+                block={region.blocks[slotIndex] ?? null}
+                variant={slot.variant}
+              />
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }

@@ -15,10 +15,10 @@
   --color-text-tertiary: #9A9A92;
   --color-text-muted: #BFBFB7;
 
-  /* Editorial red accent */
-  --color-accent-primary: #C41E3A;
-  --color-accent-hover: #A01730;
-  --color-accent-light: #E8D5D9;
+  /* Editorial accent */
+  --color-accent-primary: #9A9A92;
+  --color-accent-hover: #7B7B75;
+  --color-accent-light: #F0F0ED;
 
   /* States */
   --color-success: #2D7C5A;
@@ -26,8 +26,21 @@
   --color-warning: #C97B1D;
   --color-error: #C41E3A;
 
-  /* Forms */
+  /* Buttons */
+  --color-button-primary: #2563EB;
+  --color-button-primary-hover: #1D4ED8;
+  --color-button-primary-active: #1E40AF;
+  --color-button-primary-disabled: #93C5FD;
+  --color-button-publish: #16A34A;
+  --color-button-publish-hover: #15803D;
+  --color-button-publish-active: #166534;
+  --color-button-publish-disabled: #86EFAC;
+  --color-button-discard: #DC2626;
+  --color-button-discard-hover: #B91C1C;
+  --color-button-discard-active: #991B1B;
+  --color-button-discard-disabled: #FCA5A5;
 
+  /* Forms */
   --color-input-focus: #9A9A92;
 
   /* Section palette (matches prensaobrera.com section CSS variables) */

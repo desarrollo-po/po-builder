@@ -12,6 +12,7 @@ import {
 import {
   MainLeftArticle,
   MainRightArticle,
+  NotaEDM,
   NotaPrincipal,
   SecondaryPhotoArticle,
   SecondarySmallArticle,
@@ -23,10 +24,13 @@ interface Props {
 }
 
 export default function RegionTemplate({ region }: Props) {
-  // ponytail: composite layout for cuadricula. Generalize when 2nd composite
-  // template appears.
+  // ponytail: composite layouts handled inline. Extract to a registry when a
+  // 3rd composite template appears.
   if (region.template === "cuadricula") {
     return <CuadriculaTemplate region={region} />;
+  }
+  if (region.template === "mas-notas-edm") {
+    return <MasNotasEdmTemplate region={region} />;
   }
 
   const spec = TEMPLATE_SPECS[region.template];
@@ -127,6 +131,44 @@ function CuadriculaTemplate({ region }: { region: Region }) {
   );
 }
 
+function MasNotasEdmTemplate({ region }: { region: Region }) {
+  const spec = TEMPLATE_SPECS["mas-notas-edm"];
+  const leftSlots = spec.slots.slice(0, 9);
+  const rightSlots = spec.slots.slice(9, 15);
+
+  return (
+    <div className="flex min-h-[120px] flex-col gap-2.5 @md:flex-row @md:items-stretch">
+      <div className="grid flex-[3] gap-2.5 @max-md:grid-cols-1!" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+        {leftSlots.map((slot, i) => (
+          <SlotCell
+            key={i}
+            regionId={region.id}
+            slotIndex={i}
+            variant={slot.variant}
+            gridArea=""
+            block={region.blocks[i]}
+          />
+        ))}
+      </div>
+      <div className="flex flex-[1.3] flex-col gap-2 bg-red-600 p-2">
+        {rightSlots.map((slot, i) => {
+          const slotIndex = 9 + i;
+          return (
+            <SlotCell
+              key={slotIndex}
+              regionId={region.id}
+              slotIndex={slotIndex}
+              variant={slot.variant}
+              gridArea=""
+              block={region.blocks[slotIndex]}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 interface SlotCellProps {
   regionId: string;
   slotIndex: number;
@@ -197,6 +239,8 @@ function minHeightClassFor(variant: SlotVariant): string {
       return "min-h-[200px]";
     case "secondary-text":
       return "min-h-[180px]";
+    case "nota-edm":
+      return "min-h-[90px]";
     case "banner":
       return "min-h-[120px]";
   }
@@ -236,6 +280,8 @@ function variantLabel(variant: SlotVariant): string {
       return "Secundaria chica";
     case "secondary-text":
       return "Sin foto";
+    case "nota-edm":
+      return "Nota EDM";
     case "banner":
       return "Banner";
   }
@@ -356,6 +402,8 @@ function SlotArticleBody({
       return <SecondarySmallArticle article={article} />;
     case "secondary-text":
       return <SecondaryTextArticle article={article} />;
+    case "nota-edm":
+      return <NotaEDM article={article} />;
     case "banner":
       // Article blocks never appear in banner slots (gated by useDragHandlers).
       return null;

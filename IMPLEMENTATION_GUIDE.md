@@ -215,6 +215,7 @@ Pendientes:
 - [ ] Cargar plantillas guardadas
 - [x] Crear Editor de página con distinto slug
 - [x] Task "newregioncuadricula": Crear región "cuadricula" guardada en regiones/cuadricula.png. Esta región tiene dos columnas, en la columna izquierda entran 4 slots con tarjetas y en la derecha hay dos slots para banners.
+- [x] Task "newRegionEDM": Crear región "Mas notas EDM" como se indica en la imagen "![alt text](mas-notas-edm.png)". En la columna izquierda entra una grilla de 9 slots de 3x3 y en la columna derecha 6 slots verticales con un diseño de tarjeta específico: "NotaEDM.tsx" que debe tener imagen a la izquierda y Titulo + Autor a la derecha.
 - [ ] Retry/backoff en errores de Supabase
 - [ ] Loading skeletons en `ArticleBrowser` / `BannerLibrary`
 

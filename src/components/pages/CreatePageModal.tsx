@@ -140,7 +140,7 @@ export default function CreatePageModal({ existingSlugs, onClose, onCreated }: P
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-lg border border-accent-primary bg-accent-primary px-3.5 py-[7px] text-[13px] font-medium text-white transition enabled:hover:border-accent-hover enabled:hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg border border-button-primary bg-button-primary px-3.5 py-[7px] text-[13px] font-medium text-white transition enabled:hover:border-button-primary-hover enabled:hover:bg-button-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? "Creando…" : "Crear página"}
           </button>

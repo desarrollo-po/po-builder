@@ -80,7 +80,7 @@ export default function PagesList() {
           </div>
           <button
             onClick={() => setShowCreate(true)}
-            className="rounded-lg border border-accent-primary bg-accent-primary px-3.5 py-[7px] text-[13px] font-medium text-white transition hover:border-accent-hover hover:bg-accent-hover"
+            className="rounded-lg border border-button-primary bg-button-primary px-3.5 py-[7px] text-[13px] font-medium text-white transition hover:border-button-primary-hover hover:bg-button-primary-hover"
           >
             + Crear nueva página
           </button>

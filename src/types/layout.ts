@@ -19,6 +19,7 @@ export type TemplateId =
   | "cuatro-notas-secundarias"
   | "cuatro-notas-sin-foto"
   | "cuadricula"
+  | "mas-notas-edm"
   | "banner";
 
 export type SlotVariant =
@@ -28,6 +29,7 @@ export type SlotVariant =
   | "secondary-photo"
   | "secondary-small"
   | "secondary-text"
+  | "nota-edm"
   | "banner";
 
 export interface SlotSpec {
@@ -176,6 +178,38 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
       { variant: "secondary-small", gridArea: "a4" },
       { variant: "banner", gridArea: "b1" },
       { variant: "banner", gridArea: "b2" },
+    ],
+  },
+  "mas-notas-edm": {
+    label: "Más notas EDM",
+    thumbnail: "/regiones/mas-notas-edm.png",
+    slotsCount: 15,
+    gridTemplateColumns: "1fr 1fr 1fr 1.3fr",
+    gridTemplateRows: "repeat(6, minmax(0, 1fr))",
+    gridTemplateAreas: `
+      "a1 a2 a3 r1"
+      "a1 a2 a3 r2"
+      "a4 a5 a6 r3"
+      "a4 a5 a6 r4"
+      "a7 a8 a9 r5"
+      "a7 a8 a9 r6"
+    `,
+    slots: [
+      { variant: "secondary-small", gridArea: "a1" },
+      { variant: "secondary-small", gridArea: "a2" },
+      { variant: "secondary-small", gridArea: "a3" },
+      { variant: "secondary-small", gridArea: "a4" },
+      { variant: "secondary-small", gridArea: "a5" },
+      { variant: "secondary-small", gridArea: "a6" },
+      { variant: "secondary-small", gridArea: "a7" },
+      { variant: "secondary-small", gridArea: "a8" },
+      { variant: "secondary-small", gridArea: "a9" },
+      { variant: "nota-edm", gridArea: "r1" },
+      { variant: "nota-edm", gridArea: "r2" },
+      { variant: "nota-edm", gridArea: "r3" },
+      { variant: "nota-edm", gridArea: "r4" },
+      { variant: "nota-edm", gridArea: "r5" },
+      { variant: "nota-edm", gridArea: "r6" },
     ],
   },
   banner: {

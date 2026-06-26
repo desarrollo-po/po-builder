@@ -4,6 +4,7 @@ import {
   BannerCard,
   MainLeftArticle,
   MainRightArticle,
+  NotaEDM,
   SecondaryPhotoArticle,
   SecondarySmallArticle,
   SecondaryTextArticle,
@@ -25,6 +26,7 @@ const ARTICLE_CARDS: Record<
   "secondary-photo": SecondaryPhotoArticle,
   "secondary-small": SecondarySmallArticle,
   "secondary-text": SecondaryTextArticle,
+  "nota-edm": NotaEDM,
   banner: null, // article never lands in a banner slot — gated by useDragHandlers
 };
 
