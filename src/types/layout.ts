@@ -39,7 +39,6 @@ export interface SlotSpec {
 
 export interface TemplateSpec {
   label: string;
-  thumbnail: string;
   slotsCount: number;
   gridTemplateColumns: string;
   gridTemplateRows?: string;
@@ -97,7 +96,6 @@ export interface DragItem {
 export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
   "nota-principal": {
     label: "Nota principal",
-    thumbnail: "/regiones/nota principal.png",
     slotsCount: 1,
     gridTemplateColumns: "1fr",
     slots: [{ variant: "nota-principal", gridArea: "nota-principal" }],
@@ -105,7 +103,6 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
   },
   "tres-notas-principales": {
     label: "3 notas principales",
-    thumbnail: "/regiones/tres-notas-principáles.png",
     slotsCount: 3,
     gridTemplateColumns: "2fr 1fr",
     gridTemplateAreas: `"main top-right" "main bottom-right"`,
@@ -117,7 +114,6 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
   },
   "dos-notas-secundarias": {
     label: "2 notas secundarias",
-    thumbnail: "/regiones/dos-notas-secundarias.png",
     slotsCount: 2,
     gridTemplateColumns: "1fr 1fr",
     gridTemplateAreas: `"a b"`,
@@ -128,7 +124,6 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
   },
   "tres-notas-secundarias": {
     label: "3 notas secundarias",
-    thumbnail: "/regiones/tres-notas-secundarias.png",
     slotsCount: 3,
     gridTemplateColumns: "1fr 1fr 1fr",
     gridTemplateAreas: `"a b c"`,
@@ -140,7 +135,6 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
   },
   "cuatro-notas-secundarias": {
     label: "4 notas secundarias",
-    thumbnail: "/regiones/4 notas secundarias.png",
     slotsCount: 4,
     gridTemplateColumns: "1fr 1fr 1fr 1fr",
     gridTemplateAreas: `"a b c d"`,
@@ -153,7 +147,6 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
   },
   "cuatro-notas-sin-foto": {
     label: "4 notas sin foto",
-    thumbnail: "/regiones/4 notas sin foto.png",
     slotsCount: 4,
     gridTemplateColumns: "1fr 1fr 1fr 1fr",
     gridTemplateAreas: `"a b c d"`,
@@ -166,7 +159,6 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
   },
   cuadricula: {
     label: "Cuadrícula",
-    thumbnail: "/regiones/cuadricula.png",
     slotsCount: 6,
     gridTemplateColumns: "1fr 1fr 1fr",
     gridTemplateRows: "1fr 1fr",
@@ -182,7 +174,6 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
   },
   "mas-notas-edm": {
     label: "Más notas EDM",
-    thumbnail: "/regiones/mas-notas-edm.png",
     slotsCount: 15,
     gridTemplateColumns: "1fr 1fr 1fr 1.3fr",
     gridTemplateRows: "repeat(6, minmax(0, 1fr))",
@@ -214,7 +205,6 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
   },
   banner: {
     label: "Banner",
-    thumbnail: "/regiones/banner.png",
     slotsCount: 1,
     gridTemplateColumns: "1fr",
     gridTemplateAreas: `"banner"`,

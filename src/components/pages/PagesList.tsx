@@ -36,7 +36,7 @@ export default function PagesList() {
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-surface-inset bg-white px-6">
         <div className="flex items-center gap-3">
           <img
-            src="/favicon-32x32.png"
+            src={`${import.meta.env.BASE_URL}favicon-32x32.png`}
             alt="Prensa Obrera"
             width={28}
             height={28}

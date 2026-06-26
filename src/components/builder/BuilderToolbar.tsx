@@ -125,7 +125,7 @@ export default function BuilderToolbar() {
           </button>
 
           <img
-            src="/favicon-32x32.png"
+            src={`${import.meta.env.BASE_URL}favicon-32x32.png`}
             alt="Prensa Obrera"
             width={28}
             height={28}

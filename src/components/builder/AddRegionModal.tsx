@@ -71,7 +71,7 @@ export default function AddRegionModal() {
                 onClick={() => handleAdd(templateId)}
                 className="flex flex-col gap-2.5 rounded-md border border-surface-inset bg-white p-2.5 text-left transition hover:border-accent-primary hover:bg-accent-light"
               >
-                <TemplatePreview templateId={templateId} thumbnail={spec.thumbnail} />
+                <CssPreview templateId={templateId} />
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[13px] font-semibold text-text-primary">
                     {spec.label}
@@ -85,31 +85,6 @@ export default function AddRegionModal() {
           })}
         </div>
       </div>
-    </div>
-  );
-}
-
-function TemplatePreview({
-  templateId,
-  thumbnail,
-}: {
-  templateId: TemplateId;
-  thumbnail: string;
-}) {
-  const [failed, setFailed] = useState(false);
-
-  if (failed) {
-    return <CssPreview templateId={templateId} />;
-  }
-
-  return (
-    <div className="flex aspect-[16/7] w-full items-center justify-center overflow-hidden rounded-sm bg-surface-accent">
-      <img
-        src={thumbnail}
-        alt=""
-        onError={() => setFailed(true)}
-        className="h-full w-full object-cover"
-      />
     </div>
   );
 }

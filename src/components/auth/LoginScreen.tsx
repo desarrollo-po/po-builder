@@ -20,7 +20,7 @@ export default function LoginScreen() {
     <div className="flex min-h-screen items-center justify-center bg-[var(--surface-base)] px-4">
       <div className="flex w-[320px] max-w-full flex-col items-center gap-6 rounded-xl border border-surface-inset bg-white p-6 shadow-sm">
         <img
-          src="/favicon-32x32.png"
+          src={`${import.meta.env.BASE_URL}favicon-32x32.png`}
           alt="Prensa Obrera"
           width={40}
           height={40}
