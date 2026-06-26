@@ -208,11 +208,11 @@ Pendientes:
 4. Banners: render `<a href={banner.linkUrl} target={banner.openInNewTab ? "_blank" : undefined}><img src={banner.imageUrl} alt={banner.altText} /></a>`.
 
 ### Pendientes generales
-- [ ] Toast/feedback global en lugar del mensaje inline en toolbar
-- [ ] Sombras en tarjetas
+- [x] Sombras en tarjetas
 - [x] Autenticación
 - [ ] Poder guardar layout como plantilla
 - [ ] Cargar plantillas guardadas
+- [ ] Crear Editor de página con distinto slug
 - [ ] Retry/backoff en errores de Supabase
 - [ ] Loading skeletons en `ArticleBrowser` / `BannerLibrary`
 

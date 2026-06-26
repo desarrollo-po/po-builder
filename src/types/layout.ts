@@ -1,6 +1,8 @@
 export interface PageLayout {
   id: string;
   slug: string;
+  title: string;
+  tag_slug: string | null;
   version: number;
   layout: Region[];
   is_published: boolean;

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLayoutStore } from "../../store/layoutStore";
 import { useAuthStore } from "../../store/authStore";
 import { signOutAll } from "../../lib/supabase";
@@ -30,6 +31,7 @@ export default function BuilderToolbar() {
     discardLocalDraft,
   } = useLayoutStore();
   const email = useAuthStore((s) => s.email);
+  const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isDiscarding, setIsDiscarding] = useState(false);
@@ -114,6 +116,14 @@ export default function BuilderToolbar() {
       >
         {/* Left: Brand + Title + State */}
         <div className="flex min-w-0 items-center gap-4">
+          <button
+            onClick={() => navigate("/")}
+            title="Volver a páginas"
+            className="flex shrink-0 items-center gap-1.5 rounded-md border border-surface-inset bg-white px-2 py-[5px] text-[11px] font-medium text-text-secondary hover:bg-surface-accent"
+          >
+            ← Páginas
+          </button>
+
           <img
             src="/favicon-32x32.png"
             alt="Prensa Obrera"
@@ -124,10 +134,11 @@ export default function BuilderToolbar() {
 
           <div className="flex flex-col gap-px">
             <span className="text-sm font-semibold tracking-[-0.2px] text-black">
-              {layout?.slug ?? "Page Builder"}
+              {layout?.title || layout?.slug || "Page Builder"}
             </span>
             <span className="text-[11px] font-normal text-text-tertiary">
-              Home Builder | PrensaObrera.com
+              /{layout?.slug ?? ""}
+              {layout?.tag_slug ? ` · tag: ${layout.tag_slug}` : ""}
             </span>
           </div>
 

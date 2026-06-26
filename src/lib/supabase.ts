@@ -37,11 +37,12 @@ export async function isEmailAllowed(email: string): Promise<boolean> {
 }
 
 export async function loadLayout(slug: string): Promise<PageLayout | null> {
+  // Most-recent row for the slug regardless of publish state. A page that was
+  // published with no later draft still needs to load into the editor.
   const { data, error } = await supabase
     .from("page_layouts")
     .select("*")
     .eq("slug", slug)
-    .eq("is_published", false)
     .order("version", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(1)
@@ -64,6 +65,8 @@ export async function saveLayout(
     .insert([
       {
         slug: layout.slug,
+        title: layout.title,
+        tag_slug: layout.tag_slug,
         version: layout.version,
         layout: layout.layout,
         is_published: false,
@@ -80,6 +83,69 @@ export async function saveLayout(
   }
 
   return { success: true, id: data?.id };
+}
+
+export interface PageSummary {
+  slug: string;
+  title: string | null;
+  tag_slug: string | null;
+  is_published: boolean;
+  updated_at: string;
+}
+
+// Latest row per slug. PostgREST has no DISTINCT ON, so fetch and dedupe
+// client-side. Fine while pages are in the tens — revisit at hundreds.
+// ponytail: client dedupe; switch to an RPC with DISTINCT ON if it gets slow.
+export async function listPages(): Promise<PageSummary[]> {
+  const { data, error } = await supabase
+    .from("page_layouts")
+    .select("slug, title, tag_slug, is_published, updated_at")
+    .order("slug", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error listing pages:", error);
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const published = new Set<string>();
+  const rows: PageSummary[] = [];
+  for (const row of data ?? []) {
+    if (row.is_published) published.add(row.slug);
+    if (seen.has(row.slug)) continue;
+    seen.add(row.slug);
+    rows.push(row as PageSummary);
+  }
+  // The first row per slug (most recent) may be a draft; reflect that a
+  // published version exists somewhere for the slug.
+  return rows.map((r) => ({ ...r, is_published: published.has(r.slug) }));
+}
+
+export async function createPage(input: {
+  slug: string;
+  title: string;
+  tag_slug: string | null;
+}): Promise<{ success: boolean; error?: string }> {
+  // ponytail: client validates slug uniqueness; race with a concurrent
+  // editor naming the same slug is accepted. Add a unique(slug) constraint
+  // on a dedicated `pages` table if multi-editor collisions actually happen.
+  const { error } = await supabase.from("page_layouts").insert([
+    {
+      slug: input.slug,
+      title: input.title,
+      tag_slug: input.tag_slug,
+      version: 1,
+      layout: [],
+      is_published: false,
+    },
+  ]);
+
+  if (error) {
+    console.error("Error creating page:", error);
+    return { success: false, error: error.message };
+  }
+  return { success: true };
 }
 
 export async function publishLayout(

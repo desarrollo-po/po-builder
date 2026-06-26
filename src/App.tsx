@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
 import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+import {
   DndContext,
   type DragEndEvent,
   DragOverlay,
@@ -19,6 +27,7 @@ import DragOverlayContent from "./components/DragOverlayContent";
 import PageRenderer from "./components/renderer/PageRenderer";
 import useDragHandlers from "./hooks/useDragHandlers";
 import AuthGate from "./components/auth/AuthGate";
+import PagesList from "./components/pages/PagesList";
 import { useAuthStore } from "./store/authStore";
 
 type Mode = "edit" | "preview";
@@ -26,15 +35,24 @@ type Mode = "edit" | "preview";
 function App() {
   return (
     <AuthGate>
-      <Builder />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<PagesList />} />
+          <Route path="/edit/:slug" element={<Builder />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
     </AuthGate>
   );
 }
 
 function Builder() {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const { initializeLayout, layout } = useLayoutStore();
   const { handleDragEnd } = useDragHandlers();
   const [mode, setMode] = useState<Mode>("edit");
+  const [loadFailed, setLoadFailed] = useState(false);
   const authStatus = useAuthStore((s) => s.status);
 
   const sensors = useSensors(
@@ -46,19 +64,34 @@ function Builder() {
     // ponytail: only fetch once authenticated, so the request carries the JWT
     // and the tightened RLS policy returns rows instead of an empty result.
     if (authStatus !== "authenticated") return;
+    if (!slug) return;
+    let cancelled = false;
     const loadPageLayout = async () => {
-      const existingLayout = await loadLayout("home");
-      initializeLayout("home", existingLayout);
+      const existingLayout = await loadLayout(slug);
+      if (cancelled) return;
+      if (!existingLayout) {
+        // Page doesn't exist in Supabase — bounce back to the list rather
+        // than scaffolding an orphan layout from the URL.
+        setLoadFailed(true);
+        return;
+      }
+      initializeLayout(slug, existingLayout);
     };
-
     loadPageLayout();
-  }, [initializeLayout, authStatus]);
+    return () => {
+      cancelled = true;
+    };
+  }, [initializeLayout, authStatus, slug]);
+
+  useEffect(() => {
+    if (loadFailed) navigate("/", { replace: true });
+  }, [loadFailed, navigate]);
 
   const handleAppDragEnd = (event: DragEndEvent) => {
     handleDragEnd(event);
   };
 
-  if (!layout) {
+  if (!layout || layout.slug !== slug) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-gray-500">Loading...</p>

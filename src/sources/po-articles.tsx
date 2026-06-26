@@ -1,6 +1,7 @@
 import { fetchGraphQL } from "../lib/graphql";
 import { sizesFromMediaDetails } from "../lib/wpImage";
 import ArticleCard from "../components/sidebar/ArticleCard";
+import { useLayoutStore } from "../store/layoutStore";
 import type { ArticleBlock } from "../types/layout";
 import type { ContentPage, ContentSource } from "./types";
 
@@ -90,6 +91,40 @@ const QUERY_LATEST = /* GraphQL */ `
   }
 `;
 
+const QUERY_LATEST_BY_TAG = /* GraphQL */ `
+  query GetPostsByTag($after: String, $first: Int!, $tagSlug: [String]!) {
+    posts(
+      first: $first
+      after: $after
+      where: {
+        taxQuery: {
+          taxArray: { taxonomy: TAG, terms: $tagSlug, field: SLUG }
+        }
+      }
+    ) {
+      edges {
+        node {
+          id
+          title
+          slug
+          date
+          excerpt
+          campos { descripcionDestacado volanta }
+          categories { edges { node { name slug } } }
+          featuredImage {
+            node {
+              sourceUrl
+              mediaDetails { sizes { name sourceUrl } }
+            }
+          }
+        }
+        cursor
+      }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
 function toSnapshot(node: PoArticleNode): ArticleSnapshot {
   return {
     title: node.title ?? "",
@@ -113,9 +148,22 @@ async function fetchPage(
 ): Promise<ContentPage<PoArticleItem>> {
   const trimmed = query.trim();
   const useSearch = trimmed.length > 0;
+  // Tag-based filtering only kicks in when the editor is not actively
+  // searching — the search box deliberately bypasses the page's tag so the
+  // user can still pull in articles from outside the tag when they need to.
+  const pageTagSlug = useLayoutStore.getState().layout?.tag_slug ?? null;
+  const useTag = !useSearch && !!pageTagSlug;
+
   const variables: Record<string, unknown> = { first };
   if (after) variables.after = after;
   if (useSearch) variables.search = trimmed;
+  if (useTag) variables.tagSlug = [pageTagSlug];
+
+  const queryText = useSearch
+    ? QUERY_WITH_SEARCH
+    : useTag
+      ? QUERY_LATEST_BY_TAG
+      : QUERY_LATEST;
 
   try {
     const data = await fetchGraphQL<{
@@ -123,7 +171,7 @@ async function fetchPage(
         edges: Array<{ node: PoArticleNode; cursor: string }>;
         pageInfo: { hasNextPage: boolean; endCursor: string | null };
       };
-    }>(ENDPOINT, useSearch ? QUERY_WITH_SEARCH : QUERY_LATEST, variables, signal);
+    }>(ENDPOINT, queryText, variables, signal);
 
     if (!data?.posts?.edges) {
       return { items: [], pageInfo: { hasNextPage: false, endCursor: null } };

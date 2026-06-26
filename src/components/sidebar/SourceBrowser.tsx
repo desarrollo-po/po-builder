@@ -4,13 +4,18 @@ import type { ContentSource } from "../../sources/types";
 
 interface Props<TItem> {
   source: ContentSource<TItem>;
+  // Extra discriminator appended to react-query's queryKey so cache from a
+  // sibling context (e.g. a different page's tag filter) doesn't bleed in.
+  // The component remount via `key` only resets local state — react-query's
+  // cache is global and matches on queryKey.
+  cacheKey?: string;
 }
 
 // One browser to rule them all: it consumes the ContentSource contract and
 // stays oblivious to whether it's listing articles, EDM posts, banner media,
 // or anything we plug in next. Layout (list vs grid), search placeholder,
 // empty-state copy and page size all come from the source.
-export default function SourceBrowser<TItem>({ source }: Props<TItem>) {
+export default function SourceBrowser<TItem>({ source, cacheKey = "" }: Props<TItem>) {
   const [inputValue, setInputValue] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
@@ -31,7 +36,7 @@ export default function SourceBrowser<TItem>({ source }: Props<TItem>) {
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
-      queryKey: [source.id, debouncedQuery],
+      queryKey: [source.id, debouncedQuery, cacheKey],
       queryFn: ({ pageParam, signal }) =>
         source.fetchPage(
           debouncedQuery,

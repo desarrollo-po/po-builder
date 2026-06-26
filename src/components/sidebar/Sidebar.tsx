@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { sources } from "../../sources";
+import { useLayoutStore } from "../../store/layoutStore";
 import SourceBrowser from "./SourceBrowser";
 
 export default function Sidebar() {
@@ -9,6 +10,12 @@ export default function Sidebar() {
 
   const activeSource =
     sources.find((s) => s.id === activeSourceId) ?? sources[0];
+
+  // Subscribed so the SourceBrowser remounts (via key) when the editor
+  // switches to a page with a different tag — that invalidates react-query's
+  // cache and forces a refetch with the new tag in the GraphQL where clause.
+  const pageTagSlug = useLayoutStore((s) => s.layout?.tag_slug ?? "");
+  const showTagHint = !!pageTagSlug && activeSource?.id === "po-articles";
 
   return (
     <div
@@ -64,9 +71,35 @@ export default function Sidebar() {
         </div>
       </div>
 
+      {showTagHint && (
+        <div
+          title="Mientras la página tiene un tag, esta tab solo muestra notas con ese tag. Usá el buscador para ver notas de otros tags."
+          style={{
+            padding: "8px 16px",
+            background: "rgba(0,112,243,0.06)",
+            borderBottom: "1px solid var(--border)",
+            fontSize: "11.5px",
+            color: "var(--text-secondary)",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+          }}
+        >
+          <span style={{ fontSize: "13px" }}>🏷</span>
+          Filtrado por tag:{" "}
+          <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+            {pageTagSlug}
+          </span>
+        </div>
+      )}
+
       <div style={{ flex: 1, overflow: "auto", background: "var(--surface-base)" }}>
         {activeSource && (
-          <SourceBrowser key={activeSource.id} source={activeSource} />
+          <SourceBrowser
+            key={`${activeSource.id}:${pageTagSlug}`}
+            source={activeSource}
+            cacheKey={pageTagSlug}
+          />
         )}
       </div>
     </div>

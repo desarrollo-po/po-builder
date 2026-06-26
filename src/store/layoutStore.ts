@@ -59,12 +59,20 @@ interface LayoutState {
 }
 
 const MAX_HISTORY = 20;
-const PERSIST_KEY = "po-builder:layout:home";
+// Single rolling draft for the currently-open page. Switching pages clears
+// it implicitly via the slug-mismatch branch in initializeLayout.
+const PERSIST_KEY = "po-builder:layout:current";
 
-function createEmptyLayout(slug: string): PageLayout {
+function createEmptyLayout(
+  slug: string,
+  title: string = slug,
+  tag_slug: string | null = null,
+): PageLayout {
   return {
     id: uuidv4(),
     slug,
+    title,
+    tag_slug,
     version: 1,
     layout: [],
     is_published: false,
@@ -138,7 +146,11 @@ export const useLayoutStore = create<LayoutState>()(
 
         initializeLayout: (slug, existingLayout) => {
           const state = get();
-          const localValid = isValidTemplateLayout(state.layout);
+          // The persisted draft belongs to whichever slug was last edited.
+          // If the user opens a different page, discard the draft outright
+          // so we never paint slug A's content under slug B.
+          const localValid =
+            isValidTemplateLayout(state.layout) && state.slug === slug;
           const remoteValid = isValidTemplateLayout(existingLayout ?? null);
 
           // No usable local draft → load remote (or empty).
@@ -361,7 +373,8 @@ export const useLayoutStore = create<LayoutState>()(
         // the "Cargar versión guardada" button in the draft-restored banner.
         discardLocalDraft: async () => {
           const state = get();
-          const slug = state.slug || "home";
+          const slug = state.slug;
+          if (!slug) return;
           const remote = await loadLayout(slug);
           const layout = isValidTemplateLayout(remote)
             ? (remote as PageLayout)
