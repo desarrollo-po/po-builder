@@ -12,7 +12,7 @@ npm run preview    # Preview production build
 ```
 
 ## Workflow & Rules
-Always bring context-7-mcp and ponytail skill.
+**Always** bring context-7-mcp and ponytail skill. For each code change you must bring improve-codebase-architecture skill in order to keep architecture consistant and coherent.
 
 ## Architecture
 

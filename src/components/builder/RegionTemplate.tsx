@@ -1,5 +1,6 @@
 import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { useLayoutStore } from "../../store/layoutStore";
+import { useVerticalSplit } from "../../hooks/useVerticalSplit";
 import {
   TEMPLATE_SPECS,
   type ArticleBlock,
@@ -22,6 +23,12 @@ interface Props {
 }
 
 export default function RegionTemplate({ region }: Props) {
+  // ponytail: composite layout for cuadricula. Generalize when 2nd composite
+  // template appears.
+  if (region.template === "cuadricula") {
+    return <CuadriculaTemplate region={region} />;
+  }
+
   const spec = TEMPLATE_SPECS[region.template];
 
   return (
@@ -47,15 +54,91 @@ export default function RegionTemplate({ region }: Props) {
   );
 }
 
+function CuadriculaTemplate({ region }: { region: Region }) {
+  const setBannerColumnSplit = useLayoutStore((s) => s.setBannerColumnSplit);
+  const ratio = region.bannerColumnSplit ?? 0.5;
+  const { containerRef, handleProps } = useVerticalSplit({
+    ratio,
+    onChange: (next) => setBannerColumnSplit(region.id, next),
+  });
+
+  const spec = TEMPLATE_SPECS.cuadricula;
+  const articleSlots = spec.slots.slice(0, 4);
+  const bannerSlots = spec.slots.slice(4, 6);
+
+  return (
+    <div className="flex min-h-[120px] flex-col gap-2.5 @md:flex-row @md:items-stretch">
+      <div
+        className="grid flex-[2] gap-2.5 @max-md:grid-cols-1!"
+        style={{
+          gridTemplateColumns: "1fr 1fr",
+          gridTemplateRows: "1fr 1fr",
+        }}
+      >
+        {articleSlots.map((slot, i) => (
+          <SlotCell
+            key={i}
+            regionId={region.id}
+            slotIndex={i}
+            variant={slot.variant}
+            gridArea=""
+            block={region.blocks[i]}
+          />
+        ))}
+      </div>
+
+      <div
+        ref={containerRef}
+        className="flex flex-[1] flex-col @max-md:gap-2.5"
+      >
+        <div
+          className="flex min-h-[120px] overflow-hidden @md:min-h-0"
+          style={{ flexGrow: ratio, flexShrink: 1, flexBasis: 0 }}
+        >
+          <SlotCell
+            regionId={region.id}
+            slotIndex={4}
+            variant={bannerSlots[0].variant}
+            gridArea=""
+            block={region.blocks[4]}
+            fullSize
+          />
+        </div>
+        <div
+          {...handleProps}
+          className="h-[6px] shrink-0 cursor-row-resize bg-surface-inset transition hover:bg-accent-primary @max-md:hidden"
+          title="Arrastrar para redimensionar"
+        />
+        <div
+          className="flex min-h-[120px] overflow-hidden @md:min-h-0"
+          style={{ flexGrow: 1 - ratio, flexShrink: 1, flexBasis: 0 }}
+        >
+          <SlotCell
+            regionId={region.id}
+            slotIndex={5}
+            variant={bannerSlots[1].variant}
+            gridArea=""
+            block={region.blocks[5]}
+            fullSize
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface SlotCellProps {
   regionId: string;
   slotIndex: number;
   variant: SlotVariant;
   gridArea: string;
   block: Block | null;
+  // When true, the slot fills its parent (used by composite templates like
+  // cuadricula where the parent dictates height via flex).
+  fullSize?: boolean;
 }
 
-function SlotCell({ regionId, slotIndex, variant, gridArea, block }: SlotCellProps) {
+function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize }: SlotCellProps) {
   const { active } = useDndContext();
   const { setNodeRef, isOver } = useDroppable({
     id: `slot:${regionId}:${slotIndex}`,
@@ -77,12 +160,14 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block }: SlotCellPro
       ? "border border-surface-inset bg-white"
       : "border-2 border-dashed border-surface-inset bg-surface-base";
 
+  const sizeClass = fullSize ? "h-full w-full" : minHeightClassFor(variant);
+
   return (
     <div
       ref={setNodeRef}
-      className={`relative overflow-hidden transition @max-md:[grid-area:auto]! ${stateClass} ${minHeightClassFor(variant)} ${isSourceOfActiveSlot ? "opacity-40" : "opacity-100"
+      className={`relative overflow-hidden transition @max-md:[grid-area:auto]! ${stateClass} ${sizeClass} ${isSourceOfActiveSlot ? "opacity-40" : "opacity-100"
         }`}
-      style={{ gridArea }}
+      style={{ gridArea: gridArea || undefined }}
     >
       {block ? (
         <SlotBlock

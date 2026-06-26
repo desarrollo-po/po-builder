@@ -9,6 +9,7 @@ const TEMPLATE_ORDER: TemplateId[] = [
   "tres-notas-secundarias",
   "cuatro-notas-secundarias",
   "cuatro-notas-sin-foto",
+  "cuadricula",
   "banner",
 ];
 

@@ -88,7 +88,7 @@ export default function CreatePageModal({ existingSlugs, onClose, onCreated }: P
               onChange={(e) => setSlug(e.target.value)}
               placeholder="paro-general"
               autoFocus
-              className="rounded-md border border-surface-inset bg-white px-3 py-2 text-[13px] text-text-primary outline-none placeholder:text-text-tertiary/60 focus:border-accent-primary"
+              className="rounded-md border border-surface-inset bg-white px-3 py-2 text-[13px] text-text-primary outline-none placeholder:text-text-tertiary/60 focus:border-input-focus"
             />
             <span className="text-[11px] text-text-tertiary">
               Minúsculas, números y guiones. Ej: <code>paro-general</code>.
@@ -102,7 +102,7 @@ export default function CreatePageModal({ existingSlugs, onClose, onCreated }: P
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Paro General 2026"
-              className="rounded-md border border-surface-inset bg-white px-3 py-2 text-[13px] text-text-primary outline-none placeholder:text-text-tertiary/60 focus:border-accent-primary"
+              className="rounded-md border border-surface-inset bg-white px-3 py-2 text-[13px] text-text-primary outline-none placeholder:text-text-tertiary/60 focus:border-input-focus"
             />
           </label>
 
@@ -115,7 +115,7 @@ export default function CreatePageModal({ existingSlugs, onClose, onCreated }: P
               value={tagSlug}
               onChange={(e) => setTagSlug(e.target.value)}
               placeholder="paro-general"
-              className="rounded-md border border-surface-inset bg-white px-3 py-2 text-[13px] text-text-primary outline-none placeholder:text-text-tertiary/60 focus:border-accent-primary"
+              className="rounded-md border border-surface-inset bg-white px-3 py-2 text-[13px] text-text-primary outline-none placeholder:text-text-tertiary/60 focus:border-input-focus"
             />
             <span className="text-[11px] text-text-tertiary">
               Si lo seteás, te aparecerán sólo las notas de ese tag.

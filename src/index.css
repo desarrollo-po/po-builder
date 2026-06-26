@@ -26,6 +26,10 @@
   --color-warning: #C97B1D;
   --color-error: #C41E3A;
 
+  /* Forms */
+
+  --color-input-focus: #9A9A92;
+
   /* Section palette (matches prensaobrera.com section CSS variables) */
   --color-section-aniversarios: #333333;
   --color-section-politicas: #e64a19;

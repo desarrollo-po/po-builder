@@ -18,6 +18,7 @@ export type TemplateId =
   | "tres-notas-secundarias"
   | "cuatro-notas-secundarias"
   | "cuatro-notas-sin-foto"
+  | "cuadricula"
   | "banner";
 
 export type SlotVariant =
@@ -49,6 +50,9 @@ export interface Region {
   template: TemplateId;
   order: number;
   blocks: (Block | null)[];
+  // ponytail: cuadricula-only split (0..1) for the banner column.
+  // Generalize when a 2nd composite template appears.
+  bannerColumnSplit?: number;
 }
 
 export interface ArticleBlock {
@@ -156,6 +160,22 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
       { variant: "secondary-text", gridArea: "b" },
       { variant: "secondary-text", gridArea: "c" },
       { variant: "secondary-text", gridArea: "d" },
+    ],
+  },
+  cuadricula: {
+    label: "Cuadrícula",
+    thumbnail: "/regiones/cuadricula.png",
+    slotsCount: 6,
+    gridTemplateColumns: "1fr 1fr 1fr",
+    gridTemplateRows: "1fr 1fr",
+    gridTemplateAreas: `"a1 a2 b1" "a3 a4 b2"`,
+    slots: [
+      { variant: "secondary-small", gridArea: "a1" },
+      { variant: "secondary-small", gridArea: "a2" },
+      { variant: "secondary-small", gridArea: "a3" },
+      { variant: "secondary-small", gridArea: "a4" },
+      { variant: "banner", gridArea: "b1" },
+      { variant: "banner", gridArea: "b2" },
     ],
   },
   banner: {

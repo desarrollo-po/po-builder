@@ -16,6 +16,7 @@ Templates disponibles (en `src/types/layout.ts → TEMPLATE_SPECS`):
 | `tres-notas-secundarias` | 3 | 3 col iguales con foto |
 | `cuatro-notas-secundarias` | 4 | 4 col iguales con foto |
 | `cuatro-notas-sin-foto` | 4 | 4 col sólo texto con border top coloreado |
+| `cuadricula` | 6 | grid 3×2: 4 tarjetas (izq, 2×2) + 2 banners (der, apilados) |
 | `banner` | 1 | full width, imagen + URL editable |
 
 Cada slot tiene una `SlotVariant` (`hero | main-left | main-right | secondary-photo | secondary-small | secondary-text | banner`) que el consumidor usará para decidir qué componente de card renderizar en producción.
@@ -212,7 +213,8 @@ Pendientes:
 - [x] Autenticación
 - [ ] Poder guardar layout como plantilla
 - [ ] Cargar plantillas guardadas
-- [ ] Crear Editor de página con distinto slug
+- [x] Crear Editor de página con distinto slug
+- [x] Task "newregioncuadricula": Crear región "cuadricula" guardada en regiones/cuadricula.png. Esta región tiene dos columnas, en la columna izquierda entran 4 slots con tarjetas y en la derecha hay dos slots para banners.
 - [ ] Retry/backoff en errores de Supabase
 - [ ] Loading skeletons en `ArticleBrowser` / `BannerLibrary`
 
