@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { listPages, signOutAll, type PageSummary } from "../../lib/supabase";
 import { useAuthStore } from "../../store/authStore";
 import CreatePageModal from "./CreatePageModal";
+import favicon from "../../assets/favicon-32x32.png";
 
 export default function PagesList() {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ export default function PagesList() {
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-surface-inset bg-white px-6">
         <div className="flex items-center gap-3">
           <img
-            src={`${import.meta.env.BASE_URL}favicon-32x32.png`}
+            src={favicon}
             alt="Prensa Obrera"
             width={28}
             height={28}

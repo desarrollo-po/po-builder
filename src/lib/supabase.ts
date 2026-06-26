@@ -15,7 +15,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export async function signInWithGoogle() {
   return supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: window.location.origin + '/po-builder/' },
+    options: {
+      redirectTo: import.meta.env.DEV
+        ? `${window.location.origin}${import.meta.env.BASE_URL}`
+        : "https://desarrollo-po.github.io/po-builder/",
+    },
   });
 }
 

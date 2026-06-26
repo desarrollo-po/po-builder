@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLayoutStore } from "../../store/layoutStore";
 import { useAuthStore } from "../../store/authStore";
 import { signOutAll } from "../../lib/supabase";
+import favicon from "../../assets/favicon-32x32.png";
 
 function formatLocalSaveAge(lastLocalSave: string | null, now: number): string | null {
   if (!lastLocalSave) return null;
@@ -125,7 +126,7 @@ export default function BuilderToolbar() {
           </button>
 
           <img
-            src={`${import.meta.env.BASE_URL}favicon-32x32.png`}
+            src={favicon}
             alt="Prensa Obrera"
             width={28}
             height={28}

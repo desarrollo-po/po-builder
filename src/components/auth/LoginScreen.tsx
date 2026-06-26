@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { signInWithGoogle } from "../../lib/supabase";
+import favicon from "../../assets/favicon-32x32.png";
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
@@ -20,7 +21,7 @@ export default function LoginScreen() {
     <div className="flex min-h-screen items-center justify-center bg-[var(--surface-base)] px-4">
       <div className="flex w-[320px] max-w-full flex-col items-center gap-6 rounded-xl border border-surface-inset bg-white p-6 shadow-sm">
         <img
-          src={`${import.meta.env.BASE_URL}favicon-32x32.png`}
+          src={favicon}
           alt="Prensa Obrera"
           width={40}
           height={40}
