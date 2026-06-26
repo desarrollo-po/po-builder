@@ -35,7 +35,7 @@ type Mode = "edit" | "preview";
 function App() {
   return (
     <AuthGate>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <BrowserRouter basename={'/po-builder/'}>
         <Routes>
           <Route path="/" element={<PagesList />} />
           <Route path="/edit/:slug" element={<Builder />} />
