@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLayoutStore } from "../../store/layoutStore";
 import { useAuthStore } from "../../store/authStore";
@@ -37,6 +37,8 @@ export default function BuilderToolbar() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isDiscarding, setIsDiscarding] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Tick once per second so the "hace Xs" indicator stays fresh without
   // re-rendering on every store mutation.
@@ -89,25 +91,24 @@ export default function BuilderToolbar() {
     }
   };
 
-  const stateBadge = isDirty
-    ? {
-      label: "Borrador",
-      className: "bg-[#0070f3]/10 text-[#0070f3]",
-      dotClassName: "bg-[#0070f3]",
-    }
-    : layout?.is_published
-      ? {
-        label: "Publicado",
-        className: "bg-emerald-500/10 text-emerald-700",
-        dotClassName: "bg-emerald-500",
-      }
-      : {
-        label: "Guardado",
-        className: "bg-surface-accent text-text-secondary",
-        dotClassName: "bg-gray-400",
-      };
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!userMenuRef.current?.contains(e.target as Node)) setUserMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [userMenuOpen]);
 
   const localSaveLabel = formatLocalSaveAge(lastLocalSave, now);
+
+  const saveStatus = isSaving
+    ? { dot: "bg-amber-400 animate-pulse", label: "Guardando…" }
+    : isDirty
+      ? { dot: "bg-amber-400", label: "Sin guardar" }
+      : layout?.is_published
+        ? { dot: "bg-emerald-500", label: "Publicado" }
+        : { dot: "bg-surface-inset", label: localSaveLabel ?? "Guardado" };
 
   return (
     <div className="flex shrink-0 flex-col">
@@ -120,9 +121,14 @@ export default function BuilderToolbar() {
           <button
             onClick={() => navigate("/")}
             title="Volver a páginas"
-            className="flex shrink-0 items-center gap-1.5 rounded-md border border-surface-inset bg-white px-2 py-[5px] text-[11px] font-medium text-text-secondary hover:bg-surface-accent"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-surface-inset bg-white text-text-secondary hover:bg-surface-accent"
           >
-            ← Páginas
+            <span className="pointer-events-none flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 5 5 12 12 19" />
+              </svg>
+            </span>
           </button>
 
           <img
@@ -143,37 +149,11 @@ export default function BuilderToolbar() {
             </span>
           </div>
 
-          {/* State badge */}
-          <div
-            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${stateBadge.className}`}
-          >
-            <div className={`h-1.5 w-1.5 shrink-0 rounded-full ${stateBadge.dotClassName}`} />
-            {stateBadge.label}
+          {/* Save status */}
+          <div className="flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-text-secondary">
+            <div className={`h-1.5 w-1.5 shrink-0 rounded-full ${saveStatus.dot}`} />
+            {saveStatus.label}
           </div>
-
-          {/* Local autosave indicator */}
-          {localSaveLabel && (
-            <span
-              title="Los cambios se guardan automáticamente en tu navegador. Apretá Guardar para subirlos a Supabase."
-              className="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-medium text-text-tertiary"
-            >
-              <svg
-                width="11"
-                height="11"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                <polyline points="17 21 17 13 7 13 7 21" />
-                <polyline points="7 3 7 8 15 8" />
-              </svg>
-              {localSaveLabel}
-            </span>
-          )}
         </div>
 
         {/* Center: transient message */}
@@ -214,7 +194,7 @@ export default function BuilderToolbar() {
           {/* Save */}
           <button
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || !isDirty}
             className="rounded-lg border border-text-muted bg-white px-3.5 py-[7px] text-[13px] font-medium text-black transition enabled:hover:bg-surface-accent disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSaving ? "Guardando…" : "Guardar"}
@@ -231,22 +211,35 @@ export default function BuilderToolbar() {
 
           <div className="h-5 w-px bg-surface-inset" />
 
-          {/* User + Logout */}
+          {/* User menu */}
           {email && (
-            <div className="flex items-center gap-2">
-              <span
-                title={email}
-                className="max-w-[180px] truncate text-[11px] font-medium text-text-tertiary"
-              >
-                {email}
-              </span>
+            <div className="relative" ref={userMenuRef}>
               <button
-                onClick={() => signOutAll()}
-                title="Cerrar sesión"
-                className="rounded-md border border-surface-inset bg-white px-2.5 py-[5px] text-[11px] font-medium text-text-secondary hover:bg-surface-accent"
+                onClick={() => setUserMenuOpen(v => !v)}
+                title={email}
+                className="flex h-7 items-center gap-1.5 rounded-md border border-surface-inset bg-white pl-1.5 pr-2 hover:bg-surface-accent"
               >
-                Salir
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-surface-accent text-[10px] font-semibold text-text-secondary">
+                  {email[0].toUpperCase()}
+                </span>
+                <span className="pointer-events-none flex items-center">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
               </button>
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full z-50 mt-1 w-52 rounded-lg border border-surface-inset bg-white py-1 shadow-md">
+                  <div className="truncate px-3 py-2 text-[11px] text-text-tertiary">{email}</div>
+                  <div className="mx-1 h-px bg-surface-inset" />
+                  <button
+                    onClick={() => signOutAll()}
+                    className="w-full rounded-none border-none bg-transparent px-3 py-2 text-left text-[12px] font-normal text-text-secondary hover:bg-surface-accent"
+                  >
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -51,9 +51,9 @@ export interface Region {
   template: TemplateId;
   order: number;
   blocks: (Block | null)[];
-  // ponytail: cuadricula-only split (0..1) for the banner column.
-  // Generalize when a 2nd composite template appears.
-  bannerColumnSplit?: number;
+  // ponytail: cuadricula-only banner heights in px. Independent so shrinking
+  // one doesn't grow the other. Generalize when a 2nd composite template appears.
+  bannerHeights?: [number, number];
 }
 
 export interface ArticleBlock {

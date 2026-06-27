@@ -93,8 +93,13 @@ function Builder() {
 
   if (!layout || layout.slug !== slug) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-500">Loading...</p>
+      <div className="flex animate-pulse flex-col" style={{ height: "100vh", background: "var(--surface-base)" }}>
+        <div className="h-14 shrink-0 border-b border-surface-inset bg-white" />
+        <div className="h-10 shrink-0 border-b border-surface-inset bg-white" />
+        <div className="flex flex-1 overflow-hidden">
+          <div className="w-72 shrink-0 border-r border-surface-inset bg-white" />
+          <div className="flex-1 bg-surface-base" />
+        </div>
       </div>
     );
   }
@@ -133,38 +138,25 @@ function Builder() {
 
 function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        gap: "4px",
-        padding: "8px",
-        borderBottom: "1px solid var(--border)",
-        background: "#ffffff",
-      }}
-    >
-      {(["edit", "preview"] as Mode[]).map((m) => {
-        const active = mode === m;
-        return (
-          <button
-            key={m}
-            onClick={() => onChange(m)}
-            style={{
-              padding: "6px 14px",
-              fontSize: "12px",
-              fontWeight: 500,
-              border: "1px solid var(--border-strong)",
-              borderRadius: "6px",
-              background: active ? "#0070f3" : "#ffffff",
-              color: active ? "#ffffff" : "var(--text-secondary)",
-              cursor: "pointer",
-              transition: "all 120ms ease-out",
-            }}
-          >
-            {m === "edit" ? "Editor" : "Vista previa"}
-          </button>
-        );
-      })}
+    <div className="flex justify-center p-2 border-b border-[var(--border)] bg-white">
+      <div className="flex bg-[var(--surface-base)] rounded-lg p-0.5 gap-0.5">
+        {(["edit", "preview"] as Mode[]).map((m) => {
+          const active = mode === m;
+          return (
+            <button
+              key={m}
+              onClick={() => onChange(m)}
+              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all duration-150 cursor-pointer border-none ${
+                active
+                  ? "bg-white text-[var(--text-primary)] shadow-sm"
+                  : "bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              {m === "edit" ? "Editor" : "Vista previa"}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

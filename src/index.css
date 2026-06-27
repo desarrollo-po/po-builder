@@ -109,6 +109,24 @@
   --shadow-none: none;
 }
 
+/* ponytail: aliases so --text-primary etc. resolve to Tailwind v4's --color-* vars */
+:root {
+  --surface-base: var(--color-surface-base);
+  --surface-card: var(--color-surface-elevated);
+  --surface-secondary: var(--color-surface-elevated);
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+  --text-tertiary: var(--color-text-tertiary);
+  --text-muted: var(--color-text-muted);
+  --border: var(--color-surface-accent);
+  --border-strong: var(--color-surface-inset);
+  --accent: var(--color-accent-primary);
+  --accent-dark: var(--color-accent-hover);
+  --accent-light: var(--color-accent-light);
+  --button-primary: var(--color-button-primary);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+}
+
 @layer base {
 
 * {

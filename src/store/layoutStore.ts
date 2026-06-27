@@ -47,7 +47,7 @@ interface LayoutState {
     slotIndex: number,
     linkUrl: string,
   ) => void;
-  setBannerColumnSplit: (regionId: string, ratio: number) => void;
+  setBannerHeight: (regionId: string, idx: 0 | 1, height: number) => void;
 
   save: () => Promise<{ success: boolean; error?: string }>;
   publish: () => Promise<{ success: boolean; error?: string }>;
@@ -249,12 +249,15 @@ export const useLayoutStore = create<LayoutState>()(
             }),
           ),
 
-        setBannerColumnSplit: (regionId, ratio) => {
-          const clamped = Math.min(0.85, Math.max(0.15, ratio));
+        setBannerHeight: (regionId, idx, height) => {
+          const clamped = Math.min(800, Math.max(80, height));
           updateRegions((regions) =>
-            regions.map((r) =>
-              r.id === regionId ? { ...r, bannerColumnSplit: clamped } : r,
-            ),
+            regions.map((r) => {
+              if (r.id !== regionId) return r;
+              const next: [number, number] = [...(r.bannerHeights ?? [200, 200])] as [number, number];
+              next[idx] = clamped;
+              return { ...r, bannerHeights: next };
+            }),
           );
         },
 

@@ -95,7 +95,7 @@ function MasNotasEdmRender({ region }: { region: Region }) {
 
 function CuadriculaRender({ region }: { region: Region }) {
   const spec = TEMPLATE_SPECS.cuadricula;
-  const ratio = region.bannerColumnSplit ?? 0.5;
+  const heights = region.bannerHeights ?? [200, 200];
   const articleSlots = spec.slots.slice(0, 4);
   const bannerSlots = spec.slots.slice(4, 6);
 
@@ -119,16 +119,10 @@ function CuadriculaRender({ region }: { region: Region }) {
       </div>
 
       <div className="flex flex-[1] flex-col gap-[18px]">
-        <div
-          className="overflow-hidden @md:min-h-0"
-          style={{ flexGrow: ratio, flexShrink: 1, flexBasis: 0 }}
-        >
+        <div className="overflow-hidden" style={{ height: heights[0] }}>
           <BlockRenderer block={region.blocks[4] ?? null} variant={bannerSlots[0].variant} />
         </div>
-        <div
-          className="overflow-hidden @md:min-h-0"
-          style={{ flexGrow: 1 - ratio, flexShrink: 1, flexBasis: 0 }}
-        >
+        <div className="overflow-hidden" style={{ height: heights[1] }}>
           <BlockRenderer block={region.blocks[5] ?? null} variant={bannerSlots[1].variant} />
         </div>
       </div>

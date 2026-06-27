@@ -11,6 +11,31 @@ interface Props<TItem> {
   cacheKey?: string;
 }
 
+function ListSkeleton() {
+  return (
+    <div className="flex animate-pulse gap-2 rounded-lg border border-surface-inset p-2">
+      <div className="h-[72px] w-[72px] shrink-0 rounded bg-surface-accent" />
+      <div className="flex flex-1 flex-col gap-1.5 py-1">
+        <div className="h-2 w-1/3 rounded bg-surface-accent" />
+        <div className="h-2.5 w-full rounded bg-surface-accent" />
+        <div className="h-2.5 w-4/5 rounded bg-surface-accent" />
+        <div className="mt-1 h-2 w-1/4 rounded bg-surface-accent" />
+      </div>
+    </div>
+  );
+}
+
+function GridSkeleton() {
+  return (
+    <div className="animate-pulse overflow-hidden rounded-md border border-surface-inset">
+      <div className="aspect-[3/2] bg-surface-accent" />
+      <div className="p-1.5">
+        <div className="h-2 w-3/4 rounded bg-surface-accent" />
+      </div>
+    </div>
+  );
+}
+
 // One browser to rule them all: it consumes the ContentSource contract and
 // stays oblivious to whether it's listing articles, EDM posts, banner media,
 // or anything we plug in next. Layout (list vs grid), search placeholder,
@@ -115,12 +140,6 @@ export default function SourceBrowser<TItem>({ source, cacheKey = "" }: Props<TI
         </div>
       )}
 
-      {isLoading && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", paddingTop: "32px", paddingBottom: "32px" }}>
-          <span style={{ fontSize: "13px", color: "var(--text-tertiary)" }}>Cargando…</span>
-        </div>
-      )}
-
       {items.length === 0 && !isLoading && debouncedQuery && (
         <div style={{ textAlign: "center", paddingTop: "32px", color: "var(--text-tertiary)", fontSize: "13px" }}>
           {source.emptyMessage ?? "Sin resultados"}
@@ -130,56 +149,26 @@ export default function SourceBrowser<TItem>({ source, cacheKey = "" }: Props<TI
       <div
         style={
           isGrid
-            ? {
-                flex: 1,
-                overflowY: "auto",
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "8px",
-                alignContent: "start",
-              }
-            : {
-                flex: 1,
-                overflowY: "auto",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-              }
+            ? { flex: 1, overflowY: "auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", alignContent: "start" }
+            : { flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px" }
         }
       >
-        {items.map((item) => {
-          const ItemCard = source.ItemCard;
-          return <ItemCard key={source.getItemKey(item)} item={item} />;
-        })}
+        {isLoading
+          ? Array.from({ length: pageSize }, (_, i) =>
+              isGrid ? <GridSkeleton key={i} /> : <ListSkeleton key={i} />
+            )
+          : items.map((item) => {
+              const ItemCard = source.ItemCard;
+              return <ItemCard key={source.getItemKey(item)} item={item} />;
+            })
+        }
       </div>
 
       {hasNextPage && (
         <button
           onClick={() => fetchNextPage()}
           disabled={isFetchingNextPage}
-          style={{
-            width: "100%",
-            padding: "9px 16px",
-            fontSize: "12px",
-            fontWeight: 500,
-            background: "#ffffff",
-            border: "1px solid var(--border-strong)",
-            color: "var(--text-secondary)",
-            borderRadius: "8px",
-            cursor: isFetchingNextPage ? "not-allowed" : "pointer",
-            opacity: isFetchingNextPage ? 0.5 : 1,
-            transition: "all 120ms ease-out",
-          }}
-          onMouseEnter={(e) => {
-            if (!isFetchingNextPage) {
-              (e.currentTarget as HTMLButtonElement).style.background = "var(--surface-secondary)";
-              (e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.background = "#ffffff";
-            (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
-          }}
+          className="w-full rounded-lg border border-surface-inset bg-white py-2 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-accent hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isFetchingNextPage ? "Cargando…" : "Cargar más"}
         </button>

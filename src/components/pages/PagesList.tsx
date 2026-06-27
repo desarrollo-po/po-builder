@@ -88,9 +88,18 @@ export default function PagesList() {
         </div>
 
         {loading && (
-          <div className="rounded-lg border border-surface-inset bg-white px-4 py-8 text-center text-[13px] text-text-tertiary">
-            Cargando…
-          </div>
+          <ul className="flex flex-col gap-2">
+            {Array.from({ length: 5 }, (_, i) => (
+              <li key={i} className="flex animate-pulse items-center gap-3 rounded-lg border border-surface-inset bg-white px-4 py-3">
+                <div className="h-4 w-4 shrink-0 rounded bg-surface-accent" />
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <div className="h-3 w-2/5 rounded bg-surface-accent" />
+                  <div className="h-2 w-1/4 rounded bg-surface-accent" />
+                </div>
+                <div className="h-5 w-16 rounded-full bg-surface-accent" />
+              </li>
+            ))}
+          </ul>
         )}
 
         {error && !loading && (

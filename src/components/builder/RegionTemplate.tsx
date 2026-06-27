@@ -1,6 +1,6 @@
+import { useRef } from "react";
 import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { useLayoutStore } from "../../store/layoutStore";
-import { useVerticalSplit } from "../../hooks/useVerticalSplit";
 import {
   TEMPLATE_SPECS,
   type ArticleBlock,
@@ -59,12 +59,8 @@ export default function RegionTemplate({ region }: Props) {
 }
 
 function CuadriculaTemplate({ region }: { region: Region }) {
-  const setBannerColumnSplit = useLayoutStore((s) => s.setBannerColumnSplit);
-  const ratio = region.bannerColumnSplit ?? 0.5;
-  const { containerRef, handleProps } = useVerticalSplit({
-    ratio,
-    onChange: (next) => setBannerColumnSplit(region.id, next),
-  });
+  const setBannerHeight = useLayoutStore((s) => s.setBannerHeight);
+  const heights = region.bannerHeights ?? [200, 200];
 
   const spec = TEMPLATE_SPECS.cuadricula;
   const articleSlots = spec.slots.slice(0, 4);
@@ -73,61 +69,54 @@ function CuadriculaTemplate({ region }: { region: Region }) {
   return (
     <div className="flex min-h-[120px] flex-col gap-2.5 @md:flex-row @md:items-stretch">
       <div
-        className="grid flex-[2] gap-2.5 @max-md:grid-cols-1!"
-        style={{
-          gridTemplateColumns: "1fr 1fr",
-          gridTemplateRows: "1fr 1fr",
-        }}
+        className="grid flex-2 gap-2.5 @max-md:grid-cols-1!"
+        style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr" }}
       >
         {articleSlots.map((slot, i) => (
-          <SlotCell
-            key={i}
-            regionId={region.id}
-            slotIndex={i}
-            variant={slot.variant}
-            gridArea=""
-            block={region.blocks[i]}
-          />
+          <SlotCell key={i} regionId={region.id} slotIndex={i} variant={slot.variant} gridArea="" block={region.blocks[i]} />
         ))}
       </div>
 
-      <div
-        ref={containerRef}
-        className="flex flex-[1] flex-col @max-md:gap-2.5"
-      >
-        <div
-          className="flex min-h-[120px] overflow-hidden @md:min-h-0"
-          style={{ flexGrow: ratio, flexShrink: 1, flexBasis: 0 }}
-        >
-          <SlotCell
-            regionId={region.id}
-            slotIndex={4}
-            variant={bannerSlots[0].variant}
-            gridArea=""
-            block={region.blocks[4]}
-            fullSize
-          />
+      <div className="flex flex-1 flex-col @max-md:gap-2.5">
+        <div style={{ height: heights[0] }} className="min-h-[80px] shrink-0 overflow-hidden">
+          <SlotCell regionId={region.id} slotIndex={4} variant={bannerSlots[0].variant} gridArea="" block={region.blocks[4]} fullSize />
         </div>
-        <div
-          {...handleProps}
-          className="h-[6px] shrink-0 cursor-row-resize bg-surface-inset transition hover:bg-accent-primary @max-md:hidden"
-          title="Arrastrar para redimensionar"
-        />
-        <div
-          className="flex min-h-[120px] overflow-hidden @md:min-h-0"
-          style={{ flexGrow: 1 - ratio, flexShrink: 1, flexBasis: 0 }}
-        >
-          <SlotCell
-            regionId={region.id}
-            slotIndex={5}
-            variant={bannerSlots[1].variant}
-            gridArea=""
-            block={region.blocks[5]}
-            fullSize
-          />
+        <BannerResizeHandle height={heights[0]} onResize={(h) => setBannerHeight(region.id, 0, h)} />
+        <div style={{ height: heights[1] }} className="min-h-[80px] shrink-0 overflow-hidden">
+          <SlotCell regionId={region.id} slotIndex={5} variant={bannerSlots[1].variant} gridArea="" block={region.blocks[5]} fullSize />
         </div>
+        <BannerResizeHandle height={heights[1]} onResize={(h) => setBannerHeight(region.id, 1, h)} />
       </div>
     </div>
+  );
+}
+
+function BannerResizeHandle({ height, onResize }: { height: number; onResize: (h: number) => void }) {
+  const drag = useRef({ active: false, startY: 0, startH: 0 });
+
+  return (
+    <div
+      className="h-[6px] shrink-0 cursor-row-resize bg-surface-inset transition hover:bg-accent-primary @max-md:hidden"
+      title="Arrastrar para redimensionar"
+      onPointerDown={(e) => {
+        e.preventDefault(); e.stopPropagation();
+        drag.current = { active: true, startY: e.clientY, startH: height };
+        (e.target as Element).setPointerCapture(e.pointerId);
+      }}
+      onPointerMove={(e) => {
+        if (!drag.current.active) return;
+        const next = Math.min(800, Math.max(80, drag.current.startH + e.clientY - drag.current.startY));
+        onResize(next);
+      }}
+      onPointerUp={(e) => {
+        drag.current.active = false;
+        (e.target as Element).releasePointerCapture(e.pointerId);
+      }}
+      onPointerCancel={(e) => {
+        drag.current.active = false;
+        (e.target as Element).releasePointerCapture(e.pointerId);
+      }}
+    />
   );
 }
 
