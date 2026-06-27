@@ -181,6 +181,64 @@ export async function publishLayout(
   return { success: true };
 }
 
+// --- Page locks ---
+
+const LOCK_TTL_MS = 5 * 60 * 1000;
+const lockExpiry = () => new Date(Date.now() - LOCK_TTL_MS).toISOString();
+
+export type PageLock = { slug: string; locked_by: string };
+
+export async function acquireLock(
+  slug: string,
+  email: string,
+  force = false
+): Promise<{ ok: boolean; lockedBy?: string }> {
+  if (!force) {
+    const { data } = await supabase
+      .from("page_locks")
+      .select("locked_by")
+      .eq("slug", slug)
+      .neq("locked_by", email)
+      .gt("locked_at", lockExpiry())
+      .maybeSingle();
+    if (data) return { ok: false, lockedBy: data.locked_by };
+  }
+  await supabase
+    .from("page_locks")
+    .upsert({ slug, locked_by: email, locked_at: new Date().toISOString() });
+  return { ok: true };
+}
+
+export async function releaseLock(slug: string, email: string): Promise<void> {
+  await supabase.from("page_locks").delete().eq("slug", slug).eq("locked_by", email);
+}
+
+export async function refreshLock(slug: string, email: string): Promise<void> {
+  await supabase
+    .from("page_locks")
+    .update({ locked_at: new Date().toISOString() })
+    .eq("slug", slug)
+    .eq("locked_by", email);
+}
+
+export async function checkLock(slug: string): Promise<PageLock | null> {
+  const { data } = await supabase
+    .from("page_locks")
+    .select("slug, locked_by")
+    .eq("slug", slug)
+    .gt("locked_at", lockExpiry())
+    .maybeSingle();
+  return (data as PageLock | null) ?? null;
+}
+
+export async function getLocks(): Promise<PageLock[]> {
+  const { data } = await supabase
+    .from("page_locks")
+    .select("slug, locked_by")
+    .gt("locked_at", lockExpiry());
+  return (data as PageLock[]) ?? [];
+}
+
 export async function getLayoutVersions(
   slug: string
 ): Promise<

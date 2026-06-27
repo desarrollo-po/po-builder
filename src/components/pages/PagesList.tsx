@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { listPages, signOutAll, type PageSummary } from "../../lib/supabase";
+import { getLocks, listPages, signOutAll, type PageLock, type PageSummary } from "../../lib/supabase";
 import { useAuthStore } from "../../store/authStore";
 import CreatePageModal from "./CreatePageModal";
 import favicon from "../../assets/favicon-32x32.png";
@@ -10,16 +10,39 @@ export default function PagesList() {
   const email = useAuthStore((s) => s.email);
   const authStatus = useAuthStore((s) => s.status);
   const [pages, setPages] = useState<PageSummary[]>([]);
+  const [locks, setLocks] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [kickedMessage, setKickedMessage] = useState<string | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const kicked = sessionStorage.getItem("po-kicked");
+    if (kicked) {
+      sessionStorage.removeItem("po-kicked");
+      const [by, sl] = kicked.split("|");
+      setKickedMessage(`${by} tomó el control de "${sl}". Tu borrador local sigue disponible.`);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!userMenuRef.current?.contains(e.target as Node)) setUserMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [userMenuOpen]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const rows = await listPages();
+      const [rows, lockData] = await Promise.all([listPages(), getLocks()]);
       setPages(rows);
+      setLocks(new Map((lockData as PageLock[]).map((l) => [l.slug, l.locked_by])));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar páginas.");
     } finally {
@@ -53,25 +76,44 @@ export default function PagesList() {
           </div>
         </div>
         {email && (
-          <div className="flex items-center gap-2">
-            <span
-              title={email}
-              className="max-w-[220px] truncate text-[11px] font-medium text-text-tertiary"
-            >
-              {email}
-            </span>
+          <div className="relative" ref={userMenuRef}>
             <button
-              onClick={() => signOutAll()}
-              title="Cerrar sesión"
-              className="rounded-md border border-surface-inset bg-white px-2.5 py-[5px] text-[11px] font-medium text-text-secondary hover:bg-surface-accent"
+              onClick={() => setUserMenuOpen(v => !v)}
+              title={email}
+              className="flex h-7 items-center gap-1.5 rounded-md border border-surface-inset bg-white pl-1.5 pr-2 hover:bg-surface-accent"
             >
-              Salir
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-surface-accent text-[10px] font-semibold text-text-secondary">
+                {email[0].toUpperCase()}
+              </span>
+              <span className="pointer-events-none flex items-center">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-tertiary">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </span>
             </button>
+            {userMenuOpen && (
+              <div className="absolute right-0 top-full z-50 mt-1 w-52 rounded-lg border border-surface-inset bg-white py-1 shadow-md">
+                <div className="truncate px-3 py-2 text-[11px] text-text-tertiary">{email}</div>
+                <div className="mx-1 h-px bg-surface-inset" />
+                <button
+                  onClick={() => signOutAll()}
+                  className="w-full rounded-none border-none bg-transparent px-3 py-2 text-left text-[12px] font-normal text-text-secondary hover:bg-surface-accent"
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+            )}
           </div>
         )}
       </header>
 
       <main className="mx-auto w-full max-w-[760px] flex-1 px-6 py-8">
+        {kickedMessage && (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-[13px] text-amber-800">
+            <span>{kickedMessage}</span>
+            <button onClick={() => setKickedMessage(null)} className="shrink-0 text-amber-600 hover:text-amber-800">✕</button>
+          </div>
+        )}
         <div className="mb-5 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-[22px] font-semibold text-text-primary">Páginas</h1>
@@ -170,7 +212,16 @@ export default function PagesList() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    {locks.has(p.slug) && locks.get(p.slug) !== email && (
+                      <span
+                        title={`Editando: ${locks.get(p.slug)}`}
+                        className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700"
+                      >
+                        <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                        Editando
+                      </span>
+                    )}
                     {p.is_published ? (
                       <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700">
                         <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />

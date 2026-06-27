@@ -19,7 +19,13 @@ import {
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useLayoutStore } from "./store/layoutStore";
-import { loadLayout } from "./lib/supabase";
+import {
+  loadLayout,
+  acquireLock,
+  releaseLock,
+  refreshLock,
+  checkLock,
+} from "./lib/supabase";
 import Canvas from "./components/builder/Canvas";
 import Sidebar from "./components/sidebar/Sidebar";
 import BuilderToolbar from "./components/builder/BuilderToolbar";
@@ -54,6 +60,9 @@ function Builder() {
   const [mode, setMode] = useState<Mode>("edit");
   const [loadFailed, setLoadFailed] = useState(false);
   const authStatus = useAuthStore((s) => s.status);
+  const email = useAuthStore((s) => s.email);
+  const [lockState, setLockState] = useState<"checking" | "owned" | "blocked">("checking");
+  const [lockOwner, setLockOwner] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -61,37 +70,78 @@ function Builder() {
   );
 
   useEffect(() => {
-    // ponytail: only fetch once authenticated, so the request carries the JWT
-    // and the tightened RLS policy returns rows instead of an empty result.
-    if (authStatus !== "authenticated") return;
-    if (!slug) return;
+    if (authStatus !== "authenticated" || !slug || !email) return;
     let cancelled = false;
-    const loadPageLayout = async () => {
-      const existingLayout = await loadLayout(slug);
+    const run = async () => {
+      const lock = await acquireLock(slug, email);
       if (cancelled) return;
-      if (!existingLayout) {
-        // Page doesn't exist in Supabase — bounce back to the list rather
-        // than scaffolding an orphan layout from the URL.
-        setLoadFailed(true);
+      if (!lock.ok) {
+        setLockOwner(lock.lockedBy!);
+        setLockState("blocked");
         return;
       }
+      const existingLayout = await loadLayout(slug);
+      if (cancelled) return;
+      if (!existingLayout) { setLoadFailed(true); return; }
       initializeLayout(slug, existingLayout);
+      setLockState("owned");
     };
-    loadPageLayout();
-    return () => {
-      cancelled = true;
-    };
-  }, [initializeLayout, authStatus, slug]);
+    run();
+    return () => { cancelled = true; };
+  }, [authStatus, slug, email, initializeLayout]);
 
   useEffect(() => {
     if (loadFailed) navigate("/", { replace: true });
   }, [loadFailed, navigate]);
 
+  // Heartbeat (keep lock alive) + takeover detection (detect if kicked)
+  useEffect(() => {
+    if (lockState !== "owned" || !slug || !email) return;
+    const heartbeat = setInterval(() => refreshLock(slug, email), 2 * 60 * 1000);
+    const poll = setInterval(async () => {
+      const cur = await checkLock(slug);
+      if (!cur) {
+        acquireLock(slug, email, true); // lock expired, silently re-acquire
+      } else if (cur.locked_by !== email) {
+        sessionStorage.setItem("po-kicked", `${cur.locked_by}|${slug}`);
+        navigate("/");
+      }
+    }, 30 * 1000);
+    const onUnload = () => releaseLock(slug, email);
+    window.addEventListener("beforeunload", onUnload);
+    return () => {
+      clearInterval(heartbeat);
+      clearInterval(poll);
+      window.removeEventListener("beforeunload", onUnload);
+      releaseLock(slug, email);
+    };
+  }, [lockState, slug, email, navigate]);
+
+  const handleTakeover = async () => {
+    if (!slug || !email) return;
+    setLockState("checking");
+    await acquireLock(slug, email, true);
+    const existingLayout = await loadLayout(slug);
+    if (!existingLayout) { navigate("/"); return; }
+    initializeLayout(slug, existingLayout);
+    setLockState("owned");
+  };
+
   const handleAppDragEnd = (event: DragEndEvent) => {
     handleDragEnd(event);
   };
 
-  if (!layout || layout.slug !== slug) {
+  if (lockState === "blocked") {
+    return (
+      <TakeoverModal
+        lockedBy={lockOwner!}
+        onTakeover={handleTakeover}
+        onCancel={() => navigate("/")}
+      />
+    );
+  }
+
+  if (lockState !== "owned" || !layout || layout.slug !== slug) {
     return (
       <div className="flex animate-pulse flex-col" style={{ height: "100vh", background: "var(--surface-base)" }}>
         <div className="h-14 shrink-0 border-b border-surface-inset bg-white" />
@@ -133,6 +183,42 @@ function Builder() {
         <DragOverlayContent />
       </DragOverlay>
     </DndContext>
+  );
+}
+
+function TakeoverModal({
+  lockedBy,
+  onTakeover,
+  onCancel,
+}: {
+  lockedBy: string;
+  onTakeover: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="w-full max-w-sm rounded-xl border border-surface-inset bg-white p-6 shadow-xl">
+        <h2 className="mb-2 text-[15px] font-semibold text-text-primary">Página en uso</h2>
+        <p className="mb-5 text-[13px] text-text-secondary">
+          <span className="font-medium text-text-primary">{lockedBy}</span> está editando esta página.
+          ¿Querés tomar el control y expulsarlo?
+        </p>
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onCancel}
+            className="rounded-lg border border-surface-inset bg-white px-3.5 py-[7px] text-[13px] font-medium text-text-secondary hover:bg-surface-accent"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onTakeover}
+            className="rounded-lg border border-amber-500 bg-amber-500 px-3.5 py-[7px] text-[13px] font-medium text-white hover:border-amber-600 hover:bg-amber-600"
+          >
+            Tomar control
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

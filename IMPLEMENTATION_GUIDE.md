@@ -216,6 +216,8 @@ Pendientes:
 - [x] Crear Editor de página con distinto slug
 - [x] Task "newregioncuadricula": Crear región "cuadricula" guardada en regiones/cuadricula.png. Esta región tiene dos columnas, en la columna izquierda entran 4 slots con tarjetas y en la derecha hay dos slots para banners.
 - [x] Task "newRegionEDM": Crear región "Mas notas EDM" como se indica en la imagen "![alt text](mas-notas-edm.png)". En la columna izquierda entra una grilla de 9 slots de 3x3 y en la columna derecha 6 slots verticales con un diseño de tarjeta específico: "NotaEDM.tsx" que debe tener imagen a la izquierda y Titulo + Autor a la derecha.
+- [x] Task: "UserEditPages": Cuando un usuario está editando una página, los demás usuarios no deberían poder entrar hasta que el usuario la "libere". Debe poder "expulsar" al usuario mediante un mensaje de confirmación. En la lista de páginas debe reflejarse que el usuario que la está editando. Usar /grill-with-docs y /ponytail.
+- [ ] Task: "PageMetaData": Se debe poder incluir metadata a las páginas (solo a páginas que no sean la Home). Una opción sería que dentro del editor exista una columna fija a la derecha con los campos necesarios para que la página esté bien optimizada con su metadata (incluida una imagen). Usar /grill-with-docs y /ponytail.
 - [ ] Retry/backoff en errores de Supabase
 - [ ] Loading skeletons en `ArticleBrowser` / `BannerLibrary`
 
