@@ -25,13 +25,23 @@ export default function AddRegionModal() {
 
   if (!isOpen) {
     return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="w-full justify-center flex items-center gap-1.5 rounded-md border border-dashed border-text-muted bg-white px-4 py-[9px] text-[13px] font-medium text-text-secondary transition hover:border-accent-primary hover:bg-accent-light hover:text-accent-primary"
-      >
-        <span className="text-base leading-none">+</span>
-        Agregar región
-      </button>
+      <>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="w-full justify-center flex items-center gap-1.5 rounded-md border border-dashed border-text-muted bg-white px-4 py-[9px] text-[13px] font-medium text-text-secondary transition hover:border-accent-primary hover:bg-accent-light hover:text-accent-primary"
+        >
+          <span className="text-base leading-none">+</span>
+          Agregar región
+        </button>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-7 right-8 z-40 flex items-center gap-2 rounded-full border-text-muted text-text-secondary bg-white px-5 py-3 text-[15px] font-semibold shadow-lg transition hover:brightness-110"
+          title="Agregar región"
+        >
+          <span className="text-[20px] leading-none font-light">+</span>
+          Agregar región
+        </button>
+      </>
     );
   }
 
