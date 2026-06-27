@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getLocks, listPages, signOutAll, type PageLock, type PageSummary } from "../../lib/supabase";
+import { displayName } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 import CreatePageModal from "./CreatePageModal";
 import favicon from "../../assets/favicon-32x32.png";
@@ -23,7 +24,7 @@ export default function PagesList() {
     if (kicked) {
       sessionStorage.removeItem("po-kicked");
       const [by, sl] = kicked.split("|");
-      setKickedMessage(`${by} tomó el control de "${sl}". Tu borrador local sigue disponible.`);
+      setKickedMessage(`${displayName(by)} tomó el control de "${sl}". Tu borrador local sigue disponible.`);
     }
   }, []);
 
@@ -215,11 +216,11 @@ export default function PagesList() {
                   <div className="flex items-center gap-2">
                     {locks.has(p.slug) && locks.get(p.slug) !== email && (
                       <span
-                        title={`Editando: ${locks.get(p.slug)}`}
+                        title={`Editando: ${displayName(locks.get(p.slug)!)}`}
                         className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700"
                       >
                         <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                        Editando
+                        {displayName(locks.get(p.slug)!)} está editando.
                       </span>
                     )}
                     {p.is_published ? (

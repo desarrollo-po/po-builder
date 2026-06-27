@@ -26,6 +26,7 @@ import {
   refreshLock,
   checkLock,
 } from "./lib/supabase";
+import { displayName } from "./lib/utils";
 import Canvas from "./components/builder/Canvas";
 import Sidebar from "./components/sidebar/Sidebar";
 import BuilderToolbar from "./components/builder/BuilderToolbar";
@@ -197,11 +198,11 @@ function TakeoverModal({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-sm rounded-xl border border-surface-inset bg-white p-6 shadow-xl">
+      <div className="w-96 rounded-xl border border-surface-inset bg-white p-6 shadow-xl">
         <h2 className="mb-2 text-[15px] font-semibold text-text-primary">Página en uso</h2>
         <p className="mb-5 text-[13px] text-text-secondary">
-          <span className="font-medium text-text-primary">{lockedBy}</span> está editando esta página.
-          ¿Querés tomar el control y expulsarlo?
+          <span className="font-medium text-text-primary">{displayName(lockedBy)}</span> está editando esta página.
+          ¿Querés tomar el control igualmente?
         </p>
         <div className="flex justify-end gap-2">
           <button
@@ -212,7 +213,7 @@ function TakeoverModal({
           </button>
           <button
             onClick={onTakeover}
-            className="rounded-lg border border-amber-500 bg-amber-500 px-3.5 py-[7px] text-[13px] font-medium text-white hover:border-amber-600 hover:bg-amber-600"
+            className="rounded-lg bg-button-primary-hover px-3.5 py-[7px] text-[13px] font-medium text-white hover:bg-button-primary-hover"
           >
             Tomar control
           </button>
@@ -232,11 +233,10 @@ function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => voi
             <button
               key={m}
               onClick={() => onChange(m)}
-              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all duration-150 cursor-pointer border-none ${
-                active
-                  ? "bg-white text-[var(--text-primary)] shadow-sm"
-                  : "bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              }`}
+              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all duration-150 cursor-pointer border-none ${active
+                ? "bg-white text-[var(--text-primary)] shadow-sm"
+                : "bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                }`}
             >
               {m === "edit" ? "Editor" : "Vista previa"}
             </button>
