@@ -199,7 +199,7 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize }: S
   const stateClass = isDropTarget
     ? "border-2 border-accent-primary bg-accent-light ring-2 ring-accent-primary/40"
     : block
-      ? "border border-surface-inset bg-white"
+      ? "border border-surface-inset"
       : "border-2 border-dashed border-surface-inset bg-surface-base";
 
   const sizeClass = fullSize ? "h-full w-full" : minHeightClassFor(variant);

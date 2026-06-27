@@ -1,5 +1,6 @@
 import { TEMPLATE_SPECS, type Region } from "../../types/layout";
 import BlockRenderer from "./BlockRenderer";
+import logoEdm from "../../assets/logo-edm.png";
 
 interface Props {
   region: Region;
@@ -69,18 +70,24 @@ function MasNotasEdmRender({ region }: { region: Region }) {
           </div>
         ))}
       </div>
-      <div className="flex flex-[1.3] flex-col gap-3 bg-red-600 p-3">
-        {rightSlots.map((slot, i) => {
-          const slotIndex = 9 + i;
-          return (
-            <div key={slotIndex}>
-              <BlockRenderer
-                block={region.blocks[slotIndex] ?? null}
-                variant={slot.variant}
-              />
-            </div>
-          );
-        })}
+      <div className="flex flex-[1.3] flex-col">
+        <div className="flex justify-center items-start flex-col bg-white p-3 py-5">
+          <img src={logoEdm} alt="EDM" width={155} height={47} className="w-auto h-auto" />
+        </div>
+        <div className="flex flex-[1.3] flex-col gap-3 bg-red-600 p-3">
+          {rightSlots.map((slot, i) => {
+            const slotIndex = 9 + i;
+            return (
+              <div key={slotIndex}>
+                <BlockRenderer
+                  block={region.blocks[slotIndex] ?? null}
+                  variant={slot.variant}
+                />
+              </div>
+            );
+          })}
+        </div>
+
       </div>
     </section>
   );

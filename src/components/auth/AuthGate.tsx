@@ -56,7 +56,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
         <h1 className="text-xl font-semibold">Acceso denegado</h1>
-        <p className="max-w-md text-sm text-gray-600">
+        <p className="text-sm text-gray-600">
           La cuenta {email ?? "que usaste"} no está autorizada para usar PO Builder.
           Pedí que te agreguen a la lista de editores.
         </p>
