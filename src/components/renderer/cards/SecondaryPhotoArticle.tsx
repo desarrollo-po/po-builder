@@ -8,7 +8,7 @@ interface Props {
 
 export default function SecondaryPhotoArticle({ article }: Props) {
   const { snapshot } = article;
-  const accent = getSectionColor(snapshot.categoryName);
+  const accent = getSectionColor(snapshot.categorySlug ?? snapshot.categoryName);
   return (
     <article
       className="flex relative h-full bg-white flex-col shadow-[0_0_15px_0_rgba(0,0,0,0.10)]"

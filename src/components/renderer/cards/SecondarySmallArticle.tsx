@@ -8,7 +8,7 @@ interface Props {
 
 export default function SecondarySmallArticle({ article }: Props) {
   const { snapshot } = article;
-  const accent = getSectionColor(snapshot.categoryName);
+  const accent = getSectionColor(snapshot.categorySlug ?? snapshot.categoryName);
 
   return (
     <article

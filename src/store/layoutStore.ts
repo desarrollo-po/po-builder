@@ -355,13 +355,14 @@ export const useLayoutStore = create<LayoutState>()(
           const state = get();
           if (!state.layout) return { success: false, error: "No layout loaded" };
 
-          const incomplete = state.layout.layout.filter((r) =>
-            r.blocks.some(
+          const incomplete = state.layout.layout.filter((r) => {
+            const spec = TEMPLATE_SPECS[r.template];
+            return r.blocks.some(
               (b) =>
-                b === null ||
-                (b.type === "banner" && (!b.imageUrl || !b.linkUrl.trim())),
-            ),
-          );
+                (!spec.optionalSlots && b === null) ||
+                (b?.type === "banner" && (!b.imageUrl || !b.linkUrl.trim())),
+            );
+          });
           if (incomplete.length > 0) {
             const names = incomplete
               .map((r) => TEMPLATE_SPECS[r.template].label)

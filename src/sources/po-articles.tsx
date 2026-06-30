@@ -136,6 +136,7 @@ function toSnapshot(node: PoArticleNode): ArticleSnapshot {
     imageSizes: sizesFromMediaDetails(node.featuredImage?.node?.mediaDetails?.sizes),
     publishedAt: node.date,
     categoryName: node.categories?.edges?.[0]?.node?.name ?? null,
+    categorySlug: node.categories?.edges?.[0]?.node?.slug ?? null,
     volanta: node.campos?.volanta ?? null,
   };
 }

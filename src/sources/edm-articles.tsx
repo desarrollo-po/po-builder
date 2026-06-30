@@ -131,6 +131,7 @@ function toSnapshot(node: EdmArticleNode): ArticleSnapshot {
     imageSizes: sizesFromMediaDetails(node.featuredImage?.node?.mediaDetails?.sizes),
     publishedAt: node.date,
     categoryName: node.categories?.edges?.[0]?.node?.name ?? "EDM Digital",
+    categorySlug: node.categories?.edges?.[0]?.node?.slug ?? null,
     volanta,
   };
 }

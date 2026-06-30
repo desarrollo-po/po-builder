@@ -8,8 +8,7 @@ interface Props {
 
 export default function MainRightArticle({ article }: Props) {
   const { snapshot } = article;
-  const sectionColor = getSectionColor(snapshot.categoryName);
-  const accent = getSectionColor(snapshot.categoryName);
+  const accent = getSectionColor(snapshot.categorySlug ?? snapshot.categoryName);
 
   return (
     <article
@@ -29,7 +28,7 @@ export default function MainRightArticle({ article }: Props) {
         {snapshot.volanta && (
           <span
             className="text-[10px] font-bold uppercase tracking-[0.5px]"
-            style={{ color: sectionColor }}
+            style={{ color: accent }}
           >
             {snapshot.volanta}
           </span>

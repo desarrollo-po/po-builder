@@ -13,12 +13,15 @@ interface Props {
 // dashed placeholder, which is a builder-only concern).
 export default function RegionRenderer({ region }: Props) {
   // ponytail: composite layouts handled inline. Mirror of the builder's
-  // RegionTemplate branches. Generalize when a 3rd composite template appears.
+  // RegionTemplate branches. Generalize when a 4th composite template appears.
   if (region.template === "cuadricula") {
     return <CuadriculaRender region={region} />;
   }
   if (region.template === "mas-notas-edm") {
     return <MasNotasEdmRender region={region} />;
+  }
+  if (region.template === "edm-horizontal") {
+    return <EdmHorizontalRender region={region} />;
   }
 
   const spec = TEMPLATE_SPECS[region.template];
@@ -88,6 +91,28 @@ function MasNotasEdmRender({ region }: { region: Region }) {
           })}
         </div>
 
+      </div>
+    </section>
+  );
+}
+
+function EdmHorizontalRender({ region }: { region: Region }) {
+  const spec = TEMPLATE_SPECS["edm-horizontal"];
+
+  return (
+    <section data-region-template={region.template} className="bg-red-600">
+      <div className="flex justify-center items-start flex-col bg-white p-3 py-5">
+        <img src={logoEdm} alt="EDM" width={155} height={47} className="w-auto h-auto" />
+      </div>
+      <div
+        className="grid gap-4 @max-md:grid-cols-1! p-4"
+        style={{ gridTemplateColumns: "repeat(5, 1fr)" }}
+      >
+        {spec.slots.map((slot, i) => (
+          <div key={i}>
+            <BlockRenderer block={region.blocks[i] ?? null} variant={slot.variant} />
+          </div>
+        ))}
       </div>
     </section>
   );

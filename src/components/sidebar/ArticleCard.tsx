@@ -14,7 +14,7 @@ interface Props {
 // this — each one is responsible for mapping its raw GraphQL node into the
 // ArticleSnapshot shape before handing it over.
 export default function ArticleCard({ articleId, snapshot }: Props) {
-  const sectionColor = getSectionColor(snapshot.categoryName);
+  const sectionColor = getSectionColor(snapshot.categorySlug ?? snapshot.categoryName);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `article-${articleId}`,
     data: {

@@ -20,6 +20,7 @@ export type TemplateId =
   | "cuatro-notas-sin-foto"
   | "cuadricula"
   | "mas-notas-edm"
+  | "edm-horizontal"
   | "banner";
 
 export type SlotVariant =
@@ -30,6 +31,7 @@ export type SlotVariant =
   | "secondary-small"
   | "secondary-text"
   | "nota-edm"
+  | "nota-edm-vertical"
   | "banner";
 
 export interface SlotSpec {
@@ -43,6 +45,8 @@ export interface TemplateSpec {
   gridTemplateColumns: string;
   gridTemplateRows?: string;
   gridTemplateAreas?: string;
+  // When true, null slots don't block publication.
+  optionalSlots?: boolean;
   slots: SlotSpec[];
 }
 
@@ -71,6 +75,7 @@ export interface ArticleBlock {
     imageSizes?: Record<string, string> | null;
     publishedAt: string;
     categoryName: string | null;
+    categorySlug: string | null;
     volanta: string | null;
   };
 }
@@ -172,9 +177,24 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
       { variant: "banner", gridArea: "b2" },
     ],
   },
+  "edm-horizontal": {
+    label: "EDM Horizontal",
+    slotsCount: 5,
+    optionalSlots: true,
+    gridTemplateColumns: "repeat(5, 1fr)",
+    gridTemplateAreas: `"a b c d e"`,
+    slots: [
+      { variant: "nota-edm-vertical", gridArea: "a" },
+      { variant: "nota-edm-vertical", gridArea: "b" },
+      { variant: "nota-edm-vertical", gridArea: "c" },
+      { variant: "nota-edm-vertical", gridArea: "d" },
+      { variant: "nota-edm-vertical", gridArea: "e" },
+    ],
+  },
   "mas-notas-edm": {
     label: "Más notas EDM",
     slotsCount: 15,
+    optionalSlots: true,
     gridTemplateColumns: "1fr 1fr 1fr 1.3fr",
     gridTemplateRows: "repeat(6, minmax(0, 1fr))",
     gridTemplateAreas: `

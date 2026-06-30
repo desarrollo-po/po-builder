@@ -11,6 +11,7 @@ const TEMPLATE_ORDER: TemplateId[] = [
   "cuatro-notas-sin-foto",
   "cuadricula",
   "mas-notas-edm",
+  "edm-horizontal",
   "banner",
 ];
 

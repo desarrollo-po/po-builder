@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getLocks, listPages, signOutAll, type PageLock, type PageSummary } from "../../lib/supabase";
+import { useQuery } from "@tanstack/react-query";
+import { getLocks, listPages, signOutAll, type PageLock } from "../../lib/supabase";
 import { displayName } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 import CreatePageModal from "./CreatePageModal";
@@ -10,10 +11,6 @@ export default function PagesList() {
   const navigate = useNavigate();
   const email = useAuthStore((s) => s.email);
   const authStatus = useAuthStore((s) => s.status);
-  const [pages, setPages] = useState<PageSummary[]>([]);
-  const [locks, setLocks] = useState<Map<string, string>>(new Map());
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [kickedMessage, setKickedMessage] = useState<string | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -37,24 +34,20 @@ export default function PagesList() {
     return () => document.removeEventListener("mousedown", handler);
   }, [userMenuOpen]);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["pages-and-locks"],
+    queryFn: async () => {
       const [rows, lockData] = await Promise.all([listPages(), getLocks()]);
-      setPages(rows);
-      setLocks(new Map((lockData as PageLock[]).map((l) => [l.slug, l.locked_by])));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar páginas.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return {
+        pages: rows,
+        locks: new Map((lockData as PageLock[]).map((l) => [l.slug, l.locked_by])),
+      };
+    },
+    enabled: authStatus === "authenticated",
+  });
 
-  useEffect(() => {
-    if (authStatus !== "authenticated") return;
-    refresh();
-  }, [authStatus, refresh]);
+  const pages = data?.pages ?? [];
+  const locks = data?.locks ?? new Map<string, string>();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -130,7 +123,7 @@ export default function PagesList() {
           </button>
         </div>
 
-        {loading && (
+        {isLoading && (
           <ul className="flex flex-col gap-2">
             {Array.from({ length: 5 }, (_, i) => (
               <li key={i} className="flex animate-pulse items-center gap-3 rounded-lg border border-surface-inset bg-white px-4 py-3">
@@ -145,19 +138,19 @@ export default function PagesList() {
           </ul>
         )}
 
-        {error && !loading && (
+        {error && !isLoading && (
           <div className="rounded-lg border border-[#0070f3]/30 bg-[#0070f3]/10 px-4 py-3 text-[13px] font-medium text-[#0070f3]">
-            {error}
+            {error.message}
           </div>
         )}
 
-        {!loading && !error && pages.length === 0 && (
+        {!isLoading && !error && pages.length === 0 && (
           <div className="rounded-lg border border-dashed border-surface-inset bg-white px-4 py-12 text-center text-[13px] text-text-tertiary">
             No hay páginas todavía. Creá la primera con el botón de arriba.
           </div>
         )}
 
-        {!loading && pages.length > 0 && (
+        {!isLoading && pages.length > 0 && (
           <ul className="flex flex-col gap-2">
             {[...pages].sort((a, b) => (a.slug === "home" ? -1 : b.slug === "home" ? 1 : 0)).map((p) => (
               <li key={p.slug}>
@@ -246,7 +239,7 @@ export default function PagesList() {
         <CreatePageModal
           existingSlugs={pages.map((p) => p.slug)}
           onClose={() => setShowCreate(false)}
-          onCreated={() => setShowCreate(false)}
+          onCreated={() => { setShowCreate(false); refetch(); }}
         />
       )}
     </div>

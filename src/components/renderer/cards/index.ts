@@ -8,4 +8,5 @@ export { default as SecondaryPhotoArticle } from "./SecondaryPhotoArticle";
 export { default as SecondarySmallArticle } from "./SecondarySmallArticle";
 export { default as SecondaryTextArticle } from "./SecondaryTextArticle";
 export { default as NotaEDM } from "./NotaEDM";
+export { default as NotaEDMVertical } from "./NotaEDMVertical";
 export { default as BannerCard } from "./BannerCard";

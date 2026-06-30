@@ -219,7 +219,10 @@ Pendientes:
 - [x] Task: "UserEditPages": Cuando un usuario está editando una página, los demás usuarios no deberían poder entrar hasta que el usuario la "libere". Debe poder "expulsar" al usuario mediante un mensaje de confirmación. En la lista de páginas debe reflejarse que el usuario que la está editando. Usar /grill-with-docs y /ponytail.
 - [ ] Task: "PageMetaData": Se debe poder incluir metadata a las páginas (solo a páginas que no sean la Home). Una opción sería que dentro del editor exista una columna fija a la derecha con los campos necesarios para que la página esté bien optimizada con su metadata (incluida una imagen). Usar /grill-with-docs y /ponytail.
 - [x] Task: "FixedAddRegionButton": Agregar boton fixed abajo a la derecha dentro del editor para agregar nueva región. Mantener el existente. El objetivo es que el usuario no tenga que scrollear para ver que puede agregar región.
+- [x] Task: "EDM-Region-Horizontal": Crear nueva región con fondo rojo y 5 notas horizontales como lo muestra la siguiente imagen ![alt text](public/regiones/region-edm-horizontal.png). Usar skills grill-with-docs y ponytail si hacen falta.
+- [x] Task: "SlotsOpcionales": La region "MasNotasEdmTemplate" no deberia tener slots obligatorios. Si el usuario carga menos notas no debería haber problemas para publicar.
 - [ ] Administrar usuarios
+- [x] Task: "ReviewFieldCategorySlug": Revisar la implementación de un nuevo campo "categorySlug"
 - [ ] Agregar roles / permisos a usuarios
 - [ ] Retry/backoff en errores de Supabase
 - [ ] Configurar MCP de github para sincronizar issues

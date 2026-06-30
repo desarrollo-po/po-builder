@@ -32,6 +32,7 @@ export default function RegionItem({ region }: Props) {
       b === null ||
       (b.type === "banner" && !b.linkUrl.trim()),
   ).length;
+  const optionalSlots = !!spec.optionalSlots;
 
   return (
     <div
@@ -95,14 +96,18 @@ export default function RegionItem({ region }: Props) {
               style={{
                 fontSize: "11px",
                 fontWeight: 600,
-                color: "#b45309",
-                background: "rgba(245, 158, 11, 0.12)",
+                color: optionalSlots ? "#6b7280" : "#b45309",
+                background: optionalSlots ? "rgba(107,114,128,0.1)" : "rgba(245, 158, 11, 0.12)",
                 padding: "3px 8px",
                 borderRadius: "99px",
                 flexShrink: 0,
                 letterSpacing: "0.1px",
               }}
-              title="Slots sin nota — el publicar quedará bloqueado hasta completarlos"
+              title={
+                optionalSlots
+                  ? "Slots sin nota — se publicará dejando estos slots vacíos"
+                  : "Slots sin nota — el publicar quedará bloqueado hasta completarlos"
+              }
             >
               {emptySlots} slot{emptySlots > 1 ? "s" : ""} vacío{emptySlots > 1 ? "s" : ""}
             </span>

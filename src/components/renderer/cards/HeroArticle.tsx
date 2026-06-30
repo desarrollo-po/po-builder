@@ -8,7 +8,7 @@ interface Props {
 
 export default function HeroArticle({ article }: Props) {
   const { snapshot } = article;
-  const sectionColor = getSectionColor(snapshot.categoryName);
+  const sectionColor = getSectionColor(snapshot.categorySlug ?? snapshot.categoryName);
 
   return (
     <article

@@ -9,10 +9,12 @@ import {
   type Region,
   type SlotVariant,
 } from "../../types/layout";
+import logoEdm from "../../assets/logo-edm.png";
 import {
   MainLeftArticle,
   MainRightArticle,
   NotaEDM,
+  NotaEDMVertical,
   NotaPrincipal,
   SecondaryPhotoArticle,
   SecondarySmallArticle,
@@ -25,12 +27,15 @@ interface Props {
 
 export default function RegionTemplate({ region }: Props) {
   // ponytail: composite layouts handled inline. Extract to a registry when a
-  // 3rd composite template appears.
+  // 4th composite template appears.
   if (region.template === "cuadricula") {
     return <CuadriculaTemplate region={region} />;
   }
   if (region.template === "mas-notas-edm") {
     return <MasNotasEdmTemplate region={region} />;
+  }
+  if (region.template === "edm-horizontal") {
+    return <EdmHorizontalTemplate region={region} />;
   }
 
   const spec = TEMPLATE_SPECS[region.template];
@@ -127,7 +132,7 @@ function MasNotasEdmTemplate({ region }: { region: Region }) {
 
   return (
     <div className="flex min-h-[120px] flex-col gap-2.5 @md:flex-row @md:items-stretch">
-      <div className="grid flex-[3] gap-2.5 @max-md:grid-cols-1!" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+      <div className="grid flex-3 gap-2.5 @max-md:grid-cols-1!" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
         {leftSlots.map((slot, i) => (
           <SlotCell
             key={i}
@@ -153,6 +158,30 @@ function MasNotasEdmTemplate({ region }: { region: Region }) {
             />
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function EdmHorizontalTemplate({ region }: { region: Region }) {
+  const spec = TEMPLATE_SPECS["edm-horizontal"];
+
+  return (
+    <div className="bg-red-600 p-3">
+      <div className="mb-2">
+        <img src={logoEdm} alt="EDM" className="h-7 w-auto brightness-0 invert" />
+      </div>
+      <div className="grid gap-2.5" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
+        {spec.slots.map((slot, i) => (
+          <SlotCell
+            key={i}
+            regionId={region.id}
+            slotIndex={i}
+            variant={slot.variant}
+            gridArea=""
+            block={region.blocks[i]}
+          />
+        ))}
       </div>
     </div>
   );
@@ -230,6 +259,8 @@ function minHeightClassFor(variant: SlotVariant): string {
       return "min-h-[180px]";
     case "nota-edm":
       return "min-h-[90px]";
+    case "nota-edm-vertical":
+      return "min-h-[160px]";
     case "banner":
       return "min-h-[120px]";
   }
@@ -271,6 +302,8 @@ function variantLabel(variant: SlotVariant): string {
       return "Sin foto";
     case "nota-edm":
       return "Nota EDM";
+    case "nota-edm-vertical":
+      return "Nota EDM (horizontal)";
     case "banner":
       return "Banner";
   }
@@ -393,6 +426,8 @@ function SlotArticleBody({
       return <SecondaryTextArticle article={article} />;
     case "nota-edm":
       return <NotaEDM article={article} />;
+    case "nota-edm-vertical":
+      return <NotaEDMVertical article={article} />;
     case "banner":
       // Article blocks never appear in banner slots (gated by useDragHandlers).
       return null;
