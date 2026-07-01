@@ -9,6 +9,8 @@ export interface PageLayout {
   created_at: string;
   updated_at: string;
   published_at?: string;
+  meta_description?: string | null;
+  og_image_url?: string | null;
 }
 
 export type TemplateId =
