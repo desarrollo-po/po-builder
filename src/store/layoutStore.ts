@@ -48,6 +48,7 @@ interface LayoutState {
     linkUrl: string,
   ) => void;
   setBannerHeight: (regionId: string, idx: 0 | 1, height: number) => void;
+  updateMetadata: (patch: Partial<Pick<PageLayout, "title" | "meta_description" | "og_image_url">>) => void;
 
   save: () => Promise<{ success: boolean; error?: string }>;
   publish: () => Promise<{ success: boolean; error?: string }>;
@@ -259,6 +260,12 @@ export const useLayoutStore = create<LayoutState>()(
               return { ...r, bannerHeights: next };
             }),
           );
+        },
+
+        updateMetadata: (patch) => {
+          const state = get();
+          if (!state.layout) return;
+          commit({ ...state.layout, ...patch, updated_at: new Date().toISOString() });
         },
 
         updateBannerLinkUrl: (regionId, slotIndex, linkUrl) =>

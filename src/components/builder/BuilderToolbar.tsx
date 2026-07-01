@@ -203,7 +203,7 @@ export default function BuilderToolbar() {
           {/* Publish */}
           <button
             onClick={handlePublish}
-            disabled={isPublishing}
+            disabled={isPublishing || isDirty}
             className="rounded-lg border border-button-publish-hover bg-button-publish px-3.5 py-[7px] text-[13px] font-medium text-white transition enabled:hover:border-button-publish-hover enabled:hover:bg-button-publish-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPublishing ? "Publicando…" : "Publicar"}

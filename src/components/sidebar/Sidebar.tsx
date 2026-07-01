@@ -2,11 +2,13 @@ import { useState } from "react";
 import { sources } from "../../sources";
 import { useLayoutStore } from "../../store/layoutStore";
 import SourceBrowser from "./SourceBrowser";
+import MetadataPanel from "./MetadataPanel";
 
 export default function Sidebar() {
   const [activeSourceId, setActiveSourceId] = useState<string>(
     sources[0]?.id ?? "",
   );
+  const [mode, setMode] = useState<"contenido" | "metadata">("contenido");
 
   const activeSource =
     sources.find((s) => s.id === activeSourceId) ?? sources[0];
@@ -15,7 +17,8 @@ export default function Sidebar() {
   // switches to a page with a different tag — that invalidates react-query's
   // cache and forces a refetch with the new tag in the GraphQL where clause.
   const pageTagSlug = useLayoutStore((s) => s.layout?.tag_slug ?? "");
-  const showTagHint = !!pageTagSlug && activeSource?.id === "po-articles";
+  const pageId = useLayoutStore((s) => s.layout?.id ?? "");
+  const showTagHint = !!pageTagSlug && activeSource?.id === "po-articles" && mode === "contenido";
 
   return (
     <div
@@ -29,46 +32,62 @@ export default function Sidebar() {
       }}
     >
       <div style={{ padding: "16px 16px 0", borderBottom: "1px solid var(--border)" }}>
-        <p
-          style={{
-            fontSize: "10px",
-            fontWeight: 600,
-            color: "var(--text-tertiary)",
-            letterSpacing: "0.8px",
-            textTransform: "uppercase",
-            marginBottom: "12px",
-          }}
-        >
-          Biblioteca de contenido
-        </p>
-
+        {/* Top-level mode switcher */}
         <div style={{ display: "flex", gap: "4px" }}>
-          {sources.map((source) => {
-            const isActive = source.id === activeSource?.id;
-            return (
-              <button
-                key={source.id}
-                onClick={() => setActiveSourceId(source.id)}
-                style={{
-                  flex: 1,
-                  padding: "7px 12px",
-                  fontSize: "12px",
-                  fontWeight: 500,
-                  border: "none",
-                  borderRadius: "6px 6px 0 0",
-                  background: isActive ? "var(--surface-base)" : "transparent",
-                  color: isActive ? "#000000" : "var(--text-secondary)",
-                  cursor: "pointer",
-                  transition: "all 120ms ease-out",
-                  borderBottom: isActive ? "2px solid #0070f3" : "2px solid transparent",
-                  letterSpacing: 0,
-                }}
-              >
-                {source.label}
-              </button>
-            );
-          })}
+          {(["contenido", "metadata"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              style={{
+                flex: 1,
+                padding: "7px 12px",
+                fontSize: "12px",
+                fontWeight: 600,
+                border: "none",
+                borderRadius: "6px 6px 0 0",
+                background: mode === m ? "var(--surface-base)" : "transparent",
+                color: mode === m ? "#000000" : "var(--text-secondary)",
+                cursor: "pointer",
+                textTransform: "capitalize",
+                transition: "all 120ms ease-out",
+                borderBottom: mode === m ? "2px solid #0070f3" : "2px solid transparent",
+              }}
+            >
+              {m === "contenido" ? "Contenido" : "Metadata"}
+            </button>
+          ))}
         </div>
+
+        {/* Source sub-tabs — only in contenido mode */}
+        {mode === "contenido" && (
+          <div style={{ display: "flex", gap: "4px", marginTop: "8px" }}>
+            {sources.map((source) => {
+              const isActive = source.id === activeSource?.id;
+              return (
+                <button
+                  key={source.id}
+                  onClick={() => setActiveSourceId(source.id)}
+                  style={{
+                    flex: 1,
+                    padding: "7px 12px",
+                    fontSize: "12px",
+                    fontWeight: 500,
+                    border: "none",
+                    borderRadius: "6px 6px 0 0",
+                    background: isActive ? "var(--surface-base)" : "transparent",
+                    color: isActive ? "#000000" : "var(--text-secondary)",
+                    cursor: "pointer",
+                    transition: "all 120ms ease-out",
+                    borderBottom: isActive ? "2px solid #0070f3" : "2px solid transparent",
+                    letterSpacing: 0,
+                  }}
+                >
+                  {source.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {showTagHint && (
@@ -94,12 +113,16 @@ export default function Sidebar() {
       )}
 
       <div style={{ flex: 1, overflow: "auto", background: "var(--surface-base)" }}>
-        {activeSource && (
-          <SourceBrowser
-            key={`${activeSource.id}:${pageTagSlug}`}
-            source={activeSource}
-            cacheKey={pageTagSlug}
-          />
+        {mode === "metadata" ? (
+          <MetadataPanel key={pageId} />
+        ) : (
+          activeSource && (
+            <SourceBrowser
+              key={`${activeSource.id}:${pageTagSlug}`}
+              source={activeSource}
+              cacheKey={pageTagSlug}
+            />
+          )
         )}
       </div>
     </div>

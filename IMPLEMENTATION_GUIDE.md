@@ -223,6 +223,37 @@ Pendientes:
 - [x] Task: "SlotsOpcionales": La region "MasNotasEdmTemplate" no deberia tener slots obligatorios. Si el usuario carga menos notas no debería haber problemas para publicar.
 - [ ] Administrar usuarios
 - [x] Task: "ReviewFieldCategorySlug": Revisar la implementación de un nuevo campo "categorySlug"
+- [ ] Task: "TabMetadata": Add Tab metadata to the left sidebar, separing "Contenido > Articulos, EDM, Banners" to "Metadata: Titulo, Descripcion, Imagen, etc". Se deben agregar los campos de metadata a supabase. Utilizar las skills necesarias.
+- [x] Task: "GuardarAntes": Solo se debería poder publicar si la pagina ya está guardada, de lo contrario, el boton publicar debe estar en gris y deshabilitado.
+- [] Task: "Webhooks". Crear implementación para que al publicar se dispare un webhook para revalidar las paginas estaticas de mi aplicación externa en nextjs. La implementación en NextJS es la siguiente: 
+   ``` 
+   export default async function handler(req, res) {
+      if (req.query.secret !== process.env.MY_SECRET_TOKEN) {
+         return res.status(401).json({ message: "Invalid token" });
+      }
+
+      const { slug } = req.query;
+      if (!slug) {
+         return res.status(400).json({ message: "Missing slug" });
+      }
+
+      try {
+         await res.revalidate(`/${slug}`);
+         return res.json({ revalidated: true, slug });
+      } catch (err) {
+         return res.status(500).send("Error revalidating");
+      }
+   }
+   ``` 
+   Y la recomendación sería la siguiente: 
+    ``` 
+     Desde el builder llamás:                               
+     GET /api/revalidate-page?secret=TU_TOKEN&slug=home    
+     Para slugs anidados (seccion/nota) el slug va tal
+     cual: ?slug=seccion/nota.
+    ```
+    El token en cuestión es: (P4rt1d0)2019.
+    Invocar las skills necesarias: ponytail, arquitectura, buenas practicas.
 - [ ] Agregar roles / permisos a usuarios
 - [ ] Retry/backoff en errores de Supabase
 - [ ] Configurar MCP de github para sincronizar issues

@@ -74,6 +74,8 @@ export async function saveLayout(
         version: layout.version,
         layout: layout.layout,
         is_published: false,
+        meta_description: layout.meta_description ?? null,
+        og_image_url: layout.og_image_url ?? null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
@@ -152,6 +154,17 @@ export async function createPage(input: {
   return { success: true };
 }
 
+async function revalidatePage(slug: string): Promise<void> {
+  const url = import.meta.env.VITE_REVALIDATE_URL;
+  const secret = import.meta.env.VITE_REVALIDATE_SECRET;
+  if (!url || !secret) return;
+  const res = await fetch(
+    `${url}/api/revalidate-page?secret=${encodeURIComponent(secret)}&slug=${encodeURIComponent(slug)}`
+  );
+  console.log("🔍 ~ revalidatePage ~ src/lib/supabase.ts:161 ~ res:", res);
+  if (!res.ok) throw new Error(`Revalidation webhook returned ${res.status}`);
+}
+
 export async function publishLayout(
   slug: string,
   version: number
@@ -177,6 +190,9 @@ export async function publishLayout(
     console.error("Error publishing layout:", error);
     return { success: false, error: error.message };
   }
+
+  // ponytail: fire-and-forget; DB publish already committed, don't block on webhook
+  revalidatePage(slug).catch((e) => console.warn("Revalidation webhook failed:", e));
 
   return { success: true };
 }
@@ -237,6 +253,32 @@ export async function getLocks(): Promise<PageLock[]> {
     .select("slug, locked_by")
     .gt("locked_at", lockExpiry());
   return (data as PageLock[]) ?? [];
+}
+
+function resizeToWebP(file: File, maxWidth = 1200): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxWidth / img.naturalWidth);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.naturalWidth * scale);
+      canvas.height = Math.round(img.naturalHeight * scale);
+      canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("toBlob failed")), "image/webp", 0.85);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+export async function uploadOgImage(file: File, slug: string): Promise<string> {
+  const blob = await resizeToWebP(file);
+  const path = `${slug}/og.webp`;
+  const { error } = await supabase.storage.from("og-images").upload(path, blob, { contentType: "image/webp", upsert: true });
+  if (error) throw error;
+  return supabase.storage.from("og-images").getPublicUrl(path).data.publicUrl;
 }
 
 export async function getLayoutVersions(
