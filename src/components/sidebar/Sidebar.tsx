@@ -31,26 +31,32 @@ export default function Sidebar() {
         flexShrink: 0,
       }}
     >
-      <div style={{ padding: "16px 16px 0", borderBottom: "1px solid var(--border)" }}>
-        {/* Top-level mode switcher */}
-        <div style={{ display: "flex", gap: "4px" }}>
+      <div style={{ padding: "12px 16px 0", borderBottom: "1px solid var(--border)" }}>
+        {/* Primary segmented control */}
+        <div style={{
+          display: "flex",
+          background: "var(--surface-base)",
+          borderRadius: "8px",
+          padding: "3px",
+          gap: "2px",
+          marginBottom: "12px",
+        }}>
           {(["contenido", "metadata"] as const).map((m) => (
             <button
               key={m}
               onClick={() => setMode(m)}
               style={{
                 flex: 1,
-                padding: "7px 12px",
+                padding: "6px 12px",
                 fontSize: "12px",
                 fontWeight: 600,
                 border: "none",
-                borderRadius: "6px 6px 0 0",
-                background: mode === m ? "var(--surface-base)" : "transparent",
+                borderRadius: "6px",
+                background: mode === m ? "#ffffff" : "transparent",
                 color: mode === m ? "#000000" : "var(--text-secondary)",
                 cursor: "pointer",
-                textTransform: "capitalize",
                 transition: "all 120ms ease-out",
-                borderBottom: mode === m ? "2px solid #0070f3" : "2px solid transparent",
+                boxShadow: mode === m ? "0 1px 3px rgba(0,0,0,0.12)" : "none",
               }}
             >
               {m === "contenido" ? "Contenido" : "Metadata"}
@@ -60,7 +66,7 @@ export default function Sidebar() {
 
         {/* Source sub-tabs — only in contenido mode */}
         {mode === "contenido" && (
-          <div style={{ display: "flex", gap: "4px", marginTop: "8px" }}>
+          <div style={{ display: "flex", gap: "2px" }}>
             {sources.map((source) => {
               const isActive = source.id === activeSource?.id;
               return (
@@ -69,13 +75,13 @@ export default function Sidebar() {
                   onClick={() => setActiveSourceId(source.id)}
                   style={{
                     flex: 1,
-                    padding: "7px 12px",
-                    fontSize: "12px",
+                    padding: "5px 10px",
+                    fontSize: "11px",
                     fontWeight: 500,
                     border: "none",
-                    borderRadius: "6px 6px 0 0",
-                    background: isActive ? "var(--surface-base)" : "transparent",
-                    color: isActive ? "#000000" : "var(--text-secondary)",
+                    borderRadius: "4px 4px 0 0",
+                    background: "transparent",
+                    color: isActive ? "#0070f3" : "var(--text-tertiary)",
                     cursor: "pointer",
                     transition: "all 120ms ease-out",
                     borderBottom: isActive ? "2px solid #0070f3" : "2px solid transparent",

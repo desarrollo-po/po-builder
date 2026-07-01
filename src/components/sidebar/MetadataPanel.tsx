@@ -7,30 +7,28 @@ export default function MetadataPanel() {
   const updateMetadata = useLayoutStore((s) => s.updateMetadata);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  // Local preview: initialized from saved URL, updated immediately on upload
-  // so the img appears without waiting for the store re-render cycle.
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     typeof layout?.og_image_url === "string" ? layout.og_image_url : null,
   );
 
   if (!layout) {
     return (
-      <div style={{ padding: "24px 16px", color: "var(--text-secondary)", fontSize: "13px" }}>
+      <div className="px-xl py-2xl text-text-secondary text-[13px]">
         No hay página cargada.
       </div>
     );
   }
 
   const textField = (label: string, key: "title" | "meta_description", placeholder?: string) => (
-    <div style={{ marginBottom: "20px" }}>
-      <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: "6px" }}>
+    <div className="mb-5">
+      <label className="block text-[11px] font-semibold text-text-tertiary uppercase tracking-[0.6px] mb-1.5">
         {label}
       </label>
       <input
         defaultValue={layout[key] ?? ""}
         placeholder={placeholder}
         onBlur={(e) => updateMetadata({ [key]: e.target.value } as Parameters<typeof updateMetadata>[0])}
-        style={{ width: "100%", padding: "8px 10px", fontSize: "13px", border: "1px solid var(--border)", borderRadius: "6px", background: "var(--surface-base)", color: "var(--text-primary)", boxSizing: "border-box" }}
+        className="w-full px-2.5 py-2 text-[13px] border border-surface-accent rounded-lg bg-white text-text-primary"
       />
     </div>
   );
@@ -52,48 +50,47 @@ export default function MetadataPanel() {
   };
 
   return (
-    <div style={{ padding: "20px 16px" }}>
+    <div className="px-xl py-[20px]">
       {textField("Título", "title")}
       {textField("Descripción", "meta_description", "Descripción para SEO y redes…")}
 
-      <div style={{ marginBottom: "20px" }}>
-        <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: "6px" }}>
+      <div className="mb-5">
+        <label className="block text-[11px] font-semibold text-text-tertiary uppercase tracking-[0.6px] mb-1">
           Imagen OG
         </label>
+        <div className="flex gap-2 items-start bg-surface-elevated border border-surface-accent rounded-lg px-lg py-2 mb-2">
+          <span className="text-[13px] text-text-tertiary mt-px">ℹ</span>
+          <p className="text-[11px] text-text-tertiary leading-relaxed">
+            1200×630 px recomendado (proporción 1.91:1). Mínimo 600×315 px. Se convierte a WebP automáticamente.
+          </p>
+        </div>
 
         {previewUrl && (
           <img
             src={previewUrl}
             alt="OG preview"
-            style={{ width: "100%", borderRadius: "6px", marginBottom: "8px", border: "1px solid var(--border)", display: "block" }}
+            className="w-full rounded-lg mb-2 border border-surface-accent block"
           />
         )}
 
-        <label
-          style={{
-            display: "block",
-            padding: "8px 12px",
-            fontSize: "13px",
-            textAlign: "center",
-            border: "1px dashed var(--border)",
-            borderRadius: "6px",
-            cursor: uploading ? "not-allowed" : "pointer",
-            color: uploading ? "var(--text-tertiary)" : "var(--text-secondary)",
-            background: "var(--surface-base)",
-          }}
-        >
+        <label className={`flex items-center justify-center gap-2 px-lg py-2 text-[13px] border border-dashed border-surface-accent rounded-lg bg-white transition-colors ${uploading ? "cursor-not-allowed text-text-tertiary" : "cursor-pointer text-text-secondary"}`}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+            <circle cx="9" cy="9" r="2"/>
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+          </svg>
           {uploading ? "Subiendo…" : previewUrl ? "Reemplazar imagen" : "Elegir imagen"}
           <input
             type="file"
             accept="image/*"
             disabled={uploading}
             onChange={handleImageChange}
-            style={{ display: "none" }}
+            className="hidden"
           />
         </label>
 
         {uploadError && (
-          <p style={{ margin: "6px 0 0", fontSize: "12px", color: "#e53e3e" }}>{uploadError}</p>
+          <p className="mt-1.5 text-xs text-error">{uploadError}</p>
         )}
       </div>
     </div>

@@ -28,7 +28,7 @@ WordPress GraphQL → ArticleBrowser → ArticleCard (draggable)
 
 ### Styling
 
-All components use **Tailwind**.
+**IMPORTANT**: All components use **Tailwind**.
 
 ### State — `src/store/layoutStore.ts`
 
