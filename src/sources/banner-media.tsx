@@ -135,7 +135,7 @@ function ItemCard({ item }: { item: MediaItem }) {
 
 export const bannerMedia: ContentSource<MediaItem> = {
   id: "banner-media",
-  label: "Banners",
+  label: "Banners WP",
   searchPlaceholder: "Buscar imágenes…",
   defaultPageSize: 18,
   layout: "grid",

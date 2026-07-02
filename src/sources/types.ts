@@ -23,6 +23,8 @@ export interface ContentSource<TItem> {
   // How SourceBrowser arranges items. "list" = single column vertical (default).
   // "grid" = 2-column grid (used by visual sources like banner thumbnails).
   layout?: "list" | "grid";
+  // Optional component rendered above the search bar (e.g. upload button).
+  renderHeader?: ComponentType;
   fetchPage: (
     query: string,
     after: string | null,

@@ -43,6 +43,7 @@ function GridSkeleton() {
 export default function SourceBrowser<TItem>({ source, cacheKey = "" }: Props<TItem>) {
   const [inputValue, setInputValue] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const Header = source.renderHeader;
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(inputValue.trim()), 300);
@@ -79,7 +80,9 @@ export default function SourceBrowser<TItem>({ source, cacheKey = "" }: Props<TI
   const isGrid = source.layout === "grid";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: "12px", gap: "10px" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {Header && <Header />}
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "12px", gap: "10px" }}>
       <div style={{ position: "relative" }}>
         <svg
           style={{
@@ -173,6 +176,7 @@ export default function SourceBrowser<TItem>({ source, cacheKey = "" }: Props<TI
           {isFetchingNextPage ? "Cargando…" : "Cargar más"}
         </button>
       )}
+      </div>
     </div>
   );
 }
