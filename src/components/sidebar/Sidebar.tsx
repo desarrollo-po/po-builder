@@ -76,7 +76,7 @@ export default function Sidebar() {
                   style={{
                     flex: 1,
                     padding: "5px 10px",
-                    fontSize: "11px",
+                    fontSize: "13px",
                     fontWeight: 500,
                     border: "none",
                     borderRadius: "4px 4px 0 0",

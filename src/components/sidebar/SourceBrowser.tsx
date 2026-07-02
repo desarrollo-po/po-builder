@@ -41,6 +41,44 @@ function GridSkeleton() {
 // or anything we plug in next. Layout (list vs grid), search placeholder,
 // empty-state copy and page size all come from the source.
 export default function SourceBrowser<TItem>({ source, cacheKey = "" }: Props<TItem>) {
+  const [activeSubId, setActiveSubId] = useState(() => source.subSources?.[0]?.id ?? "");
+
+  if (source.subSources?.length) {
+    const activeSub = source.subSources.find((s) => s.id === activeSubId) ?? source.subSources[0];
+    return (
+      <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        <div style={{ display: "flex", gap: "2px", padding: "0 12px", borderBottom: "1px solid var(--border)" }}>
+          {source.subSources.map((sub) => {
+            const isActive = sub.id === activeSub.id;
+            return (
+              <button
+                key={sub.id}
+                onClick={() => setActiveSubId(sub.id)}
+                style={{
+                  padding: "8px 12px",
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  border: "none",
+                  background: "transparent",
+                  color: isActive ? "#0070f3" : "var(--text-tertiary)",
+                  cursor: "pointer",
+                  borderBottom: isActive ? "2px solid #0070f3" : "2px solid transparent",
+                  transition: "all 120ms ease-out",
+                  borderRadius: 0,
+                }}
+              >
+                {sub.label}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ flex: 1, overflow: "auto" }}>
+          <SourceBrowser key={activeSub.id} source={activeSub} cacheKey={cacheKey} />
+        </div>
+      </div>
+    );
+  }
+
   const [inputValue, setInputValue] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const Header = source.renderHeader;
@@ -83,99 +121,99 @@ export default function SourceBrowser<TItem>({ source, cacheKey = "" }: Props<TI
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {Header && <Header />}
       <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "12px", gap: "10px" }}>
-      <div style={{ position: "relative" }}>
-        <svg
-          style={{
-            position: "absolute",
-            left: "10px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            width: "14px",
-            height: "14px",
-            color: "var(--text-tertiary)",
-            pointerEvents: "none",
-          }}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <input
-          type="text"
-          placeholder={source.searchPlaceholder ?? "Buscar…"}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "8px 12px 8px 32px",
-            border: "1px solid var(--border-strong)",
-            background: "#ffffff",
-            borderRadius: "8px",
-            color: "var(--text-primary)",
-            fontSize: "13px",
-            outline: "none",
-            transition: "all 150ms ease-out",
-          }}
-          onFocus={(e) => {
-            (e.target as HTMLInputElement).style.borderColor = "#0070f3";
-            (e.target as HTMLInputElement).style.boxShadow = "0 0 0 3px rgba(0,112,243,0.12)";
-          }}
-          onBlur={(e) => {
-            (e.target as HTMLInputElement).style.borderColor = "var(--border-strong)";
-            (e.target as HTMLInputElement).style.boxShadow = "none";
-          }}
-        />
-      </div>
+        <div style={{ position: "relative" }}>
+          <svg
+            style={{
+              position: "absolute",
+              left: "10px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: "14px",
+              height: "14px",
+              color: "var(--text-tertiary)",
+              pointerEvents: "none",
+            }}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder={source.searchPlaceholder ?? "Buscar…"}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "8px 12px 8px 32px",
+              border: "1px solid var(--border-strong)",
+              background: "#ffffff",
+              borderRadius: "8px",
+              color: "var(--text-primary)",
+              fontSize: "13px",
+              outline: "none",
+              transition: "all 150ms ease-out",
+            }}
+            onFocus={(e) => {
+              (e.target as HTMLInputElement).style.borderColor = "#0070f3";
+              (e.target as HTMLInputElement).style.boxShadow = "0 0 0 3px rgba(0,112,243,0.12)";
+            }}
+            onBlur={(e) => {
+              (e.target as HTMLInputElement).style.borderColor = "var(--border-strong)";
+              (e.target as HTMLInputElement).style.boxShadow = "none";
+            }}
+          />
+        </div>
 
-      {error && (
+        {error && (
+          <div
+            style={{
+              fontSize: "12px",
+              color: "#0070f3",
+              background: "rgba(0,112,243,0.07)",
+              padding: "10px 12px",
+              borderRadius: "8px",
+              border: "1px solid rgba(0,112,243,0.20)",
+            }}
+          >
+            {error instanceof Error ? error.message : "Error al cargar"}
+          </div>
+        )}
+
+        {items.length === 0 && !isLoading && debouncedQuery && (
+          <div style={{ textAlign: "center", paddingTop: "32px", color: "var(--text-tertiary)", fontSize: "13px" }}>
+            {source.emptyMessage ?? "Sin resultados"}
+          </div>
+        )}
+
         <div
-          style={{
-            fontSize: "12px",
-            color: "#0070f3",
-            background: "rgba(0,112,243,0.07)",
-            padding: "10px 12px",
-            borderRadius: "8px",
-            border: "1px solid rgba(0,112,243,0.20)",
-          }}
+          style={
+            isGrid
+              ? { flex: 1, overflowY: "auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", alignContent: "start" }
+              : { flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px" }
+          }
         >
-          {error instanceof Error ? error.message : "Error al cargar"}
-        </div>
-      )}
-
-      {items.length === 0 && !isLoading && debouncedQuery && (
-        <div style={{ textAlign: "center", paddingTop: "32px", color: "var(--text-tertiary)", fontSize: "13px" }}>
-          {source.emptyMessage ?? "Sin resultados"}
-        </div>
-      )}
-
-      <div
-        style={
-          isGrid
-            ? { flex: 1, overflowY: "auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", alignContent: "start" }
-            : { flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "8px" }
-        }
-      >
-        {isLoading
-          ? Array.from({ length: pageSize }, (_, i) =>
+          {isLoading
+            ? Array.from({ length: pageSize }, (_, i) =>
               isGrid ? <GridSkeleton key={i} /> : <ListSkeleton key={i} />
             )
-          : items.map((item) => {
+            : items.map((item) => {
               const ItemCard = source.ItemCard;
               return <ItemCard key={source.getItemKey(item)} item={item} />;
             })
-        }
-      </div>
+          }
+        </div>
 
-      {hasNextPage && (
-        <button
-          onClick={() => fetchNextPage()}
-          disabled={isFetchingNextPage}
-          className="w-full rounded-lg border border-surface-inset bg-white py-2 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-accent hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isFetchingNextPage ? "Cargando…" : "Cargar más"}
-        </button>
-      )}
+        {hasNextPage && (
+          <button
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="w-full rounded-lg border border-surface-inset bg-white py-2 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-accent hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isFetchingNextPage ? "Cargando…" : "Cargar más"}
+          </button>
+        )}
       </div>
     </div>
   );
