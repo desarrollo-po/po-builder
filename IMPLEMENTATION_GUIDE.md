@@ -225,7 +225,7 @@ Pendientes:
 - [x] Task: "ReviewFieldCategorySlug": Revisar la implementación de un nuevo campo "categorySlug"
 - [ ] Task: "TabMetadata": Add Tab metadata to the left sidebar, separing "Contenido > Articulos, EDM, Banners" to "Metadata: Titulo, Descripcion, Imagen, etc". Se deben agregar los campos de metadata a supabase. Utilizar las skills necesarias.
 - [x] Task: "GuardarAntes": Solo se debería poder publicar si la pagina ya está guardada, de lo contrario, el boton publicar debe estar en gris y deshabilitado.
-- [] Task: "Webhooks". Crear implementación para que al publicar se dispare un webhook para revalidar las paginas estaticas de mi aplicación externa en nextjs. La implementación en NextJS es la siguiente: 
+- [x] Task: "Webhooks". Crear implementación para que al publicar se dispare un webhook para revalidar las paginas estaticas de mi aplicación externa en nextjs. La implementación en NextJS es la siguiente: 
    ``` 
    export default async function handler(req, res) {
       if (req.query.secret !== process.env.MY_SECRET_TOKEN) {
@@ -254,6 +254,7 @@ Pendientes:
     ```
     El token en cuestión es: (P4rt1d0)2019.
     Invocar las skills necesarias: ponytail, arquitectura, buenas practicas.
+- [x] Task: "BannerStorage". Modificar la pestaña de banners para que se pueda subir imagenes a supabase directamente y no buscar en wordpress. El bucket debe llamarse banners. Debe haber un sistema de compresión y restricción de imagenes pesadas. No aceptar imagenes de mas de 3MB. Y de dimension 1920x1080. Las imagenes pueden ser .jpg .jpeg .png .webp. La implementación de la búsqueda en wordpress no debe eliminarse ya que es una prueba de concepto.
 - [ ] Agregar roles / permisos a usuarios
 - [ ] Retry/backoff en errores de Supabase
 - [ ] Configurar MCP de github para sincronizar issues
