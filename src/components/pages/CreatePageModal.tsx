@@ -14,7 +14,6 @@ export default function CreatePageModal({ existingSlugs, onClose, onCreated }: P
   const navigate = useNavigate();
   const [slug, setSlug] = useState("");
   const [title, setTitle] = useState("");
-  const [tagSlug, setTagSlug] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +37,7 @@ export default function CreatePageModal({ existingSlugs, onClose, onCreated }: P
     const result = await createPage({
       slug: slug.trim(),
       title: title.trim(),
-      tag_slug: tagSlug.trim() || null,
+      tag_slug: slug.trim() || null,
     });
     setSubmitting(false);
     if (!result.success) {
@@ -65,8 +64,11 @@ export default function CreatePageModal({ existingSlugs, onClose, onCreated }: P
             <h2 className="mb-1 text-[18px] font-semibold text-text-primary">
               Crear nueva página
             </h2>
-            <p className="m-0 text-[13px] text-text-secondary">
-              El slug será la URL en el sitio público (<code>/[slug]</code>).
+            <p className="m-0 flex items-baseline gap-px text-[13px] text-text-secondary">
+              <span>https://prensaobrera.com/<span className="font-bold">{slug ||
+                <span className="animate-pulse w-1 text-lg">
+                  _
+                </span>}</span></span>
             </p>
           </div>
           <button
@@ -85,7 +87,7 @@ export default function CreatePageModal({ existingSlugs, onClose, onCreated }: P
             <input
               type="text"
               value={slug}
-              onChange={(e) => setSlug(e.target.value)}
+              onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))}
               placeholder="paro-general"
               autoFocus
               className="rounded-md border border-surface-inset bg-white px-3 py-2 text-[13px] text-text-primary outline-none placeholder:text-text-tertiary/60 focus:border-input-focus"
@@ -112,8 +114,7 @@ export default function CreatePageModal({ existingSlugs, onClose, onCreated }: P
             </span>
             <input
               type="text"
-              value={tagSlug}
-              onChange={(e) => setTagSlug(e.target.value)}
+              value={slug}
               placeholder="paro-general"
               className="rounded-md border border-surface-inset bg-white px-3 py-2 text-[13px] text-text-primary outline-none placeholder:text-text-tertiary/60 focus:border-input-focus"
             />
