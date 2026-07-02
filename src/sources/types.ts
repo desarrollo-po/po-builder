@@ -20,6 +20,8 @@ export interface ContentSource<TItem> {
   label: string;                               // tab label shown to the user
   searchPlaceholder?: string;
   defaultPageSize?: number;
+  // When set, this source renders sub-tabs instead of its own fetchPage.
+  subSources?: ContentSource<unknown>[];
   // How SourceBrowser arranges items. "list" = single column vertical (default).
   // "grid" = 2-column grid (used by visual sources like banner thumbnails).
   layout?: "list" | "grid";

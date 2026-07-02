@@ -37,40 +37,19 @@ function UploadHeader() {
   }
 
   return (
-    <div style={{ padding: "8px 12px", borderBottom: "1px solid var(--border)", background: "#fff" }}>
-      <label
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          padding: "6px 12px",
-          background: uploading ? "var(--surface-accent)" : "#0070f3",
-          color: "#fff",
-          borderRadius: "6px",
-          fontSize: "12px",
-          fontWeight: 600,
-          cursor: uploading ? "default" : "pointer",
-          opacity: uploading ? 0.7 : 1,
-          transition: "opacity 120ms",
-          userSelect: "none",
-        }}
-      >
-        <input
-          type="file"
-          accept=".jpg,.jpeg,.png,.webp"
-          style={{ display: "none" }}
-          onChange={handleChange}
-          disabled={uploading}
-        />
-        {uploading ? "Subiendo…" : "↑ Subir imagen"}
+    <div className="px-3 py-2 border-b border-[var(--border)] bg-white flex flex-col gap-1.5">
+      <label className={`flex items-center justify-center gap-2 px-3 py-2 text-[13px] border border-dashed border-[var(--surface-accent)] rounded-lg bg-white transition-colors ${uploading ? "cursor-not-allowed text-[var(--text-tertiary)]" : "cursor-pointer text-[var(--text-secondary)] hover:border-[#0070f3] hover:text-[#0070f3]"}`}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+          <circle cx="9" cy="9" r="2"/>
+          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+        </svg>
+        {uploading ? "Subiendo…" : "Subir imagen"}
+        <input type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden" onChange={handleChange} disabled={uploading} />
       </label>
-      <span style={{ marginLeft: "8px", fontSize: "10.5px", color: "var(--text-tertiary)" }}>
-        JPG · PNG · WebP · máx 3 MB · 1920×1080
-      </span>
+      <p className="text-[10.5px] text-[var(--text-tertiary)] text-center">JPG · PNG · WebP · máx 3 MB · 1920×1080</p>
       {error && (
-        <div style={{ marginTop: "6px", fontSize: "11px", color: "#d32f2f", background: "rgba(211,47,47,0.06)", padding: "6px 8px", borderRadius: "4px" }}>
-          {error}
-        </div>
+        <p className="text-[11px] text-[#d32f2f] bg-[rgba(211,47,47,0.06)] px-2 py-1.5 rounded">{error}</p>
       )}
     </div>
   );

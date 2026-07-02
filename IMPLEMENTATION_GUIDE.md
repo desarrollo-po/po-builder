@@ -255,6 +255,7 @@ Pendientes:
     El token en cuestión es: (P4rt1d0)2019.
     Invocar las skills necesarias: ponytail, arquitectura, buenas practicas.
 - [x] Task: "BannerStorage". Modificar la pestaña de banners para que se pueda subir imagenes a supabase directamente y no buscar en wordpress. El bucket debe llamarse banners. Debe haber un sistema de compresión y restricción de imagenes pesadas. No aceptar imagenes de mas de 3MB. Y de dimension 1920x1080. Las imagenes pueden ser .jpg .jpeg .png .webp. La implementación de la búsqueda en wordpress no debe eliminarse ya que es una prueba de concepto.
+- [ ] Task: "BannersUnificados" La sección de banners deberia ser una sola. Y ahi dentro separar en "banners wp" y "subir el propio banner" todo bajo el mismo Tab "Banners".
 - [ ] Agregar roles / permisos a usuarios
 - [ ] Retry/backoff en errores de Supabase
 - [ ] Configurar MCP de github para sincronizar issues
