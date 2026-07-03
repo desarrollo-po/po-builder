@@ -41,7 +41,37 @@ export default function DragOverlayContent() {
     );
   }
 
+  // Dragging a raw HTML/code block from the sidebar
+  if (activeData?.type === "code") {
+    return <CodePreview />;
+  }
+
   return null;
+}
+
+function CodePreview() {
+  return (
+    <div
+      style={{
+        width: "240px",
+        aspectRatio: "3 / 1",
+        background: "var(--surface-accent)",
+        border: "1px solid var(--accent)",
+        borderRadius: "var(--radius-lg)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "monospace",
+        fontSize: "20px",
+        color: "var(--text-tertiary)",
+        boxShadow: "var(--shadow-lg)",
+        opacity: 0.9,
+        pointerEvents: "none",
+      }}
+    >
+      {"</>"}
+    </div>
+  );
 }
 
 function BannerPreview({ imageUrl, altText }: { imageUrl: string; altText: string }) {

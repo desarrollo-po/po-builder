@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import type { ArticleBlock, Block, SlotVariant } from "../../types/layout";
 import {
   BannerCard,
+  CodeCard,
   MainLeftArticle,
   MainRightArticle,
   NotaEDM,
@@ -45,6 +46,10 @@ export default function BlockRenderer({ block, variant }: Props) {
 
   if (block.type === "banner") {
     return <BannerCard banner={block} />;
+  }
+
+  if (block.type === "code") {
+    return <CodeCard code={block} />;
   }
 
   const ArticleCard = ARTICLE_CARDS[variant];

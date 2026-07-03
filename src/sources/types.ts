@@ -27,6 +27,10 @@ export interface ContentSource<TItem> {
   layout?: "list" | "grid";
   // Optional component rendered above the search bar (e.g. upload button).
   renderHeader?: ComponentType;
+  // When true, SourceBrowser renders only renderHeader — no search bar,
+  // fetched list, or pagination. For tabs that author content (e.g. a raw
+  // HTML form) rather than browse an existing collection.
+  formOnly?: boolean;
   fetchPage: (
     query: string,
     after: string | null,

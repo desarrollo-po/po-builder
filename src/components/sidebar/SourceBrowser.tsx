@@ -112,10 +112,19 @@ export default function SourceBrowser<TItem>({ source, cacheKey = "" }: Props<TI
       getNextPageParam: (lastPage) =>
         lastPage.pageInfo.hasNextPage ? lastPage.pageInfo.endCursor : undefined,
       staleTime: 1000 * 60 * 2,
+      enabled: !source.formOnly,
     });
 
   const items = data?.pages.flatMap((p) => p.items) ?? [];
   const isGrid = source.layout === "grid";
+
+  // Authoring-only tabs (e.g. raw HTML) skip the search/pagination chrome —
+  // renderHeader is the whole UI.
+  if (source.formOnly) {
+    return (
+      <div style={{ flex: 1, overflow: "auto" }}>{Header && <Header />}</div>
+    );
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>

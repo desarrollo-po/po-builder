@@ -91,13 +91,21 @@ export interface BannerBlock {
   openInNewTab: boolean;
 }
 
-export type Block = ArticleBlock | BannerBlock;
+// Raw HTML/iframe embed. Lands in the same slots as banners (full-width,
+// variant-agnostic) — see slotAcceptsBanner.
+export interface CodeBlock {
+  type: "code";
+  html: string;
+}
+
+export type Block = ArticleBlock | BannerBlock | CodeBlock;
 
 export interface DragItem {
-  type: "article" | "banner";
+  type: "article" | "banner" | "code";
   articleId?: string;
   snapshot?: ArticleBlock["snapshot"];
   bannerData?: Omit<BannerBlock, "type">;
+  html?: string;
 }
 
 export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {

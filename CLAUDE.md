@@ -13,6 +13,8 @@ npm run preview    # Preview production build
 
 ## Workflow & Rules
 **Always** bring context-7-mcp and ponytail skill. For each code change you must bring improve-codebase-architecture skill in order to keep architecture consistant and coherent.
+**Styling**: ALL styles MUST use Tailwind classes. No inline styles, no CSS modules, no styled-components.
+**Data Fetching**: Use react query for all data fetching.
 
 ## Architecture
 
