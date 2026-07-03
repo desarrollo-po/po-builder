@@ -5,6 +5,7 @@ import {
   slotAcceptsBanner,
   type ArticleBlock,
   type BannerBlock,
+  type CodeBlock,
 } from "../types/layout";
 
 export default function useDragHandlers() {
@@ -18,9 +19,11 @@ export default function useDragHandlers() {
     const activeData = active.data.current;
     const overData = over.data.current;
 
-    // Sidebar article / banner → slot
+    // Sidebar article / banner / code → slot
     if (
-      (activeData?.type === "article" || activeData?.type === "banner") &&
+      (activeData?.type === "article" ||
+        activeData?.type === "banner" ||
+        activeData?.type === "code") &&
       overData?.kind === "slot"
     ) {
       const region = layout.layout.find((r) => r.id === overData.regionId);
@@ -28,13 +31,16 @@ export default function useDragHandlers() {
       const variant = slotVariantAt(region.template, overData.slotIndex);
       if (!variant) return;
 
-      const expectsBanner = slotAcceptsBanner(variant);
-      const droppedBanner = activeData.type === "banner";
+      // Banner-variant slots are the generic full-width media slots — banners
+      // and raw-HTML/iframe code blocks share them.
+      const expectsMedia = slotAcceptsBanner(variant);
+      const droppedMedia =
+        activeData.type === "banner" || activeData.type === "code";
 
       // Refuse mismatched payloads (e.g. dropping an article into a banner slot).
-      if (expectsBanner !== droppedBanner) return;
+      if (expectsMedia !== droppedMedia) return;
 
-      if (droppedBanner) {
+      if (activeData.type === "banner") {
         const banner: BannerBlock = {
           type: "banner",
           mediaId: activeData.bannerData?.mediaId,
@@ -44,6 +50,9 @@ export default function useDragHandlers() {
           openInNewTab: Boolean(activeData.bannerData.openInNewTab),
         };
         setSlotBlock(overData.regionId, overData.slotIndex, banner);
+      } else if (activeData.type === "code") {
+        const code: CodeBlock = { type: "code", html: activeData.html ?? "" };
+        setSlotBlock(overData.regionId, overData.slotIndex, code);
       } else {
         const article: ArticleBlock = {
           type: "article",

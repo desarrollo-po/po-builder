@@ -5,6 +5,7 @@ import {
   TEMPLATE_SPECS,
   type ArticleBlock,
   type BannerBlock,
+  type CodeBlock,
   type Block,
   type Region,
   type SlotVariant,
@@ -311,7 +312,7 @@ function variantLabel(variant: SlotVariant): string {
 
 function emptyHintForVariant(variant: SlotVariant, isDragging: boolean): string {
   if (!isDragging) return "Slot vacío";
-  return variant === "banner" ? "Soltar banner aquí" : "Soltar nota aquí";
+  return variant === "banner" ? "Soltar banner o código aquí" : "Soltar nota aquí";
 }
 
 interface SlotBlockProps {
@@ -337,12 +338,14 @@ function SlotBlock({ regionId, slotIndex, variant, block }: SlotBlockProps) {
     >
       {block.type === "article" ? (
         <SlotArticleBody variant={variant} article={block} />
-      ) : (
+      ) : block.type === "banner" ? (
         <SlotBannerBody
           regionId={regionId}
           slotIndex={slotIndex}
           banner={block}
         />
+      ) : (
+        <SlotCodeBody code={block} />
       )}
       <button
         onClick={(e) => {
@@ -350,7 +353,13 @@ function SlotBlock({ regionId, slotIndex, variant, block }: SlotBlockProps) {
           clearSlot(regionId, slotIndex);
         }}
         onPointerDown={(e) => e.stopPropagation()}
-        title={block.type === "banner" ? "Quitar banner" : "Quitar nota"}
+        title={
+          block.type === "banner"
+            ? "Quitar banner"
+            : block.type === "code"
+              ? "Quitar código"
+              : "Quitar nota"
+        }
         className="absolute right-1.5 top-1.5 z-[2] flex h-[22px] w-[22px] items-center justify-center border border-surface-inset bg-white/90 p-0 text-xs leading-none text-text-secondary"
       >
         ×
@@ -400,6 +409,19 @@ function SlotBannerBody({
             }`}
         />
       </div>
+    </div>
+  );
+}
+
+// ── Code: raw HTML/iframe — no live render in-canvas, an embedded iframe
+// would swallow the pointer events drag-and-drop needs. ────────────────────
+function SlotCodeBody({ code }: { code: CodeBlock }) {
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-1.5 bg-surface-accent p-3 text-center">
+      <span className="font-mono text-base leading-none text-text-tertiary">{"</>"}</span>
+      <p className="line-clamp-3 break-all text-[10.5px] text-text-tertiary">
+        {code.html.trim() || "Sin contenido"}
+      </p>
     </div>
   );
 }

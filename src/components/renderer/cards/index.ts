@@ -10,3 +10,4 @@ export { default as SecondaryTextArticle } from "./SecondaryTextArticle";
 export { default as NotaEDM } from "./NotaEDM";
 export { default as NotaEDMVertical } from "./NotaEDMVertical";
 export { default as BannerCard } from "./BannerCard";
+export { default as CodeCard } from "./CodeCard";
