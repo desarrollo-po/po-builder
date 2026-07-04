@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { useLayoutStore } from "../../store/layoutStore";
 import {
@@ -37,6 +37,9 @@ export default function RegionTemplate({ region }: Props) {
   }
   if (region.template === "edm-horizontal") {
     return <EdmHorizontalTemplate region={region} />;
+  }
+  if (region.template === "code-region") {
+    return <CodeRegionTemplate region={region} />;
   }
 
   const spec = TEMPLATE_SPECS[region.template];
@@ -188,6 +191,55 @@ function EdmHorizontalTemplate({ region }: { region: Region }) {
   );
 }
 
+function CodeRegionTemplate({ region }: { region: Region }) {
+  const setCodeColumns = useLayoutStore((s) => s.setCodeColumns);
+  const removeCodeColumn = useLayoutStore((s) => s.removeCodeColumn);
+  const columns = region.codeColumns ?? 1;
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => setCodeColumns(region.id, columns - 1)}
+          disabled={columns <= 1}
+          title="Quitar columna"
+          className="flex h-[26px] w-[26px] items-center justify-center rounded-md border border-surface-inset bg-white text-sm font-semibold text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          −
+        </button>
+        <span className="w-5 text-center text-[12px] font-semibold text-text-primary">
+          {columns}
+        </span>
+        <button
+          type="button"
+          onClick={() => setCodeColumns(region.id, columns + 1)}
+          disabled={columns >= 4}
+          title="Agregar columna"
+          className="flex h-[26px] w-[26px] items-center justify-center rounded-md border border-surface-inset bg-white text-sm font-semibold text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          +
+        </button>
+      </div>
+
+      <div className="flex min-h-[120px] gap-2.5">
+        {Array.from({ length: columns }, (_, i) => (
+          <div key={i} style={{ width: `calc((100% - ${(columns - 1) * 10}px) / ${columns})` }}>
+            <SlotCell
+              regionId={region.id}
+              slotIndex={i}
+              variant="code"
+              gridArea=""
+              block={region.blocks[i] ?? null}
+              onRemoveColumn={columns > 1 ? () => removeCodeColumn(region.id, i) : undefined}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface SlotCellProps {
   regionId: string;
   slotIndex: number;
@@ -197,9 +249,14 @@ interface SlotCellProps {
   // When true, the slot fills its parent (used by composite templates like
   // cuadricula where the parent dictates height via flex).
   fullSize?: boolean;
+  // code-region only: deletes this column entirely (not just its content).
+  // Shown next to the empty-slot "+" — clear the content first to reach it.
+  onRemoveColumn?: () => void;
 }
 
-function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize }: SlotCellProps) {
+function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onRemoveColumn }: SlotCellProps) {
+  const setSlotBlock = useLayoutStore((s) => s.setSlotBlock);
+  const [isCreating, setIsCreating] = useState(false);
   const { active } = useDndContext();
   const { setNodeRef, isOver } = useDroppable({
     id: `slot:${regionId}:${slotIndex}`,
@@ -240,6 +297,44 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize }: S
       ) : (
         <EmptySlotHint variant={variant} active={isDraggingSomething} isOver={isOver} />
       )}
+      {!block && variant === "code" && (
+        <div className="absolute right-1.5 top-1.5 z-[2] flex items-center gap-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsCreating(true);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            title="Agregar contenido"
+            className="flex h-[26px] w-[26px] items-center justify-center rounded-md border border-surface-inset bg-white/90 p-0 text-lg leading-none text-text-secondary"
+          >
+            +
+          </button>
+          {onRemoveColumn && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemoveColumn();
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              title="Eliminar columna"
+              className="flex h-[26px] w-[26px] items-center justify-center rounded-md border border-surface-inset bg-white/90 p-0 text-lg leading-none text-text-secondary"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      )}
+      {isCreating && (
+        <CodeEditModal
+          title="Agregar contenido"
+          initialHtml=""
+          onSave={(html) => setSlotBlock(regionId, slotIndex, { type: "code", html })}
+          onClose={() => setIsCreating(false)}
+        />
+      )}
     </div>
   );
 }
@@ -264,6 +359,8 @@ function minHeightClassFor(variant: SlotVariant): string {
       return "min-h-[160px]";
     case "banner":
       return "min-h-[120px]";
+    case "code":
+      return "min-h-[200px]";
   }
 }
 
@@ -307,11 +404,14 @@ function variantLabel(variant: SlotVariant): string {
       return "Nota EDM (horizontal)";
     case "banner":
       return "Banner";
+    case "code":
+      return "Código, nota o banner";
   }
 }
 
 function emptyHintForVariant(variant: SlotVariant, isDragging: boolean): string {
   if (!isDragging) return "Slot vacío";
+  if (variant === "code") return "Soltar nota, banner o código aquí";
   return variant === "banner" ? "Soltar banner o código aquí" : "Soltar nota aquí";
 }
 
@@ -323,7 +423,7 @@ interface SlotBlockProps {
 }
 
 function SlotBlock({ regionId, slotIndex, variant, block }: SlotBlockProps) {
-  const { clearSlot } = useLayoutStore();
+  const clearSlot = useLayoutStore((s) => s.clearSlot);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `slot-article:${regionId}:${slotIndex}`,
     data: { kind: "slot-article", regionId, slotIndex },
@@ -345,25 +445,28 @@ function SlotBlock({ regionId, slotIndex, variant, block }: SlotBlockProps) {
           banner={block}
         />
       ) : (
-        <SlotCodeBody code={block} />
+        <SlotCodeBody regionId={regionId} slotIndex={slotIndex} code={block} variant={variant} />
       )}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          clearSlot(regionId, slotIndex);
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-        title={
-          block.type === "banner"
-            ? "Quitar banner"
-            : block.type === "code"
-              ? "Quitar código"
-              : "Quitar nota"
-        }
-        className="absolute right-1.5 top-1.5 z-[2] flex h-[22px] w-[22px] items-center justify-center border border-surface-inset bg-white/90 p-0 text-xs leading-none text-text-secondary"
-      >
-        ×
-      </button>
+      {variant === "code" && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            clearSlot(regionId, slotIndex);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          title={
+            block.type === "banner"
+              ? "Quitar banner"
+              : block.type === "code"
+                ? "Quitar código"
+                : "Quitar nota"
+          }
+          className="absolute right-1.5 top-1.5 z-[2] flex h-[26px] w-[26px] items-center justify-center rounded-md border border-surface-inset bg-white/90 p-0 text-lg leading-none text-text-secondary"
+        >
+          ×
+        </button>
+      )}
     </div>
   );
 }
@@ -415,13 +518,119 @@ function SlotBannerBody({
 
 // ── Code: raw HTML/iframe — no live render in-canvas, an embedded iframe
 // would swallow the pointer events drag-and-drop needs. ────────────────────
-function SlotCodeBody({ code }: { code: CodeBlock }) {
+function SlotCodeBody({
+  regionId,
+  slotIndex,
+  code,
+  variant,
+}: {
+  regionId: string;
+  slotIndex: number;
+  code: CodeBlock;
+  variant: SlotVariant;
+}) {
+  const updateCodeHtml = useLayoutStore((s) => s.updateCodeHtml);
+  const [isEditing, setIsEditing] = useState(false);
+
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-1.5 bg-surface-accent p-3 text-center">
-      <span className="font-mono text-base leading-none text-text-tertiary">{"</>"}</span>
-      <p className="line-clamp-3 break-all text-[10.5px] text-text-tertiary">
-        {code.html.trim() || "Sin contenido"}
-      </p>
+    <>
+      <div className="flex h-full flex-col items-center justify-center gap-1.5 bg-surface-accent p-3 text-center">
+        <span className="font-mono text-base leading-none text-text-tertiary">{"</>"}</span>
+        <p className="line-clamp-3 break-all text-[10.5px] text-text-tertiary">
+          {code.html.trim() || "Sin contenido"}
+        </p>
+      </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsEditing(true);
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        title="Editar código"
+        className={`absolute top-1.5 z-[2] flex h-[26px] w-[26px] items-center justify-center border border-surface-inset bg-white/90 p-0 text-lg leading-none text-text-secondary ${variant === "code" ? "right-8" : "right-1.5"}`}
+      >
+        ✎
+      </button>
+      {isEditing && (
+        <CodeEditModal
+          title="Editar código"
+          initialHtml={code.html}
+          onSave={(html) => updateCodeHtml(regionId, slotIndex, html)}
+          onClose={() => setIsEditing(false)}
+        />
+      )}
+    </>
+  );
+}
+
+// Editing/creating happens in a fixed-position modal, not inline in the slot
+// cell — the slot is too small for a usable textarea and a modal can't
+// disturb the region's grid or sibling blocks. Mirrors AddRegionModal's
+// overlay pattern. Shared between the pencil-edit flow (SlotCodeBody) and
+// the empty-slot quick-create flow (SlotCell, code-region only) via onSave.
+function CodeEditModal({
+  title,
+  initialHtml,
+  onSave,
+  onClose,
+}: {
+  title: string;
+  initialHtml: string;
+  onSave: (html: string) => void;
+  onClose: () => void;
+}) {
+  const [html, setHtml] = useState(initialHtml);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="flex w-[min(560px,92vw)] flex-col gap-3.5 rounded-xl border border-surface-inset bg-white p-6 shadow-lg">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="m-0 text-[16px] font-semibold text-text-primary">
+            {title}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            title="Cerrar"
+            className="border-none bg-transparent px-1 text-3xl leading-0 text-text-tertiary hover:text-text-primary"
+          >
+            ×
+          </button>
+        </div>
+
+        <textarea
+          value={html}
+          onChange={(e) => setHtml(e.target.value)}
+          rows={8}
+          className="w-full resize-y rounded-lg border border-border-strong bg-white p-3 font-mono text-xs text-text-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+        />
+
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md border border-surface-inset bg-white px-4 py-[7px] text-[13px] font-medium text-text-secondary hover:bg-surface-base"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onSave(html);
+              onClose();
+            }}
+            className="rounded-md border-none bg-success px-4 py-[7px] text-[13px] font-semibold text-white hover:brightness-110"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -453,5 +662,9 @@ function SlotArticleBody({
     case "banner":
       // Article blocks never appear in banner slots (gated by useDragHandlers).
       return null;
+    case "code":
+      // code-region slots accept articles too — SecondarySmallArticle is a
+      // reasonable default visual across the region's 1-4 column widths.
+      return <SecondarySmallArticle article={article} />;
   }
 }

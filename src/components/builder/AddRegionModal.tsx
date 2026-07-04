@@ -13,6 +13,7 @@ const TEMPLATE_ORDER: TemplateId[] = [
   "mas-notas-edm",
   "edm-horizontal",
   "banner",
+  "code-region",
 ];
 
 export default function AddRegionModal() {

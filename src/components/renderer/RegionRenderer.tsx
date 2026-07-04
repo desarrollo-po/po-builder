@@ -23,6 +23,9 @@ export default function RegionRenderer({ region }: Props) {
   if (region.template === "edm-horizontal") {
     return <EdmHorizontalRender region={region} />;
   }
+  if (region.template === "code-region") {
+    return <CodeRegionRender region={region} />;
+  }
 
   const spec = TEMPLATE_SPECS[region.template];
 
@@ -114,6 +117,24 @@ function EdmHorizontalRender({ region }: { region: Region }) {
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+function CodeRegionRender({ region }: { region: Region }) {
+  const columns = region.codeColumns ?? 1;
+
+  return (
+    <section
+      data-region-template="code-region"
+      className="flex"
+      style={{ gap: "18px" }}
+    >
+      {Array.from({ length: columns }, (_, i) => (
+        <div key={i} style={{ width: `calc((100% - ${(columns - 1) * 18}px) / ${columns})` }}>
+          <BlockRenderer block={region.blocks[i] ?? null} variant="code" />
+        </div>
+      ))}
     </section>
   );
 }
