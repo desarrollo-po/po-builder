@@ -2,7 +2,7 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { useLayoutStore } from "../store/layoutStore";
 import {
   slotVariantAt,
-  slotAcceptsBanner,
+  slotAccepts,
   type ArticleBlock,
   type BannerBlock,
   type CodeBlock,
@@ -31,14 +31,9 @@ export default function useDragHandlers() {
       const variant = slotVariantAt(region.template, overData.slotIndex);
       if (!variant) return;
 
-      // Banner-variant slots are the generic full-width media slots — banners
-      // and raw-HTML/iframe code blocks share them.
-      const expectsMedia = slotAcceptsBanner(variant);
-      const droppedMedia =
-        activeData.type === "banner" || activeData.type === "code";
-
       // Refuse mismatched payloads (e.g. dropping an article into a banner slot).
-      if (expectsMedia !== droppedMedia) return;
+      // Code-variant slots (code-region) accept any block type.
+      if (!slotAccepts(variant, activeData.type)) return;
 
       if (activeData.type === "banner") {
         const banner: BannerBlock = {
@@ -73,15 +68,18 @@ export default function useDragHandlers() {
         return;
       }
 
-      // Don't allow swapping if it would mix banner and article slots between
-      // regions whose variants don't match (e.g. moving a banner into a card slot).
+      // Don't allow swapping if either block ends up in a slot that doesn't
+      // accept its type (e.g. moving a banner into an article-only slot).
       const fromRegion = layout.layout.find((r) => r.id === activeData.regionId);
       const toRegion = layout.layout.find((r) => r.id === overData.regionId);
       if (!fromRegion || !toRegion) return;
       const fromVariant = slotVariantAt(fromRegion.template, activeData.slotIndex);
       const toVariant = slotVariantAt(toRegion.template, overData.slotIndex);
       if (!fromVariant || !toVariant) return;
-      if (slotAcceptsBanner(fromVariant) !== slotAcceptsBanner(toVariant)) return;
+      const fromBlock = fromRegion.blocks[activeData.slotIndex];
+      const toBlock = toRegion.blocks[overData.slotIndex];
+      if (fromBlock && !slotAccepts(toVariant, fromBlock.type)) return;
+      if (toBlock && !slotAccepts(fromVariant, toBlock.type)) return;
 
       swapSlots(
         activeData.regionId,

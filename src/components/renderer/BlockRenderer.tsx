@@ -31,6 +31,7 @@ const ARTICLE_CARDS: Record<
   "nota-edm": NotaEDM,
   "nota-edm-vertical": NotaEDMVertical,
   banner: null, // article never lands in a banner slot — gated by useDragHandlers
+  code: SecondarySmallArticle, // code-region slots accept articles too
 };
 
 interface Props {
