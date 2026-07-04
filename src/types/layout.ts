@@ -19,6 +19,7 @@ export type TemplateId =
   | "dos-notas-secundarias"
   | "tres-notas-secundarias"
   | "cuatro-notas-secundarias"
+  | "dos-notas-sin-foto"
   | "cuatro-notas-sin-foto"
   | "cuadricula"
   | "mas-notas-edm"
@@ -164,6 +165,16 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
       { variant: "secondary-small", gridArea: "b" },
       { variant: "secondary-small", gridArea: "c" },
       { variant: "secondary-small", gridArea: "d" },
+    ],
+  },
+  "dos-notas-sin-foto": {
+    label: "2 notas secundarias sin foto",
+    slotsCount: 2,
+    gridTemplateColumns: "1fr 1fr",
+    gridTemplateAreas: `"a b"`,
+    slots: [
+      { variant: "secondary-text", gridArea: "a" },
+      { variant: "secondary-text", gridArea: "b" },
     ],
   },
   "cuatro-notas-sin-foto": {
