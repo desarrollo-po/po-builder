@@ -6,6 +6,7 @@ import { displayName } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 import CreatePageModal from "./CreatePageModal";
 import favicon from "../../assets/favicon-32x32.png";
+import { dateFormater } from "../../helpers/dateFormater";
 
 export default function PagesList() {
   const navigate = useNavigate();
@@ -47,6 +48,7 @@ export default function PagesList() {
   });
 
   const pages = data?.pages ?? [];
+  console.log("🔍 ~ PagesList ~ src/components/pages/PagesList.tsx:49 ~ pages:", pages);
   const locks = data?.locks ?? new Map<string, string>();
 
   return (
@@ -217,15 +219,25 @@ export default function PagesList() {
                       </span>
                     )}
                     {p.is_published ? (
-                      <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                        <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                        Publicada
-                      </span>
+                      <div className="flex flex-col gap-2 items-end">
+                        <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                          <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                          Publicada
+                        </div>
+                        <div className="text-[11px] font-medium text-text-secondary">
+                          <span className="font-bold">Última modificación:</span> {dateFormater(p.updated_at)}
+                        </div>
+                      </div>
                     ) : (
-                      <span className="flex items-center gap-1.5 rounded-full bg-[#0070f3]/10 px-2.5 py-1 text-xs font-medium text-[#0070f3]">
-                        <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#0070f3]" />
-                        Borrador
-                      </span>
+                      <div className="flex flex-col gap-2 items-end">
+                        <span className="flex items-center gap-1.5 rounded-full bg-[#0070f3]/10 px-2.5 py-1 text-xs font-medium text-[#0070f3]">
+                          <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#0070f3]" />
+                          Borrador
+                        </span>
+                        <span className="text-[11px] font-medium text-text-secondary">
+                          <span className="font-bold">Última modificación:</span> {dateFormater(p.updated_at)}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </button>
