@@ -61,6 +61,20 @@ export async function loadLayout(slug: string): Promise<PageLayout | null> {
   return data || null;
 }
 
+const DRAFT_RETENTION = 5; // last N unpublished versions kept per slug
+
+// Fire-and-forget: saveLayout never updates in place, so page_layouts grows
+// one row per save. Published rows are exempt regardless of age/version.
+async function pruneOldDrafts(slug: string, currentVersion: number): Promise<void> {
+  const { error } = await supabase
+    .from("page_layouts")
+    .delete()
+    .eq("slug", slug)
+    .eq("is_published", false)
+    .lt("version", currentVersion - DRAFT_RETENTION);
+  if (error) console.warn("Prune old drafts failed:", error);
+}
+
 export async function saveLayout(
   layout: PageLayout
 ): Promise<{ success: boolean; id?: string; error?: string }> {
@@ -87,6 +101,8 @@ export async function saveLayout(
     console.error("Error saving layout:", error);
     return { success: false, error: error.message };
   }
+
+  pruneOldDrafts(layout.slug, layout.version).catch(() => {});
 
   return { success: true, id: data?.id };
 }
@@ -161,7 +177,6 @@ async function revalidatePage(slug: string): Promise<void> {
   const res = await fetch(
     `${url}/api/revalidate-page?secret=${encodeURIComponent(secret)}&slug=${encodeURIComponent(slug)}`
   );
-  console.log("🔍 ~ revalidatePage ~ src/lib/supabase.ts:161 ~ res:", res);
   if (!res.ok) throw new Error(`Revalidation webhook returned ${res.status}`);
 }
 
