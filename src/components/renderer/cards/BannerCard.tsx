@@ -12,7 +12,7 @@ export default function BannerCard({ banner }: Props) {
       <img
         src={banner.imageUrl}
         alt={banner.altText}
-        className="block h-full w-full object-cover"
+        className="block h-full w-full object-contain"
       />
     );
   }
@@ -27,7 +27,7 @@ export default function BannerCard({ banner }: Props) {
       <img
         src={banner.imageUrl}
         alt={banner.altText}
-        className="block h-full w-full object-cover"
+        className="block h-full w-full object-contain"
       />
     </a>
   );

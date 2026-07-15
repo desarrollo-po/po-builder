@@ -63,7 +63,7 @@ interface LayoutState {
   canRedo: () => boolean;
 }
 
-const MAX_HISTORY = 20;
+const MAX_HISTORY = 5;
 // Single rolling draft for the currently-open page. Switching pages clears
 // it implicitly via the slug-mismatch branch in initializeLayout.
 const PERSIST_KEY = "po-builder:layout:current";
@@ -389,6 +389,7 @@ export const useLayoutStore = create<LayoutState>()(
               ...state.layout,
               version: state.layout.version + 1,
               updated_at: new Date().toISOString(),
+              is_published: false,
             };
             const result = await saveLayout(nextLayout);
             if (result.success) {
@@ -431,7 +432,13 @@ export const useLayoutStore = create<LayoutState>()(
           }
 
           try {
-            return await publishLayout(state.layout.slug, state.layout.version);
+            const result = await publishLayout(state.layout.slug, state.layout.version);
+            if (result.success) {
+              set({
+                layout: { ...state.layout, is_published: true, published_at: new Date().toISOString() },
+              });
+            }
+            return result;
           } catch (error) {
             return {
               success: false,
