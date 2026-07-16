@@ -197,6 +197,7 @@ export async function publishLayout(
     .update({
       is_published: true,
       published_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     })
     .eq("slug", slug)
     .eq("version", version);
