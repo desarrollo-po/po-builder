@@ -33,5 +33,5 @@ create policy "Authenticated full access to page_layouts"
 -- 3) Bootstrap: insertar el email del owner para poder loguearse la primera vez.
 --    Descomentar y reemplazar antes de correr en prod, o insertar manualmente.
 -- insert into public.allowed_users (email)
--- values ('juanv87@gmail.com')
+-- values ('xxxxx')
 -- on conflict do nothing;

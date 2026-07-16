@@ -41,14 +41,45 @@ function GridSkeleton() {
 // or anything we plug in next. Layout (list vs grid), search placeholder,
 // empty-state copy and page size all come from the source.
 export default function SourceBrowser<TItem>({ source, cacheKey = "" }: Props<TItem>) {
-  const [activeSubId, setActiveSubId] = useState(() => source.subSources?.[0]?.id ?? "");
+  const hasSubSources = !!source.subSources?.length;
 
-  if (source.subSources?.length) {
-    const activeSub = source.subSources.find((s) => s.id === activeSubId) ?? source.subSources[0];
+  const [activeSubId, setActiveSubId] = useState(() => source.subSources?.[0]?.id ?? "");
+  const [inputValue, setInputValue] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const Header = source.renderHeader;
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(inputValue.trim()), 300);
+    return () => clearTimeout(t);
+  }, [inputValue]);
+
+  const pageSize = source.defaultPageSize ?? 10;
+  const searchPageSize = Math.max(pageSize, 20);
+
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery({
+      queryKey: [source.id, debouncedQuery, cacheKey],
+      queryFn: ({ pageParam, signal }) =>
+        source.fetchPage(
+          debouncedQuery,
+          pageParam ?? null,
+          debouncedQuery ? searchPageSize : pageSize,
+          signal,
+        ),
+      initialPageParam: null as string | null,
+      getNextPageParam: (lastPage) =>
+        lastPage.pageInfo.hasNextPage ? lastPage.pageInfo.endCursor : undefined,
+      staleTime: 1000 * 60 * 2,
+      enabled: !source.formOnly && !hasSubSources,
+    });
+
+  if (hasSubSources) {
+    const subSources = source.subSources!;
+    const activeSub = subSources.find((s) => s.id === activeSubId) ?? subSources[0];
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
         <div style={{ display: "flex", gap: "2px", padding: "0 12px", borderBottom: "1px solid var(--border)" }}>
-          {source.subSources.map((sub) => {
+          {subSources.map((sub) => {
             const isActive = sub.id === activeSub.id;
             return (
               <button
@@ -78,42 +109,6 @@ export default function SourceBrowser<TItem>({ source, cacheKey = "" }: Props<TI
       </div>
     );
   }
-
-  const [inputValue, setInputValue] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-  const Header = source.renderHeader;
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedQuery(inputValue.trim()), 300);
-    return () => clearTimeout(t);
-  }, [inputValue]);
-
-  // Reset the input whenever the user flips between source tabs so the new
-  // tab doesn't inherit a stale query from the previous one.
-  useEffect(() => {
-    setInputValue("");
-    setDebouncedQuery("");
-  }, [source.id]);
-
-  const pageSize = source.defaultPageSize ?? 10;
-  const searchPageSize = Math.max(pageSize, 20);
-
-  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useInfiniteQuery({
-      queryKey: [source.id, debouncedQuery, cacheKey],
-      queryFn: ({ pageParam, signal }) =>
-        source.fetchPage(
-          debouncedQuery,
-          pageParam ?? null,
-          debouncedQuery ? searchPageSize : pageSize,
-          signal,
-        ),
-      initialPageParam: null as string | null,
-      getNextPageParam: (lastPage) =>
-        lastPage.pageInfo.hasNextPage ? lastPage.pageInfo.endCursor : undefined,
-      staleTime: 1000 * 60 * 2,
-      enabled: !source.formOnly,
-    });
 
   const items = data?.pages.flatMap((p) => p.items) ?? [];
   const isGrid = source.layout === "grid";

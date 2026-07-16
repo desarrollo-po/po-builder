@@ -19,5 +19,17 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+    },
+  },
+  {
+    // sources/* export a ContentSource config object alongside internal
+    // components by design (see CLAUDE.md data flow) — Fast Refresh doesn't
+    // apply to these, they aren't routed components.
+    files: ['src/sources/**/*.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
   },
 ])

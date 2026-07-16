@@ -13,18 +13,15 @@ export default function PagesList() {
   const email = useAuthStore((s) => s.email);
   const authStatus = useAuthStore((s) => s.status);
   const [showCreate, setShowCreate] = useState(false);
-  const [kickedMessage, setKickedMessage] = useState<string | null>(null);
+  const [kickedMessage, setKickedMessage] = useState<string | null>(() => {
+    const kicked = sessionStorage.getItem("po-kicked");
+    if (!kicked) return null;
+    sessionStorage.removeItem("po-kicked");
+    const [by, sl] = kicked.split("|");
+    return `${displayName(by)} tomó el control de "${sl}". Tu borrador local sigue disponible.`;
+  });
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const kicked = sessionStorage.getItem("po-kicked");
-    if (kicked) {
-      sessionStorage.removeItem("po-kicked");
-      const [by, sl] = kicked.split("|");
-      setKickedMessage(`${displayName(by)} tomó el control de "${sl}". Tu borrador local sigue disponible.`);
-    }
-  }, []);
 
   useEffect(() => {
     if (!userMenuOpen) return;
@@ -48,7 +45,6 @@ export default function PagesList() {
   });
 
   const pages = data?.pages ?? [];
-  console.log("🔍 ~ PagesList ~ src/components/pages/PagesList.tsx:49 ~ pages:", pages);
   const locks = data?.locks ?? new Map<string, string>();
 
   return (
