@@ -18,7 +18,7 @@ export async function signInWithGoogle() {
     options: {
       redirectTo: import.meta.env.DEV
         ? `${window.location.origin}${import.meta.env.BASE_URL}`
-        : "https://pobuilder.prensaobrera.com/po-builder/",
+        : "https://pobuilder.prensaobrera.com/",
     },
   });
 }
