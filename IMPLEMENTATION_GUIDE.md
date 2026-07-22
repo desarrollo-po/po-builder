@@ -269,6 +269,20 @@ Pendientes:
 - [x] Task: "2 Notas secundarias Sin foto". Nueva Región igual a 2 notas secundarias pero SIN IMAGEN."
 - [x] Task: "AddMySQL". Analizado costo/beneficio: migrar a MySQL (Hostinger u otro host) exige construir y mantener un server intermedio nuevo, porque el SPA no puede hablarle directo a una base cruda desde el browser (sin API REST gestionada como PostgREST, ni exponer credenciales en el bundle). La causa real de la preocupación de cuota era que `saveLayout()` es insert-only y `page_layouts` crecía sin límite por slug. Se resolvió con `pruneOldDrafts()` en `src/lib/supabase.ts`: después de cada save exitoso, borra los drafts no publicados con más de 5 versiones de antigüedad para ese slug (`version < currentVersion - 5`, `is_published = false`). La fila publicada nunca se toca. Cero infraestructura nueva. Migración a MySQL queda descartada salvo que el dashboard de Supabase muestre que el límite de cuota es un problema real por otra causa (ej. Storage de banners/OG, no esta tabla).
 - [x] Task: "BotonPublicar". El boton de publicar debe bloquearse si la pagina ya esta publicada.
+- [ ] Task: "Filtro por Regiones. En el leftsidebar donde se listan las notas de prensaobrera me sugieren agregar un filtro para encontrar facilmente aquellan notas que en wordpress están marcadas con una "región" determinada. La query de regiones en graphql es la siguiente: ```
+query Regiones {
+  regiones(
+    where: {slug: ["fila-multiple", "4-columnas-con-foto", "cuadricula", "4-columnas-sin-foto", "Sin descripción\t2-sub-destacado-4", "3-notas-principales-b", "cultura", "Sin descripción\t3-notas-principales-a", "1nota-principal"]}
+  ) {
+    edges {
+      node {
+        id
+        name
+      }
+    }
+  }
+}
+``` Una vez seleccionada la región, la query de notas debe traer solo las notas que tengan esa región. Para esto se necesita agregar un parametro a la query de notas que reciba el id de la región.
 - [ ] Agregar roles / permisos a usuarios
 - [ ] Retry/backoff en errores de Supabase
 - [ ] Configurar MCP de github para sincronizar issues
