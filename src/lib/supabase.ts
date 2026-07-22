@@ -174,8 +174,9 @@ async function revalidatePage(slug: string): Promise<void> {
   const url = import.meta.env.VITE_REVALIDATE_URL;
   const secret = import.meta.env.VITE_REVALIDATE_SECRET;
   if (!url || !secret) return;
+  const endpoint = slug === "home" ? "revalidate-index" : "revalidate-page";
   const res = await fetch(
-    `${url}/api/revalidate-page?secret=${encodeURIComponent(secret)}&slug=${encodeURIComponent(slug)}`
+    `${url}/api/${endpoint}?secret=${encodeURIComponent(secret)}&slug=${encodeURIComponent(slug)}`
   );
   if (!res.ok) throw new Error(`Revalidation webhook returned ${res.status}`);
 }
