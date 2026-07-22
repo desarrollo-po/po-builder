@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { sources } from "../../sources";
 import { useLayoutStore } from "../../store/layoutStore";
+import { useArticleFilterStore } from "../../store/articleFilterStore";
+import { useRegions } from "../../sources/po-articles";
 import SourceBrowser from "./SourceBrowser";
 import MetadataPanel from "./MetadataPanel";
 
@@ -19,6 +21,11 @@ export default function Sidebar() {
   const pageTagSlug = useLayoutStore((s) => s.layout?.tag_slug ?? "");
   const pageId = useLayoutStore((s) => s.layout?.id ?? "");
   const showTagHint = !!pageTagSlug && activeSource?.id === "po-articles" && mode === "contenido";
+
+  const regionSlug = useArticleFilterStore((s) => s.regionSlug);
+  const setRegionSlug = useArticleFilterStore((s) => s.setRegionSlug);
+  const { data: regions } = useRegions();
+  const showRegionFilter = activeSource?.id === "po-articles" && mode === "contenido";
 
   return (
     <div
@@ -96,6 +103,23 @@ export default function Sidebar() {
         )}
       </div>
 
+      {showRegionFilter && (
+        <div className="px-4 py-2 border-b border-[var(--border)]">
+          <select
+            value={regionSlug}
+            onChange={(e) => setRegionSlug(e.target.value)}
+            className="w-full rounded-md border border-[var(--border-strong)] bg-white px-2 py-1.5 text-xs text-[var(--text-primary)] outline-none"
+          >
+            <option value="">Todas las regiones</option>
+            {regions?.map((region) => (
+              <option key={region.slug} value={region.slug}>
+                {region.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {showTagHint && (
         <div
           title="Mientras la página tiene un tag, esta tab solo muestra notas con ese tag. Usá el buscador para ver notas de otros tags."
@@ -124,9 +148,9 @@ export default function Sidebar() {
         ) : (
           activeSource && (
             <SourceBrowser
-              key={`${activeSource.id}:${pageTagSlug}`}
+              key={`${activeSource.id}:${pageTagSlug}:${regionSlug}`}
               source={activeSource}
-              cacheKey={pageTagSlug}
+              cacheKey={`${pageTagSlug}:${regionSlug}`}
             />
           )
         )}
