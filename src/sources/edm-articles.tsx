@@ -52,9 +52,6 @@ const QUERY_WITH_SEARCH = /* GraphQL */ `
       after: $after
       where: {
         search: $search
-        taxQuery: {
-          taxArray: { taxonomy: CATEGORY, terms: "EDM Digital", field: NAME }
-        }
       }
     ) {
       edges {
@@ -86,11 +83,6 @@ const QUERY_LATEST = /* GraphQL */ `
     posts(
       first: $first
       after: $after
-      where: {
-        taxQuery: {
-          taxArray: { taxonomy: CATEGORY, terms: "EDM Digital", field: NAME }
-        }
-      }
     ) {
       edges {
         node {
