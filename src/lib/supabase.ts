@@ -77,7 +77,20 @@ async function pruneOldDrafts(slug: string, currentVersion: number): Promise<voi
 
 export async function saveLayout(
   layout: PageLayout
-): Promise<{ success: boolean; id?: string; error?: string }> {
+): Promise<{ success: boolean; id?: string; version?: number; error?: string }> {
+  // Compute version from the DB's current max, not the client's in-memory
+  // guess — two tabs/editors both bumping their own stale local version
+  // otherwise insert duplicate (slug, version) rows, which later makes
+  // publishLayout's `.eq("version", ...)` match more than one row.
+  const { data: latest } = await supabase
+    .from("page_layouts")
+    .select("version")
+    .eq("slug", layout.slug)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const version = (latest?.version ?? 0) + 1;
+
   const { data, error } = await supabase
     .from("page_layouts")
     .insert([
@@ -85,7 +98,7 @@ export async function saveLayout(
         slug: layout.slug,
         title: layout.title,
         tag_slug: layout.tag_slug,
-        version: layout.version,
+        version,
         layout: layout.layout,
         is_published: false,
         meta_description: layout.meta_description ?? null,
@@ -102,9 +115,9 @@ export async function saveLayout(
     return { success: false, error: error.message };
   }
 
-  pruneOldDrafts(layout.slug, layout.version).catch(() => {});
+  pruneOldDrafts(layout.slug, version).catch(() => {});
 
-  return { success: true, id: data?.id };
+  return { success: true, id: data?.id, version };
 }
 
 export interface PageSummary {

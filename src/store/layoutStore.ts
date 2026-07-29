@@ -383,16 +383,14 @@ export const useLayoutStore = create<LayoutState>()(
           const state = get();
           if (!state.layout) return { success: false, error: "No layout loaded" };
           try {
-            // ponytail: single-editor assumption — bump locally. Upgrade to
-            // SELECT max(version) WHERE slug=... if concurrent editing ships.
             const nextLayout: PageLayout = {
               ...state.layout,
-              version: state.layout.version + 1,
               updated_at: new Date().toISOString(),
               is_published: false,
             };
             const result = await saveLayout(nextLayout);
-            if (result.success) {
+            if (result.success && result.version !== undefined) {
+              nextLayout.version = result.version;
               set({
                 layout: nextLayout,
                 isDirty: false,
