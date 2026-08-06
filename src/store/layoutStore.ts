@@ -47,6 +47,11 @@ interface LayoutState {
     slotIndex: number,
     linkUrl: string,
   ) => void;
+  updateBannerImageMobile: (
+    regionId: string,
+    slotIndex: number,
+    imageUrlMobile: string | null,
+  ) => void;
   updateCodeHtml: (regionId: string, slotIndex: number, html: string) => void;
   setBannerHeight: (regionId: string, idx: 0 | 1, height: number) => void;
   setCodeColumns: (regionId: string, count: number) => void;
@@ -314,6 +319,19 @@ export const useLayoutStore = create<LayoutState>()(
               if (!current || current.type !== "banner") return r;
               const blocks = [...r.blocks];
               blocks[slotIndex] = { ...current, linkUrl };
+              return { ...r, blocks };
+            }),
+          ),
+
+        updateBannerImageMobile: (regionId, slotIndex, imageUrlMobile) =>
+          updateRegions((regions) =>
+            regions.map((r) => {
+              if (r.id !== regionId) return r;
+              if (slotIndex < 0 || slotIndex >= r.blocks.length) return r;
+              const current = r.blocks[slotIndex];
+              if (!current || current.type !== "banner") return r;
+              const blocks = [...r.blocks];
+              blocks[slotIndex] = { ...current, imageUrlMobile: imageUrlMobile ?? undefined };
               return { ...r, blocks };
             }),
           ),
