@@ -283,6 +283,7 @@ query Regiones {
   }
 }
 ``` Una vez seleccionada la región, la query de notas debe traer solo las notas que tengan esa región. Para esto se necesita agregar un parametro a la query de notas que reciba el id de la región.
+- [x] Task "BannerMobile": Los banners deben tener una "versión mobile" y una "versión desktop", es decir dos imágenes por banner. Deben configurarse los breakpoints necesarios para cargar la imagen correspondiente. Debe haber un switch dentro del bloque de la región del banner para intercambiar entre mobile y desktop para cargar la correspondiente. Si no existe versión mobile debe usar la versión desktop.
 - [ ] Agregar roles / permisos a usuarios
 - [ ] Retry/backoff en errores de Supabase
 - [ ] Configurar MCP de github para sincronizar issues

@@ -9,7 +9,7 @@ import {
 } from "../types/layout";
 
 export default function useDragHandlers() {
-  const { layout, setSlotBlock, swapSlots, reorderRegions } = useLayoutStore();
+  const { layout, setSlotBlock, swapSlots, reorderRegions, updateBannerImageMobile } = useLayoutStore();
 
   const handleDragEnd = (event: DragEndEvent) => {
     if (!layout) return;
@@ -34,6 +34,14 @@ export default function useDragHandlers() {
       // Refuse mismatched payloads (e.g. dropping an article into a banner slot).
       // Code-variant slots (code-region) accept any block type.
       if (!slotAccepts(variant, activeData.type)) return;
+
+      // Slot's banner switch is on "mobile" — this drop sets the mobile
+      // image only, the desktop banner (link, alt text, etc.) stays intact.
+      if (overData.targetMobileImage) {
+        if (activeData.type !== "banner") return;
+        updateBannerImageMobile(overData.regionId, overData.slotIndex, activeData.bannerData.imageUrl);
+        return;
+      }
 
       if (activeData.type === "banner") {
         const banner: BannerBlock = {

@@ -92,6 +92,8 @@ export interface BannerBlock {
   type: "banner";
   mediaId?: string;
   imageUrl: string;
+  // Optional mobile-specific image. Falls back to `imageUrl` when unset.
+  imageUrlMobile?: string;
   linkUrl: string;
   altText: string;
   openInNewTab: boolean;

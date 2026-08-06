@@ -257,10 +257,14 @@ interface SlotCellProps {
 function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onRemoveColumn }: SlotCellProps) {
   const setSlotBlock = useLayoutStore((s) => s.setSlotBlock);
   const [isCreating, setIsCreating] = useState(false);
+  // Only meaningful for banner blocks; drives both the desktop/mobile switch
+  // inside SlotBannerBody and this slot's drop target below.
+  const [bannerPreview, setBannerPreview] = useState<"desktop" | "mobile">("desktop");
   const { active } = useDndContext();
+  const isBannerMobileTarget = block?.type === "banner" && bannerPreview === "mobile";
   const { setNodeRef, isOver } = useDroppable({
     id: `slot:${regionId}:${slotIndex}`,
-    data: { kind: "slot", regionId, slotIndex },
+    data: { kind: "slot", regionId, slotIndex, targetMobileImage: isBannerMobileTarget },
   });
 
   const isDraggingSomething = !!active;
@@ -271,12 +275,15 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onR
     activeData.slotIndex === slotIndex;
 
   const isDropTarget = isOver && !isSourceOfActiveSlot;
+  // Mobile tab with no mobile image yet reads visually as an empty slot so
+  // the user drags one in from the left sidebar, same as any other slot.
+  const looksEmpty = !block || (isBannerMobileTarget && block.type === "banner" && !block.imageUrlMobile);
 
   const stateClass = isDropTarget
     ? "border-2 border-accent-primary bg-accent-light ring-2 ring-accent-primary/40"
-    : block
-      ? "border border-surface-inset"
-      : "border-2 border-dashed border-surface-inset bg-surface-base";
+    : looksEmpty
+      ? "border-2 border-dashed border-surface-inset bg-surface-base"
+      : "border border-surface-inset";
 
   const sizeClass = fullSize ? "h-full w-full" : minHeightClassFor(variant);
 
@@ -293,6 +300,8 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onR
           slotIndex={slotIndex}
           variant={variant}
           block={block}
+          bannerPreview={bannerPreview}
+          onBannerPreviewChange={setBannerPreview}
         />
       ) : (
         <EmptySlotHint variant={variant} active={isDraggingSomething} isOver={isOver} />
@@ -420,9 +429,11 @@ interface SlotBlockProps {
   slotIndex: number;
   variant: SlotVariant;
   block: Block;
+  bannerPreview: "desktop" | "mobile";
+  onBannerPreviewChange: (mode: "desktop" | "mobile") => void;
 }
 
-function SlotBlock({ regionId, slotIndex, variant, block }: SlotBlockProps) {
+function SlotBlock({ regionId, slotIndex, variant, block, bannerPreview, onBannerPreviewChange }: SlotBlockProps) {
   const clearSlot = useLayoutStore((s) => s.clearSlot);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `slot-article:${regionId}:${slotIndex}`,
@@ -443,6 +454,8 @@ function SlotBlock({ regionId, slotIndex, variant, block }: SlotBlockProps) {
           regionId={regionId}
           slotIndex={slotIndex}
           banner={block}
+          preview={bannerPreview}
+          onPreviewChange={onBannerPreviewChange}
         />
       ) : (
         <SlotCodeBody regionId={regionId} slotIndex={slotIndex} code={block} variant={variant} />
@@ -471,46 +484,128 @@ function SlotBlock({ regionId, slotIndex, variant, block }: SlotBlockProps) {
   );
 }
 
+// Inline stroke icons matching this repo's hand-drawn icon style (see the
+// upload icon in supabase-banners.tsx) — no icon library installed.
+function IconMonitor() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect width="20" height="14" x="2" y="3" rx="2" />
+      <line x1="8" x2="16" y1="21" y2="21" />
+      <line x1="12" x2="12" y1="17" y2="21" />
+    </svg>
+  );
+}
+
+function IconSmartphone() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+      <path d="M12 18h.01" />
+    </svg>
+  );
+}
+
 // ── Banner: imagen full-width + input para la URL de destino ───────────────
+// El switch Desktop/Mobile sólo cambia qué imagen se está mirando/editando;
+// la fuente de imágenes es siempre el drag-and-drop desde la columna
+// izquierda (mismo droppable que arma SlotCell) — sin upload propio acá.
 function SlotBannerBody({
   regionId,
   slotIndex,
   banner,
+  preview,
+  onPreviewChange,
 }: {
   regionId: string;
   slotIndex: number;
   banner: BannerBlock;
+  preview: "desktop" | "mobile";
+  onPreviewChange: (mode: "desktop" | "mobile") => void;
 }) {
   const updateBannerLinkUrl = useLayoutStore((s) => s.updateBannerLinkUrl);
+  const updateBannerImageMobile = useLayoutStore((s) => s.updateBannerImageMobile);
   const linkInvalid = !banner.linkUrl.trim();
+  const showMobileEmpty = preview === "mobile" && !banner.imageUrlMobile;
 
   return (
     <div className="flex h-full flex-col">
-      <div className="min-h-[60px] w-full flex-auto overflow-hidden bg-surface-accent">
-        <img
-          src={banner.imageUrl}
-          alt={banner.altText}
-          className="block h-full w-full object-cover"
-        />
+      <div
+        className="min-h-[60px] w-full flex-auto overflow-hidden bg-surface-accent"
+        // Mobile tab: this area only receives sidebar drops, it never starts
+        // a reorder-drag of its own — the slot itself never moves.
+        onPointerDown={preview === "mobile" ? (e) => e.stopPropagation() : undefined}
+      >
+        {showMobileEmpty ? (
+          <div className="flex h-full flex-col items-center justify-center gap-1 p-2 text-center text-[10.5px] font-medium text-text-tertiary">
+            <span>Arrastrá una imagen desde la columna izquierda</span>
+          </div>
+        ) : (
+          <img
+            src={preview === "mobile" ? banner.imageUrlMobile : banner.imageUrl}
+            alt={banner.altText}
+            className="block h-full w-full object-cover"
+          />
+        )}
       </div>
       <div
-        className="flex items-center gap-2 border-t border-surface-inset bg-surface-base px-2.5 py-2"
+        className="flex flex-col gap-1.5 border-t border-surface-inset bg-surface-base px-2.5 py-2"
         onPointerDown={(e) => e.stopPropagation()}
       >
-        <span
-          className={`whitespace-nowrap text-[10.5px] font-semibold uppercase tracking-[0.5px] ${linkInvalid ? "text-amber-700" : "text-text-secondary"
-            }`}
-        >
-          URL
-        </span>
-        <input
-          type="url"
-          value={banner.linkUrl}
-          onChange={(e) => updateBannerLinkUrl(regionId, slotIndex, e.target.value)}
-          placeholder="https://…"
-          className={`min-w-0 flex-1 rounded-sm bg-white px-2 py-[5px] text-xs text-text-primary outline-none ${linkInvalid ? "border border-amber-500" : "border border-text-muted"
-            }`}
-        />
+        <div className="flex items-center gap-2">
+          <div
+            role="tablist"
+            aria-label="Vista del banner"
+            className="flex overflow-hidden rounded-sm gap-1"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={preview === "desktop"}
+              onClick={() => onPreviewChange("desktop")}
+              title="Ver versión desktop"
+              className={`flex items-center gap-1 px-2 py-1 text-[10.5px] font-semibold uppercase tracking-[0.5px] transition-colors ${preview === "desktop" ? "bg-accent-primary text-white" : "bg-white text-text-secondary hover:bg-surface-base"}`}
+            >
+              <IconMonitor />
+              Desktop
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={preview === "mobile"}
+              onClick={() => onPreviewChange("mobile")}
+              title="Ver versión mobile"
+              className={`flex items-center gap-1 border-l border-text-muted px-2 py-1 text-[10.5px] font-semibold uppercase tracking-[0.5px] transition-colors ${preview === "mobile" ? "bg-accent-primary text-white" : "bg-white text-text-secondary hover:bg-surface-base"}`}
+            >
+              <IconSmartphone />
+              Mobile
+            </button>
+          </div>
+          {preview === "mobile" && banner.imageUrlMobile && (
+            <button
+              type="button"
+              onClick={() => updateBannerImageMobile(regionId, slotIndex, null)}
+              className="text-[10.5px] text-text-tertiary underline"
+            >
+              Quitar versión mobile
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span
+            className={`whitespace-nowrap text-[10.5px] font-semibold uppercase tracking-[0.5px] ${linkInvalid ? "text-amber-700" : "text-text-secondary"
+              }`}
+          >
+            URL
+          </span>
+          <input
+            type="url"
+            value={banner.linkUrl}
+            onChange={(e) => updateBannerLinkUrl(regionId, slotIndex, e.target.value)}
+            placeholder="https://…"
+            className={`min-w-0 flex-1 rounded-sm bg-white px-2 py-[5px] text-xs text-text-primary outline-none ${linkInvalid ? "border border-amber-500" : "border border-text-muted"
+              }`}
+          />
+        </div>
       </div>
     </div>
   );
