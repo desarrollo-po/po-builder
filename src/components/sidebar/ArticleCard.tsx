@@ -1,6 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { getSectionColor } from "../../lib/sectionColors";
 import type { ArticleBlock } from "../../types/layout";
+import { useTapPlaceStore } from "../../store/tapPlaceStore";
 
 type ArticleSnapshot = ArticleBlock["snapshot"];
 
@@ -15,22 +16,31 @@ interface Props {
 // ArticleSnapshot shape before handing it over.
 export default function ArticleCard({ articleId, snapshot }: Props) {
   const sectionColor = getSectionColor(snapshot.categorySlug ?? snapshot.categoryName);
+  const dragData = {
+    type: "article" as const,
+    articleId,
+    snapshot,
+  };
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `article-${articleId}`,
-    data: {
-      type: "article",
-      articleId,
-      snapshot,
-    },
+    data: dragData,
   });
+
+  const arm = useTapPlaceStore((s) => s.arm);
+  const isArmed = useTapPlaceStore(
+    (s) => s.armed?.type === "article" && s.armed.data.articleId === articleId,
+  );
 
   return (
     <div
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      onClick={() => arm({ type: "article", label: snapshot.title, data: dragData })}
       className="group select-none"
       style={{
+        outline: isArmed ? "2px solid var(--accent)" : undefined,
+        outlineOffset: isArmed ? "1px" : undefined,
         display: "grid",
         gridTemplateColumns: "72px 1fr",
         border: "1px solid #e8e8e8",

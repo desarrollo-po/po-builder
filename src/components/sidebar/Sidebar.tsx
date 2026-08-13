@@ -6,7 +6,11 @@ import { useRegions } from "../../sources/po-articles";
 import SourceBrowser from "./SourceBrowser";
 import MetadataPanel from "./MetadataPanel";
 
-export default function Sidebar() {
+interface Props {
+  mobileHidden?: boolean;
+}
+
+export default function Sidebar({ mobileHidden }: Props) {
   const [activeSourceId, setActiveSourceId] = useState<string>(
     sources[0]?.id ?? "",
   );
@@ -29,14 +33,8 @@ export default function Sidebar() {
 
   return (
     <div
-      style={{
-        width: "400px",
-        background: "#ffffff",
-        borderRight: "1px solid var(--border)",
-        display: "flex",
-        flexDirection: "column",
-        flexShrink: 0,
-      }}
+      className={`w-full shrink-0 flex-col border-r border-[var(--border)] bg-white md:flex md:w-[400px] ${mobileHidden ? "hidden" : "flex"
+        }`}
     >
       <div style={{ padding: "12px 16px 0", borderBottom: "1px solid var(--border)" }}>
         {/* Primary segmented control */}
