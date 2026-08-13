@@ -2,15 +2,19 @@ import { useLayoutStore } from "../../store/layoutStore";
 import RegionList from "./RegionList";
 import AddRegionModal from "./AddRegionModal";
 
-export default function Canvas() {
+interface Props {
+  mobileHidden?: boolean;
+}
+
+export default function Canvas({ mobileHidden }: Props) {
   const { layout } = useLayoutStore();
 
   if (!layout) {
     return (
       <div
+        className={mobileHidden ? "hidden md:flex" : "flex"}
         style={{
           flex: 1,
-          display: "flex",
           alignItems: "center",
           justifyContent: "center",
           color: "var(--text-tertiary)",
@@ -24,9 +28,9 @@ export default function Canvas() {
 
   return (
     <div
+      className={mobileHidden ? "hidden md:flex" : "flex"}
       style={{
         flex: 1,
-        display: "flex",
         flexDirection: "column",
         overflow: "auto",
         background: "var(--surface-base)",

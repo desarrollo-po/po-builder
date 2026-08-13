@@ -1,8 +1,11 @@
 import { useRef, useState } from "react";
 import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { useLayoutStore } from "../../store/layoutStore";
+import { useTapPlaceStore } from "../../store/tapPlaceStore";
+import { applySourceToSlot } from "../../hooks/useDragHandlers";
 import {
   TEMPLATE_SPECS,
+  slotAccepts,
   type ArticleBlock,
   type BannerBlock,
   type CodeBlock,
@@ -255,7 +258,9 @@ interface SlotCellProps {
 }
 
 function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onRemoveColumn }: SlotCellProps) {
+  const layout = useLayoutStore((s) => s.layout);
   const setSlotBlock = useLayoutStore((s) => s.setSlotBlock);
+  const updateBannerImageMobile = useLayoutStore((s) => s.updateBannerImageMobile);
   const [isCreating, setIsCreating] = useState(false);
   // Only meaningful for banner blocks; drives both the desktop/mobile switch
   // inside SlotBannerBody and this slot's drop target below.
@@ -266,6 +271,10 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onR
     id: `slot:${regionId}:${slotIndex}`,
     data: { kind: "slot", regionId, slotIndex, targetMobileImage: isBannerMobileTarget },
   });
+
+  const isArmedTarget = useTapPlaceStore(
+    (s) => !!s.armed && slotAccepts(variant, s.armed.type),
+  );
 
   const isDraggingSomething = !!active;
   const activeData = active?.data.current;
@@ -279,7 +288,7 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onR
   // the user drags one in from the left sidebar, same as any other slot.
   const looksEmpty = !block || (isBannerMobileTarget && block.type === "banner" && !block.imageUrlMobile);
 
-  const stateClass = isDropTarget
+  const stateClass = isDropTarget || isArmedTarget
     ? "border-2 border-accent-primary bg-accent-light ring-2 ring-accent-primary/40"
     : looksEmpty
       ? "border-2 border-dashed border-surface-inset bg-surface-base"
@@ -287,9 +296,26 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onR
 
   const sizeClass = fullSize ? "h-full w-full" : minHeightClassFor(variant);
 
+  const handleTapPlace = () => {
+    // Read via getState() instead of a subscribed value — this is only
+    // needed inside the click callback, not for rendering, so subscribing
+    // to it would re-render every slot on every arm()/disarm().
+    const { armed, disarm } = useTapPlaceStore.getState();
+    if (!armed || !layout) return;
+    if (!slotAccepts(variant, armed.type)) return;
+    applySourceToSlot(
+      layout,
+      { setSlotBlock, updateBannerImageMobile },
+      { regionId, slotIndex, targetMobileImage: isBannerMobileTarget },
+      armed.data,
+    );
+    disarm();
+  };
+
   return (
     <div
       ref={setNodeRef}
+      onClick={handleTapPlace}
       className={`relative overflow-hidden transition @max-md:[grid-area:auto]! ${stateClass} ${sizeClass} ${isSourceOfActiveSlot ? "opacity-40" : "opacity-100"
         }`}
       style={{ gridArea: gridArea || undefined }}

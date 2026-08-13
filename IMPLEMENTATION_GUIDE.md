@@ -288,6 +288,8 @@ query Regiones {
 - [ ] Retry/backoff en errores de Supabase
 - [ ] Configurar MCP de github para sincronizar issues
 - [x] Loading skeletons en `ArticleBrowser` / `BannerLibrary`
+- [x] Task: "FixesMobile": Version mobile general. El builder no se ve correctamente en mobile. Sobre todo los botones de publicar, guardar, etc. Se adjunta imagen en /FixesMobile/versionMobile.png. Además, en mobile es dificil armar regiones porque no es eficiente el drag and drop. Proponer una solucion.
+  Hecho: shell responsive completo. `Sidebar` pasó de `width: 400px` fijo a `w-full md:w-[400px]`, `App.tsx` agrega un selector "Contenido / Página" (`md:hidden`) que alterna cuál panel se ve por debajo de `md`. Toolbar (`BuilderToolbar.tsx`) ahora usa `flex-wrap` + `h-auto` en mobile así los botones Guardar/Publicar/Undo/Redo pasan a una segunda fila en vez de recortarse, y el toast central deja de superponerse. Para el drag-and-drop poco práctico en touch se agregó **tap-to-place** como alternativa (no reemplaza el drag de desktop): tocar una card en el sidebar la "arma" (`useTapPlaceStore`), la vista salta sola a "Página", y tocar un slot compatible asigna el bloque y desarma — reusa la misma validación de `slotAccepts` que ya usaba el drag (extraída a `applySourceToSlot` en `useDragHandlers.ts` para no duplicarla). Grids de región no requirieron cambios, ya colapsaban vía `@container` pero nunca tenían ancho real en mobile por el Sidebar fijo.
 
 ---
 

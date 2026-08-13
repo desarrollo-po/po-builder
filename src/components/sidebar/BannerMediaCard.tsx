@@ -1,31 +1,39 @@
 import { useDraggable } from "@dnd-kit/core";
 import type { MediaItem } from "../../sources/banner-media";
+import { useTapPlaceStore } from "../../store/tapPlaceStore";
 
 interface Props {
   media: MediaItem;
 }
 
 export default function BannerMediaCard({ media }: Props) {
+  const dragData = {
+    type: "banner" as const,
+    mediaId: media.id,
+    bannerData: {
+      mediaId: media.id,
+      imageUrl: media.sourceUrl,
+      altText: media.altText || media.title || "",
+      linkUrl: "",
+      openInNewTab: false,
+    },
+  };
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `media-${media.id}`,
-    data: {
-      type: "banner",
-      mediaId: media.id,
-      bannerData: {
-        mediaId: media.id,
-        imageUrl: media.sourceUrl,
-        altText: media.altText || media.title || "",
-        linkUrl: "",
-        openInNewTab: false,
-      },
-    },
+    data: dragData,
   });
+
+  const arm = useTapPlaceStore((s) => s.arm);
+  const isArmed = useTapPlaceStore(
+    (s) => s.armed?.type === "banner" && s.armed.data.mediaId === media.id,
+  );
 
   return (
     <div
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      onClick={() => arm({ type: "banner", label: media.title || media.altText || "Banner", data: dragData })}
       title={media.title || media.altText || "Banner"}
       style={{
         position: "relative",
@@ -35,6 +43,8 @@ export default function BannerMediaCard({ media }: Props) {
         overflow: "hidden",
         cursor: isDragging ? "grabbing" : "grab",
         opacity: isDragging ? 0.45 : 1,
+        outline: isArmed ? "2px solid var(--accent)" : undefined,
+        outlineOffset: isArmed ? "1px" : undefined,
         boxShadow: isDragging
           ? "0 0 0 2px #0070f3, 0 8px 24px rgba(0,0,0,0.12)"
           : "0 1px 3px rgba(0,0,0,0.04)",
