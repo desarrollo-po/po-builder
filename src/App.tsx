@@ -181,7 +181,7 @@ function Builder() {
         <BuilderToolbar />
         <ArmedContentBar />
         <MobileViewSwitcher view={mobileView} onChange={setMobileView} />
-        <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
+        <div className="flex flex-1 flex-col md:overflow-hidden md:flex-row">
           <Sidebar mobileHidden={mobileView !== "contenido"} />
           <Canvas mobileHidden={mobileView !== "pagina"} />
         </div>
