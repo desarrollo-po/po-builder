@@ -484,28 +484,26 @@ function SlotBlock({ regionId, slotIndex, variant, block, bannerPreview, onBanne
           onPreviewChange={onBannerPreviewChange}
         />
       ) : (
-        <SlotCodeBody regionId={regionId} slotIndex={slotIndex} code={block} variant={variant} />
+        <SlotCodeBody regionId={regionId} slotIndex={slotIndex} code={block} />
       )}
-      {variant === "code" && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            clearSlot(regionId, slotIndex);
-          }}
-          onPointerDown={(e) => e.stopPropagation()}
-          title={
-            block.type === "banner"
-              ? "Quitar banner"
-              : block.type === "code"
-                ? "Quitar código"
-                : "Quitar nota"
-          }
-          className="absolute right-1.5 top-1.5 z-[2] flex h-[26px] w-[26px] items-center justify-center rounded-md border border-surface-inset bg-white/90 p-0 text-lg leading-none text-text-secondary"
-        >
-          ×
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          clearSlot(regionId, slotIndex);
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        title={
+          block.type === "banner"
+            ? "Quitar banner"
+            : block.type === "code"
+              ? "Quitar código"
+              : "Quitar nota"
+        }
+        className="absolute right-1.5 top-1.5 z-[2] flex h-[26px] w-[26px] items-center justify-center rounded-md border border-surface-inset bg-white/90 p-0 text-lg leading-none text-text-secondary"
+      >
+        ×
+      </button>
     </div>
   );
 }
@@ -643,12 +641,10 @@ function SlotCodeBody({
   regionId,
   slotIndex,
   code,
-  variant,
 }: {
   regionId: string;
   slotIndex: number;
   code: CodeBlock;
-  variant: SlotVariant;
 }) {
   const updateCodeHtml = useLayoutStore((s) => s.updateCodeHtml);
   const [isEditing, setIsEditing] = useState(false);
@@ -668,7 +664,7 @@ function SlotCodeBody({
         }}
         onPointerDown={(e) => e.stopPropagation()}
         title="Editar código"
-        className={`absolute top-1.5 z-[2] flex h-[26px] w-[26px] items-center justify-center border border-surface-inset bg-white/90 p-0 text-lg leading-none text-text-secondary ${variant === "code" ? "right-8" : "right-1.5"}`}
+        className="absolute right-8 top-1.5 z-[2] flex h-[26px] w-[26px] items-center justify-center border border-surface-inset bg-white/90 p-0 text-lg leading-none text-text-secondary"
       >
         ✎
       </button>
