@@ -61,7 +61,7 @@ function MasNotasEdmRender({ region }: { region: Region }) {
   return (
     <section
       data-region-template={region.template}
-      className="flex flex-col gap-[18px] @md:flex-row @md:items-stretch"
+      className="flex flex-col gap-[18px] @md:flex-row @md:items-start"
     >
       <div
         className="grid flex-[3] gap-[18px] @max-md:grid-cols-1!"
