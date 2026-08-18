@@ -39,6 +39,8 @@ jobs:
           VITE_GRAPHQL_ENDPOINT_EDM: ${{ secrets.VITE_GRAPHQL_ENDPOINT_EDM }}
       - name: SPA fallback
         run: cp dist/index.html dist/404.html
+      - name: Copy CNAME
+        run: cp CNAME dist/CNAME
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact

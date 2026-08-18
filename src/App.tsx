@@ -30,19 +30,21 @@ import { displayName } from "./lib/utils";
 import Canvas from "./components/builder/Canvas";
 import Sidebar from "./components/sidebar/Sidebar";
 import BuilderToolbar from "./components/builder/BuilderToolbar";
+import ArmedContentBar from "./components/builder/ArmedContentBar";
 import DragOverlayContent from "./components/DragOverlayContent";
 import PageRenderer from "./components/renderer/PageRenderer";
 import useDragHandlers from "./hooks/useDragHandlers";
 import AuthGate from "./components/auth/AuthGate";
 import PagesList from "./components/pages/PagesList";
 import { useAuthStore } from "./store/authStore";
+import { useTapPlaceStore } from "./store/tapPlaceStore";
 
 type Mode = "edit" | "preview";
 
 function App() {
   return (
     <AuthGate>
-      <BrowserRouter basename={'/po-builder/'}>
+      <BrowserRouter basename={'/'}>
         <Routes>
           <Route path="/" element={<PagesList />} />
           <Route path="/edit/:slug" element={<Builder />} />
@@ -60,6 +62,8 @@ function Builder() {
   const { handleDragEnd } = useDragHandlers();
   const [mode, setMode] = useState<Mode>("edit");
   const [loadFailed, setLoadFailed] = useState(false);
+  const mobileView = useTapPlaceStore((s) => s.mobileView);
+  const setMobileView = useTapPlaceStore((s) => s.setMobileView);
   const authStatus = useAuthStore((s) => s.status);
   const email = useAuthStore((s) => s.email);
   const [lockState, setLockState] = useState<"checking" | "owned" | "blocked">("checking");
@@ -175,9 +179,11 @@ function Builder() {
       <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--surface-base)" }}>
         <ModeToggle mode={mode} onChange={setMode} />
         <BuilderToolbar />
-        <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-          <Sidebar />
-          <Canvas />
+        <ArmedContentBar />
+        <MobileViewSwitcher view={mobileView} onChange={setMobileView} />
+        <div className="flex flex-1 flex-col md:overflow-hidden md:flex-row">
+          <Sidebar mobileHidden={mobileView !== "contenido"} />
+          <Canvas mobileHidden={mobileView !== "pagina"} />
         </div>
       </div>
       <DragOverlay>
@@ -218,6 +224,36 @@ function TakeoverModal({
             Tomar control
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileViewSwitcher({
+  view,
+  onChange,
+}: {
+  view: "contenido" | "pagina";
+  onChange: (v: "contenido" | "pagina") => void;
+}) {
+  return (
+    <div className="flex justify-center border-b border-[var(--border)] bg-white p-2 md:hidden">
+      <div className="flex gap-0.5 rounded-lg bg-[var(--surface-base)] p-0.5">
+        {(["contenido", "pagina"] as const).map((v) => {
+          const active = view === v;
+          return (
+            <button
+              key={v}
+              onClick={() => onChange(v)}
+              className={`cursor-pointer rounded-md border-none px-4 py-1.5 text-xs font-medium transition-all duration-150 ${active
+                ? "bg-white text-[var(--text-primary)] shadow-sm"
+                : "bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                }`}
+            >
+              {v === "contenido" ? "Contenido" : "Página"}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

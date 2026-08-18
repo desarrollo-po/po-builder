@@ -113,7 +113,7 @@ export default function BuilderToolbar() {
   return (
     <div className="flex shrink-0 flex-col">
       <div
-        className={`relative z-10 flex h-14 items-center justify-between gap-6 bg-white px-6 ${draftRestored ? "border-b border-amber-300" : "border-b border-surface-inset"
+        className={`relative z-10 flex h-auto min-h-14 flex-wrap items-center justify-between gap-x-6 gap-y-2 bg-white px-4 py-2 md:h-14 md:flex-nowrap md:px-6 md:py-0 ${draftRestored ? "border-b border-amber-300" : "border-b border-surface-inset"
           }`}
       >
         {/* Left: Brand + Title + State */}
@@ -143,7 +143,7 @@ export default function BuilderToolbar() {
             <span className="text-sm font-semibold tracking-[-0.2px] text-black">
               {layout?.title || layout?.slug || "Page Builder"}
             </span>
-            <span className="text-[11px] font-normal text-text-tertiary">
+            <span className="hidden text-[11px] font-normal text-text-tertiary sm:block">
               /{layout?.slug ?? ""}
               {layout?.tag_slug ? ` · tag: ${layout.tag_slug}` : ""}
             </span>
@@ -159,7 +159,7 @@ export default function BuilderToolbar() {
         {/* Center: transient message */}
         {message && (
           <div
-            className={`absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-medium ${message.type === "success"
+            className={`order-last w-full whitespace-nowrap rounded-full border px-3.5 py-1.5 text-center text-xs font-medium md:absolute md:left-1/2 md:order-none md:w-auto md:-translate-x-1/2 ${message.type === "success"
               ? "border-surface-inset bg-surface-accent text-text-secondary"
               : "border-[#0070f3]/30 bg-[#0070f3]/10 text-[#0070f3]"
               }`}
@@ -195,7 +195,7 @@ export default function BuilderToolbar() {
           <button
             onClick={handleSave}
             disabled={isSaving || !isDirty}
-            className="rounded-lg border border-text-muted bg-white px-3.5 py-[7px] text-[13px] font-medium text-black transition enabled:hover:bg-surface-accent disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg border border-text-muted bg-white px-2.5 py-[7px] text-[13px] font-medium text-black transition enabled:hover:bg-surface-accent disabled:cursor-not-allowed disabled:opacity-60 md:px-3.5"
           >
             {isSaving ? "Guardando…" : "Guardar"}
           </button>
@@ -203,10 +203,10 @@ export default function BuilderToolbar() {
           {/* Publish */}
           <button
             onClick={handlePublish}
-            disabled={isPublishing || isDirty}
-            className="rounded-lg border border-button-publish-hover bg-button-publish px-3.5 py-[7px] text-[13px] font-medium text-white transition enabled:hover:border-button-publish-hover enabled:hover:bg-button-publish-hover disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isPublishing || isDirty || layout?.is_published}
+            className="rounded-lg border border-button-publish-hover bg-button-publish px-2.5 py-[7px] text-[13px] font-medium text-white transition enabled:hover:border-button-publish-hover enabled:hover:bg-button-publish-hover disabled:cursor-not-allowed disabled:opacity-60 md:px-3.5"
           >
-            {isPublishing ? "Publicando…" : "Publicar"}
+            {isPublishing ? "Publicando…" : layout?.is_published ? "Publicado" : "Publicar"}
           </button>
 
           <div className="h-5 w-px bg-surface-inset" />

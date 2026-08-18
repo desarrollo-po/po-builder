@@ -5,16 +5,26 @@ interface Props {
 }
 
 export default function BannerCard({ banner }: Props) {
-  // A banner without a target URL is essentially a static image — render it
-  // unwrapped so we don't ship an <a> that goes nowhere.
-  if (!banner.linkUrl.trim()) {
-    return (
+  // Native <picture>/<source media> breakpoint — browser picks the right
+  // image itself, no JS resize listener needed. Falls back to `imageUrl`
+  // when no mobile-specific image was uploaded.
+  const image = (
+    <picture>
+      {banner.imageUrlMobile && (
+        <source media="(max-width: 767px)" srcSet={banner.imageUrlMobile} />
+      )}
       <img
         src={banner.imageUrl}
         alt={banner.altText}
-        className="block h-full w-full object-cover"
+        className="block h-full w-full object-contain"
       />
-    );
+    </picture>
+  );
+
+  // A banner without a target URL is essentially a static image — render it
+  // unwrapped so we don't ship an <a> that goes nowhere.
+  if (!banner.linkUrl.trim()) {
+    return image;
   }
 
   return (
@@ -24,11 +34,7 @@ export default function BannerCard({ banner }: Props) {
       rel={banner.openInNewTab ? "noopener noreferrer" : undefined}
       className="block h-full"
     >
-      <img
-        src={banner.imageUrl}
-        alt={banner.altText}
-        className="block h-full w-full object-cover"
-      />
+      {image}
     </a>
   );
 }

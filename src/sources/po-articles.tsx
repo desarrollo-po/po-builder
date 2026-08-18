@@ -1,7 +1,9 @@
+import { useQuery } from "@tanstack/react-query";
 import { fetchGraphQL } from "../lib/graphql";
 import { sizesFromMediaDetails } from "../lib/wpImage";
 import ArticleCard from "../components/sidebar/ArticleCard";
 import { useLayoutStore } from "../store/layoutStore";
+import { useArticleFilterStore } from "../store/articleFilterStore";
 import type { ArticleBlock } from "../types/layout";
 import type { ContentPage, ContentSource } from "./types";
 
@@ -125,6 +127,91 @@ const QUERY_LATEST_BY_TAG = /* GraphQL */ `
   }
 `;
 
+const QUERY_LATEST_BY_REGION = /* GraphQL */ `
+  query GetPostsByRegion($after: String, $first: Int!, $regionSlug: [String]!) {
+    posts(
+      first: $first
+      after: $after
+      where: {
+        taxQuery: {
+          taxArray: { taxonomy: REGION, terms: $regionSlug, field: SLUG }
+        }
+      }
+    ) {
+      edges {
+        node {
+          id
+          title
+          slug
+          date
+          excerpt
+          campos { descripcionDestacado volanta }
+          categories { edges { node { name slug } } }
+          featuredImage {
+            node {
+              sourceUrl
+              mediaDetails { sizes { name sourceUrl } }
+            }
+          }
+        }
+        cursor
+      }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+`;
+
+// Curated list of "región" terms editors actually use to lay out the home
+// page — the taxonomy has other legacy/unused terms we don't want to show.
+const REGION_SLUGS = [
+  "fila-multiple",
+  "4-columnas-con-foto",
+  "cuadricula",
+  "4-columnas-sin-foto",
+  "Sin descripción\t2-sub-destacado-4",
+  "3-notas-principales-b",
+  "cultura",
+  "Sin descripción\t3-notas-principales-a",
+  "1nota-principal",
+];
+
+const REGIONES_QUERY = /* GraphQL */ `
+  query Regiones($slugs: [String]!) {
+    regiones(where: { slug: $slugs }) {
+      edges {
+        node {
+          id
+          name
+          slug
+        }
+      }
+    }
+  }
+`;
+
+export interface RegionTerm {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+async function fetchRegions(): Promise<RegionTerm[]> {
+  const data = await fetchGraphQL<{
+    regiones: { edges: Array<{ node: RegionTerm }> };
+  }>(ENDPOINT, REGIONES_QUERY, { slugs: REGION_SLUGS });
+  return data?.regiones?.edges.map((edge) => edge.node) ?? [];
+}
+
+// Catalog of curated regions — static enough that it never needs a refetch
+// within a session.
+export function useRegions() {
+  return useQuery({
+    queryKey: ["po-regiones"],
+    queryFn: fetchRegions,
+    staleTime: Infinity,
+  });
+}
+
 function toSnapshot(node: PoArticleNode): ArticleSnapshot {
   return {
     title: node.title ?? "",
@@ -149,22 +236,29 @@ async function fetchPage(
 ): Promise<ContentPage<PoArticleItem>> {
   const trimmed = query.trim();
   const useSearch = trimmed.length > 0;
-  // Tag-based filtering only kicks in when the editor is not actively
-  // searching — the search box deliberately bypasses the page's tag so the
-  // user can still pull in articles from outside the tag when they need to.
+  // Tag/region filtering only kicks in when the editor is not actively
+  // searching — the search box deliberately bypasses both so the user can
+  // still pull in articles from outside the filter when they need to.
+  // Region is an explicit, session-level filter the editor just picked, so
+  // it takes priority over the page's tag when both happen to be set.
+  const regionSlug = useArticleFilterStore.getState().regionSlug || null;
+  const useRegion = !useSearch && !!regionSlug;
   const pageTagSlug = useLayoutStore.getState().layout?.tag_slug ?? null;
-  const useTag = !useSearch && !!pageTagSlug;
+  const useTag = !useSearch && !useRegion && !!pageTagSlug;
 
   const variables: Record<string, unknown> = { first };
   if (after) variables.after = after;
   if (useSearch) variables.search = trimmed;
+  if (useRegion) variables.regionSlug = [regionSlug];
   if (useTag) variables.tagSlug = [pageTagSlug];
 
   const queryText = useSearch
     ? QUERY_WITH_SEARCH
-    : useTag
-      ? QUERY_LATEST_BY_TAG
-      : QUERY_LATEST;
+    : useRegion
+      ? QUERY_LATEST_BY_REGION
+      : useTag
+        ? QUERY_LATEST_BY_TAG
+        : QUERY_LATEST;
 
   try {
     const data = await fetchGraphQL<{

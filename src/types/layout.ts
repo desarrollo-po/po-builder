@@ -19,11 +19,13 @@ export type TemplateId =
   | "dos-notas-secundarias"
   | "tres-notas-secundarias"
   | "cuatro-notas-secundarias"
+  | "dos-notas-sin-foto"
   | "cuatro-notas-sin-foto"
   | "cuadricula"
   | "mas-notas-edm"
   | "edm-horizontal"
-  | "banner";
+  | "banner"
+  | "code-region";
 
 export type SlotVariant =
   | "nota-principal"
@@ -34,7 +36,8 @@ export type SlotVariant =
   | "secondary-text"
   | "nota-edm"
   | "nota-edm-vertical"
-  | "banner";
+  | "banner"
+  | "code";
 
 export interface SlotSpec {
   variant: SlotVariant;
@@ -60,6 +63,9 @@ export interface Region {
   // ponytail: cuadricula-only banner heights in px. Independent so shrinking
   // one doesn't grow the other. Generalize when a 2nd composite template appears.
   bannerHeights?: [number, number];
+  // code-region-only: active column count (1-4). Per-instance config the
+  // static TEMPLATE_SPECS entry can't express.
+  codeColumns?: number;
 }
 
 export interface ArticleBlock {
@@ -86,13 +92,16 @@ export interface BannerBlock {
   type: "banner";
   mediaId?: string;
   imageUrl: string;
+  // Optional mobile-specific image. Falls back to `imageUrl` when unset.
+  imageUrlMobile?: string;
   linkUrl: string;
   altText: string;
   openInNewTab: boolean;
 }
 
-// Raw HTML/iframe embed. Lands in the same slots as banners (full-width,
-// variant-agnostic) — see slotAcceptsBanner.
+// Raw HTML/iframe embed. Legacy banner-variant slots accept it alongside
+// banners (see slotAcceptsBanner); "code"-variant slots (code-region) accept
+// it alongside articles and banners — see slotAccepts.
 export interface CodeBlock {
   type: "code";
   html: string;
@@ -158,6 +167,16 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
       { variant: "secondary-small", gridArea: "b" },
       { variant: "secondary-small", gridArea: "c" },
       { variant: "secondary-small", gridArea: "d" },
+    ],
+  },
+  "dos-notas-sin-foto": {
+    label: "2 notas secundarias sin foto",
+    slotsCount: 2,
+    gridTemplateColumns: "1fr 1fr",
+    gridTemplateAreas: `"a b"`,
+    slots: [
+      { variant: "secondary-text", gridArea: "a" },
+      { variant: "secondary-text", gridArea: "b" },
     ],
   },
   "cuatro-notas-sin-foto": {
@@ -240,6 +259,23 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
     gridTemplateAreas: `"banner"`,
     slots: [{ variant: "banner", gridArea: "banner" }],
   },
+  // Instance actually renders `Region.codeColumns` (1-4) slots, computed
+  // layout in CodeRegionTemplate/CodeRegionRender — this spec exists so
+  // slotVariantAt resolves for indices up to 3 regardless of the instance's
+  // active column count, and so AddRegionModal's generic preview works.
+  "code-region": {
+    label: "Bloque flexible: código, notas o banners (1 a 4 columnas)",
+    slotsCount: 4,
+    optionalSlots: true,
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gridTemplateAreas: `"a b c d"`,
+    slots: [
+      { variant: "code", gridArea: "a" },
+      { variant: "code", gridArea: "b" },
+      { variant: "code", gridArea: "c" },
+      { variant: "code", gridArea: "d" },
+    ],
+  },
 };
 
 // Returns the variant a region's slot exposes, used to know which BlockType
@@ -253,4 +289,18 @@ export function slotVariantAt(
 
 export function slotAcceptsBanner(variant: SlotVariant): boolean {
   return variant === "banner";
+}
+
+// "code" variant marks code-region slots, which accept any block type
+// (article, banner, or code) — see slotAccepts.
+export function slotAcceptsCode(variant: SlotVariant): boolean {
+  return variant === "code";
+}
+
+// Single gate for drag-and-drop: does this slot variant accept a block of
+// this type? Article-only variants (the default) fall through at the end.
+export function slotAccepts(variant: SlotVariant, blockType: Block["type"]): boolean {
+  if (slotAcceptsCode(variant)) return true;
+  if (slotAcceptsBanner(variant)) return blockType === "banner" || blockType === "code";
+  return blockType === "article";
 }

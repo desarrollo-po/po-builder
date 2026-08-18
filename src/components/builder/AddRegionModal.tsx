@@ -8,11 +8,13 @@ const TEMPLATE_ORDER: TemplateId[] = [
   "dos-notas-secundarias",
   "tres-notas-secundarias",
   "cuatro-notas-secundarias",
+  "dos-notas-sin-foto",
   "cuatro-notas-sin-foto",
   "cuadricula",
   "mas-notas-edm",
   "edm-horizontal",
   "banner",
+  "code-region",
 ];
 
 export default function AddRegionModal() {

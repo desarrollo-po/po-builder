@@ -257,10 +257,41 @@ Pendientes:
 - [x] Task: "BannerStorage". Modificar la pestaña de banners para que se pueda subir imagenes a supabase directamente y no buscar en wordpress. El bucket debe llamarse banners. Debe haber un sistema de compresión y restricción de imagenes pesadas. No aceptar imagenes de mas de 3MB. Y de dimension 1920x1080. Las imagenes pueden ser .jpg .jpeg .png .webp. La implementación de la búsqueda en wordpress no debe eliminarse ya que es una prueba de concepto.
 - [x] Task: "BannersUnificados" La sección de banners deberia ser una sola. Y ahi dentro separar en "banners wp" y "subir el propio banner" todo bajo el mismo Tab "Banners".
 - [x] Task: "CodeBlocks" Agregar un nuevo bloque para poder agregar html crudo, debe soportar las etiquetas de html, por el momento será para subir iframes, pero es una solución si se quiere implementar una estructura a mano. Se debe agregar un tab "Code" junto a "Articulos / EDM / Banners" en la barra lateral izquierda de contenido. 
+- [x] Bug: "CodeBlocksTweets": El bloque de código recientemente implementado en la task:
+  "CodeBlocks" tiene un problema cuando se previsualizan los
+  cambios: los tweets no se cargan correctamente, quedan como texto plano. Sospecho que tiene que cargarse una libreria de js de manera asincrona para que se ejecute una vez que el contenido esté en el dom. Ejemplo de tweet insertado:
+  ```
+   <blockquote class="twitter-tweet" data-media-max-width="560"><p lang="es" dir="ltr">Se casa Taylor Swift y juega la selección Argentina. Hoy lo vemos así <a href="https://t.co/w5qQmBP4l6">pic.twitter.com/w5qQmBP4l6</a></p>&mdash; Deb (@debisolsi) <a href="https://x.com/debisolsi/status/2073025272803168640?ref_src=twsrc%5Etfw">July 3, 2026</a></blockquote> <script async src="https://platform.x.com/widgets.js" charset="utf-8"></script>
+   ```
+- [x] Task: "EditBlockCode". El bloque insertado de código debe poder editarse. Encontrar la forma más efectiva y simple de poder editar ese mismo bloque en el canvas sin romper el diseño de la región ni los otros bloques. Debe aparecer un boton o icono de lapiz que al hacer click permita editar el bloque. Invocar skills ponytail y best practices si es necesario.
+- [x] Task: "NewCodeRegion". Implementar nueva región para insertar bloque de código. Esta región tendrá la particularidad de tener una botonera con opciones para: 1. Agregar o Quitar Slots/Columnas. 2. Posicionar la o las columnas horizontalmente (izquierda, centro y derecha) para que, en el caso de tener un solo bloque, quede centrado. 3. Analizar si es conveniente incluir botones para: Insertar tweet, Insertar video de youtube, Insertar Iframe, Instagram. Serían opciones independientes que condicionan al usuario a no pegar código incorrecto y solo llenar los campos necesarios.
+  Hecho: columnas (1-4), reparten el 100% del ancho de la región (1 col = full width, 2 cols = 50/50, etc.). Los slots aceptan código, notas y banners (no solo código). Item 2 (alineación izq/centro/der) removido — quedaba sin efecto visible al repartir el 100% del ancho, no había espacio sobrante para desplazar. Cada slot con contenido tiene su propio botón "×" (quitar ese banner/nota/código puntual, reutiliza `clearSlot`), además del lápiz de edición en los de código. Cada columna vacía tiene además un "×" junto al "+" de agregar contenido (elimina esa columna específica, no solo la última — `removeCodeColumn`); con contenido, hay que vaciarla primero con el "×" de contenido para llegar a ese estado. El "−"/"+" del stepper sigue operando sobre la cantidad total desde el final. Item 3 (tweet/youtube/iframe/instagram) diferido — ver botón genérico "Agregar contenido" en slots vacíos, pensado para que un picker futuro lo reemplace sin rename.
+- [x] Task: "2 Notas secundarias Sin foto". Nueva Región igual a 2 notas secundarias pero SIN IMAGEN."
+- [x] Task: "AddMySQL". Analizado costo/beneficio: migrar a MySQL (Hostinger u otro host) exige construir y mantener un server intermedio nuevo, porque el SPA no puede hablarle directo a una base cruda desde el browser (sin API REST gestionada como PostgREST, ni exponer credenciales en el bundle). La causa real de la preocupación de cuota era que `saveLayout()` es insert-only y `page_layouts` crecía sin límite por slug. Se resolvió con `pruneOldDrafts()` en `src/lib/supabase.ts`: después de cada save exitoso, borra los drafts no publicados con más de 5 versiones de antigüedad para ese slug (`version < currentVersion - 5`, `is_published = false`). La fila publicada nunca se toca. Cero infraestructura nueva. Migración a MySQL queda descartada salvo que el dashboard de Supabase muestre que el límite de cuota es un problema real por otra causa (ej. Storage de banners/OG, no esta tabla).
+- [x] Task: "BotonPublicar". El boton de publicar debe bloquearse si la pagina ya esta publicada.
+- [ ] Task: "Filtro por Regiones. En el leftsidebar donde se listan las notas de prensaobrera me sugieren agregar un filtro para encontrar facilmente aquellan notas que en wordpress están marcadas con una "región" determinada. La query de regiones en graphql es la siguiente: ```
+query Regiones {
+  regiones(
+    where: {slug: ["fila-multiple", "4-columnas-con-foto", "cuadricula", "4-columnas-sin-foto", "Sin descripción\t2-sub-destacado-4", "3-notas-principales-b", "cultura", "Sin descripción\t3-notas-principales-a", "1nota-principal"]}
+  ) {
+    edges {
+      node {
+        id
+        name
+      }
+    }
+  }
+}
+``` Una vez seleccionada la región, la query de notas debe traer solo las notas que tengan esa región. Para esto se necesita agregar un parametro a la query de notas que reciba el id de la región.
+- [x] Task "BannerMobile": Los banners deben tener una "versión mobile" y una "versión desktop", es decir dos imágenes por banner. Deben configurarse los breakpoints necesarios para cargar la imagen correspondiente. Debe haber un switch dentro del bloque de la región del banner para intercambiar entre mobile y desktop para cargar la correspondiente. Si no existe versión mobile debe usar la versión desktop.
 - [ ] Agregar roles / permisos a usuarios
 - [ ] Retry/backoff en errores de Supabase
 - [ ] Configurar MCP de github para sincronizar issues
+- [x] Task "RemoveCardButton": Las tarjetas insertadas dentro de las regiones deben tener la opción de eliminarlas por separado, como tiene la región de "Bloque Flexible"
+  Hecho: el botón "×" de `SlotBlock` (`RegionTemplate.tsx`) estaba gateado a `variant === "code"` (sólo "Bloque Flexible"); se sacó el gate — ahora se muestra para cualquier slot con bloque, usando el mismo `clearSlot` genérico del store. El lápiz de edición de `SlotCodeBody` asumía que compartía posición con el "×" sólo en variant "code"; pasó a `right-8` fijo para no superponerse ahora que el "×" está siempre presente.
 - [x] Loading skeletons en `ArticleBrowser` / `BannerLibrary`
+- [x] Task: "FixesMobile": Version mobile general. El builder no se ve correctamente en mobile. Sobre todo los botones de publicar, guardar, etc. Se adjunta imagen en /FixesMobile/versionMobile.png. Además, en mobile es dificil armar regiones porque no es eficiente el drag and drop. Proponer una solucion.
+  Hecho: shell responsive completo. `Sidebar` pasó de `width: 400px` fijo a `w-full md:w-[400px]`, `App.tsx` agrega un selector "Contenido / Página" (`md:hidden`) que alterna cuál panel se ve por debajo de `md`. Toolbar (`BuilderToolbar.tsx`) ahora usa `flex-wrap` + `h-auto` en mobile así los botones Guardar/Publicar/Undo/Redo pasan a una segunda fila en vez de recortarse, y el toast central deja de superponerse. Para el drag-and-drop poco práctico en touch se agregó **tap-to-place** como alternativa (no reemplaza el drag de desktop): tocar una card en el sidebar la "arma" (`useTapPlaceStore`), la vista salta sola a "Página", y tocar un slot compatible asigna el bloque y desarma — reusa la misma validación de `slotAccepts` que ya usaba el drag (extraída a `applySourceToSlot` en `useDragHandlers.ts` para no duplicarla). Grids de región no requirieron cambios, ya colapsaban vía `@container` pero nunca tenían ancho real en mobile por el Sidebar fijo.
 
 ---
 

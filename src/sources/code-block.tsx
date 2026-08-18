@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import type { ContentPage, ContentSource } from "./types";
+import { useTapPlaceStore } from "../store/tapPlaceStore";
 
 const SOURCE_ID = "code-block";
 
@@ -12,6 +13,8 @@ function CodeForm() {
     id: "new-code-block",
     data: { type: "code", html },
   });
+
+  const arm = useTapPlaceStore((s) => s.arm);
 
   return (
     <div className="flex flex-col gap-3.5 p-3">
@@ -35,6 +38,7 @@ function CodeForm() {
         ref={setNodeRef}
         {...attributes}
         {...listeners}
+        onClick={() => isValid && arm({ type: "code", label: "Bloque de código", data: { type: "code", html } })}
         className={`rounded-lg border-2 border-dashed p-3.5 text-center transition-colors ${
           isValid
             ? "cursor-grab border-accent bg-accent/5"

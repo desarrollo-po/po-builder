@@ -6,24 +6,22 @@ import { displayName } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 import CreatePageModal from "./CreatePageModal";
 import favicon from "../../assets/favicon-32x32.png";
+import { dateFormater } from "../../helpers/dateFormater";
 
 export default function PagesList() {
   const navigate = useNavigate();
   const email = useAuthStore((s) => s.email);
   const authStatus = useAuthStore((s) => s.status);
   const [showCreate, setShowCreate] = useState(false);
-  const [kickedMessage, setKickedMessage] = useState<string | null>(null);
+  const [kickedMessage, setKickedMessage] = useState<string | null>(() => {
+    const kicked = sessionStorage.getItem("po-kicked");
+    if (!kicked) return null;
+    sessionStorage.removeItem("po-kicked");
+    const [by, sl] = kicked.split("|");
+    return `${displayName(by)} tomó el control de "${sl}". Tu borrador local sigue disponible.`;
+  });
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const kicked = sessionStorage.getItem("po-kicked");
-    if (kicked) {
-      sessionStorage.removeItem("po-kicked");
-      const [by, sl] = kicked.split("|");
-      setKickedMessage(`${displayName(by)} tomó el control de "${sl}". Tu borrador local sigue disponible.`);
-    }
-  }, []);
 
   useEffect(() => {
     if (!userMenuOpen) return;
@@ -217,15 +215,25 @@ export default function PagesList() {
                       </span>
                     )}
                     {p.is_published ? (
-                      <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                        <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                        Publicada
-                      </span>
+                      <div className="flex flex-col gap-2 items-end">
+                        <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                          <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                          Publicada
+                        </div>
+                        <div className="text-[11px] font-medium text-text-secondary">
+                          <span className="font-bold">Última modificación:</span> {dateFormater(p.updated_at)}
+                        </div>
+                      </div>
                     ) : (
-                      <span className="flex items-center gap-1.5 rounded-full bg-[#0070f3]/10 px-2.5 py-1 text-xs font-medium text-[#0070f3]">
-                        <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#0070f3]" />
-                        Borrador
-                      </span>
+                      <div className="flex flex-col gap-2 items-end">
+                        <span className="flex items-center gap-1.5 rounded-full bg-[#0070f3]/10 px-2.5 py-1 text-xs font-medium text-[#0070f3]">
+                          <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#0070f3]" />
+                          Borrador
+                        </span>
+                        <span className="text-[11px] font-medium text-text-secondary">
+                          <span className="font-bold">Última modificación:</span> {dateFormater(p.updated_at)}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </button>

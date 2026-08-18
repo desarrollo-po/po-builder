@@ -14,6 +14,7 @@ export default function CreatePageModal({ existingSlugs, onClose, onCreated }: P
   const navigate = useNavigate();
   const [slug, setSlug] = useState("");
   const [title, setTitle] = useState("");
+  const [tagSlug, setTagSlug] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +38,7 @@ export default function CreatePageModal({ existingSlugs, onClose, onCreated }: P
     const result = await createPage({
       slug: slug.trim(),
       title: title.trim(),
-      tag_slug: slug.trim() || null,
+      tag_slug: tagSlug.trim() || null,
     });
     setSubmitting(false);
     if (!result.success) {
@@ -114,7 +115,8 @@ export default function CreatePageModal({ existingSlugs, onClose, onCreated }: P
             </span>
             <input
               type="text"
-              value={slug}
+              value={tagSlug}
+              onChange={(e) => setTagSlug(e.target.value)}
               placeholder="paro-general"
               className="rounded-md border border-surface-inset bg-white px-3 py-2 text-[13px] text-text-primary outline-none placeholder:text-text-tertiary/60 focus:border-input-focus"
             />

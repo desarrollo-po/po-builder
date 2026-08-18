@@ -47,7 +47,15 @@ interface LayoutState {
     slotIndex: number,
     linkUrl: string,
   ) => void;
+  updateBannerImageMobile: (
+    regionId: string,
+    slotIndex: number,
+    imageUrlMobile: string | null,
+  ) => void;
+  updateCodeHtml: (regionId: string, slotIndex: number, html: string) => void;
   setBannerHeight: (regionId: string, idx: 0 | 1, height: number) => void;
+  setCodeColumns: (regionId: string, count: number) => void;
+  removeCodeColumn: (regionId: string, slotIndex: number) => void;
   updateMetadata: (patch: Partial<Pick<PageLayout, "title" | "meta_description" | "og_image_url">>) => void;
 
   save: () => Promise<{ success: boolean; error?: string }>;
@@ -60,7 +68,7 @@ interface LayoutState {
   canRedo: () => boolean;
 }
 
-const MAX_HISTORY = 20;
+const MAX_HISTORY = 5;
 // Single rolling draft for the currently-open page. Switching pages clears
 // it implicitly via the slug-mismatch branch in initializeLayout.
 const PERSIST_KEY = "po-builder:layout:current";
@@ -97,6 +105,15 @@ function isValidTemplateLayout(layout: PageLayout | null): boolean {
 }
 
 function createRegion(template: TemplateId): Region {
+  if (template === "code-region") {
+    return {
+      id: uuidv4(),
+      template,
+      order: 0,
+      blocks: [null],
+      codeColumns: 1,
+    };
+  }
   const spec = TEMPLATE_SPECS[template];
   return {
     id: uuidv4(),
@@ -262,6 +279,31 @@ export const useLayoutStore = create<LayoutState>()(
           );
         },
 
+        setCodeColumns: (regionId, count) => {
+          const clamped = Math.min(4, Math.max(1, count));
+          updateRegions((regions) =>
+            regions.map((r) => {
+              if (r.id !== regionId) return r;
+              const blocks = [...r.blocks];
+              while (blocks.length < clamped) blocks.push(null);
+              blocks.length = clamped;
+              return { ...r, blocks, codeColumns: clamped };
+            }),
+          );
+        },
+
+        // Removes one specific column (not just the last one, unlike
+        // setCodeColumns) — shifts the remaining columns left.
+        removeCodeColumn: (regionId, slotIndex) =>
+          updateRegions((regions) =>
+            regions.map((r) => {
+              if (r.id !== regionId) return r;
+              if (r.blocks.length <= 1) return r;
+              const blocks = r.blocks.filter((_, i) => i !== slotIndex);
+              return { ...r, blocks, codeColumns: blocks.length };
+            }),
+          ),
+
         updateMetadata: (patch) => {
           const state = get();
           if (!state.layout) return;
@@ -277,6 +319,32 @@ export const useLayoutStore = create<LayoutState>()(
               if (!current || current.type !== "banner") return r;
               const blocks = [...r.blocks];
               blocks[slotIndex] = { ...current, linkUrl };
+              return { ...r, blocks };
+            }),
+          ),
+
+        updateBannerImageMobile: (regionId, slotIndex, imageUrlMobile) =>
+          updateRegions((regions) =>
+            regions.map((r) => {
+              if (r.id !== regionId) return r;
+              if (slotIndex < 0 || slotIndex >= r.blocks.length) return r;
+              const current = r.blocks[slotIndex];
+              if (!current || current.type !== "banner") return r;
+              const blocks = [...r.blocks];
+              blocks[slotIndex] = { ...current, imageUrlMobile: imageUrlMobile ?? undefined };
+              return { ...r, blocks };
+            }),
+          ),
+
+        updateCodeHtml: (regionId, slotIndex, html) =>
+          updateRegions((regions) =>
+            regions.map((r) => {
+              if (r.id !== regionId) return r;
+              if (slotIndex < 0 || slotIndex >= r.blocks.length) return r;
+              const current = r.blocks[slotIndex];
+              if (!current || current.type !== "code") return r;
+              const blocks = [...r.blocks];
+              blocks[slotIndex] = { ...current, html };
               return { ...r, blocks };
             }),
           ),
@@ -333,15 +401,14 @@ export const useLayoutStore = create<LayoutState>()(
           const state = get();
           if (!state.layout) return { success: false, error: "No layout loaded" };
           try {
-            // ponytail: single-editor assumption — bump locally. Upgrade to
-            // SELECT max(version) WHERE slug=... if concurrent editing ships.
             const nextLayout: PageLayout = {
               ...state.layout,
-              version: state.layout.version + 1,
               updated_at: new Date().toISOString(),
+              is_published: false,
             };
             const result = await saveLayout(nextLayout);
-            if (result.success) {
+            if (result.success && result.version !== undefined) {
+              nextLayout.version = result.version;
               set({
                 layout: nextLayout,
                 isDirty: false,
@@ -381,7 +448,13 @@ export const useLayoutStore = create<LayoutState>()(
           }
 
           try {
-            return await publishLayout(state.layout.slug, state.layout.version);
+            const result = await publishLayout(state.layout.slug, state.layout.version);
+            if (result.success) {
+              set({
+                layout: { ...state.layout, is_published: true, published_at: new Date().toISOString() },
+              });
+            }
+            return result;
           } catch (error) {
             return {
               success: false,

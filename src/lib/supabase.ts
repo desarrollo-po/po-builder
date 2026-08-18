@@ -18,7 +18,7 @@ export async function signInWithGoogle() {
     options: {
       redirectTo: import.meta.env.DEV
         ? `${window.location.origin}${import.meta.env.BASE_URL}`
-        : "https://desarrollo-po.github.io/po-builder/",
+        : "https://pobuilder.prensaobrera.com/",
     },
   });
 }
@@ -61,9 +61,36 @@ export async function loadLayout(slug: string): Promise<PageLayout | null> {
   return data || null;
 }
 
+const DRAFT_RETENTION = 5; // last N unpublished versions kept per slug
+
+// Fire-and-forget: saveLayout never updates in place, so page_layouts grows
+// one row per save. Published rows are exempt regardless of age/version.
+async function pruneOldDrafts(slug: string, currentVersion: number): Promise<void> {
+  const { error } = await supabase
+    .from("page_layouts")
+    .delete()
+    .eq("slug", slug)
+    .eq("is_published", false)
+    .lt("version", currentVersion - DRAFT_RETENTION);
+  if (error) console.warn("Prune old drafts failed:", error);
+}
+
 export async function saveLayout(
   layout: PageLayout
-): Promise<{ success: boolean; id?: string; error?: string }> {
+): Promise<{ success: boolean; id?: string; version?: number; error?: string }> {
+  // Compute version from the DB's current max, not the client's in-memory
+  // guess — two tabs/editors both bumping their own stale local version
+  // otherwise insert duplicate (slug, version) rows, which later makes
+  // publishLayout's `.eq("version", ...)` match more than one row.
+  const { data: latest } = await supabase
+    .from("page_layouts")
+    .select("version")
+    .eq("slug", layout.slug)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const version = (latest?.version ?? 0) + 1;
+
   const { data, error } = await supabase
     .from("page_layouts")
     .insert([
@@ -71,7 +98,7 @@ export async function saveLayout(
         slug: layout.slug,
         title: layout.title,
         tag_slug: layout.tag_slug,
-        version: layout.version,
+        version,
         layout: layout.layout,
         is_published: false,
         meta_description: layout.meta_description ?? null,
@@ -88,7 +115,9 @@ export async function saveLayout(
     return { success: false, error: error.message };
   }
 
-  return { success: true, id: data?.id };
+  pruneOldDrafts(layout.slug, version).catch(() => {});
+
+  return { success: true, id: data?.id, version };
 }
 
 export interface PageSummary {
@@ -158,10 +187,10 @@ async function revalidatePage(slug: string): Promise<void> {
   const url = import.meta.env.VITE_REVALIDATE_URL;
   const secret = import.meta.env.VITE_REVALIDATE_SECRET;
   if (!url || !secret) return;
+  const endpoint = slug === "home" ? "revalidate-index" : "revalidate-page";
   const res = await fetch(
-    `${url}/api/revalidate-page?secret=${encodeURIComponent(secret)}&slug=${encodeURIComponent(slug)}`
+    `${url}/api/${endpoint}?secret=${encodeURIComponent(secret)}&slug=${encodeURIComponent(slug)}`
   );
-  console.log("🔍 ~ revalidatePage ~ src/lib/supabase.ts:161 ~ res:", res);
   if (!res.ok) throw new Error(`Revalidation webhook returned ${res.status}`);
 }
 
@@ -182,6 +211,7 @@ export async function publishLayout(
     .update({
       is_published: true,
       published_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     })
     .eq("slug", slug)
     .eq("version", version);
