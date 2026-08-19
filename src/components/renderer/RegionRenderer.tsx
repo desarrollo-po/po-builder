@@ -80,7 +80,7 @@ function MasNotasEdmRender({ region }: { region: Region }) {
         <div className="flex justify-center items-start flex-col bg-white p-3 py-5">
           <img src={logoEdm} alt="EDM" width={155} height={47} className="w-auto h-auto" />
         </div>
-        <div className="flex flex-[1.3] flex-col gap-3 bg-red-600 p-3">
+        <div className="flex flex-[1.3] flex-col gap-3 bg-[#e23b1a] p-3">
           {rightSlots.map((slot, i) => {
             const slotIndex = 9 + i;
             return (
@@ -103,7 +103,7 @@ function EdmHorizontalRender({ region }: { region: Region }) {
   const spec = TEMPLATE_SPECS["edm-horizontal"];
 
   return (
-    <section data-region-template={region.template} className="bg-red-600">
+    <section data-region-template={region.template} className="bg-[#e23b1a]">
       <div className="flex justify-center items-start flex-col bg-white p-3 py-5">
         <img src={logoEdm} alt="EDM" width={155} height={47} className="w-auto h-auto" />
       </div>
