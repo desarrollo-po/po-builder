@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_BYTES = 3 * 1024 * 1024;
 const MAX_W = 1920;
-const MAX_H = 1080;
+const MAX_H = 1440;
 
 export function validateBannerFile(file: File): string | null {
   if (!ALLOWED_TYPES.has(file.type)) return "Formato no permitido. Usá JPG, PNG o WebP.";
