@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { TEMPLATE_SPECS, type Region } from "../../types/layout";
 import BlockRenderer from "./BlockRenderer";
 import logoEdm from "../../assets/logo-edm.png";
@@ -127,11 +128,15 @@ function CodeRegionRender({ region }: { region: Region }) {
   return (
     <section
       data-region-template="code-region"
-      className="flex"
+      className="flex flex-col @md:flex-row"
       style={{ gap: "18px" }}
     >
       {Array.from({ length: columns }, (_, i) => (
-        <div key={i} style={{ width: `calc((100% - ${(columns - 1) * 18}px) / ${columns})` }}>
+        <div
+          key={i}
+          className="w-full @md:[width:var(--col-width)]"
+          style={{ "--col-width": `calc((100% - ${(columns - 1) * 18}px) / ${columns})` } as CSSProperties}
+        >
           <BlockRenderer block={region.blocks[i] ?? null} variant="code" />
         </div>
       ))}
