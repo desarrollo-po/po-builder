@@ -225,6 +225,7 @@ function toSnapshot(node: PoArticleNode): ArticleSnapshot {
     categoryName: node.categories?.edges?.[0]?.node?.name ?? null,
     categorySlug: node.categories?.edges?.[0]?.node?.slug ?? null,
     volanta: node.campos?.volanta ?? null,
+    source: "po",
   };
 }
 

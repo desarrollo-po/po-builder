@@ -10,7 +10,8 @@ import {
   SecondarySmallArticle,
   SecondaryTextArticle,
   NotaPrincipal,
-  NotaEDMVertical
+  NotaEDMVertical,
+  NotaEDMFlexible
 } from "./cards";
 
 // Article cards per slot variant. Each variant has one visual that the
@@ -51,6 +52,12 @@ export default function BlockRenderer({ block, variant }: Props) {
 
   if (block.type === "code") {
     return <CodeCard code={block} />;
+  }
+
+  // code-region slots take articles from any source — give EDM's its own
+  // card instead of the general one, since it carries a distinct red style.
+  if (variant === "code" && block.snapshot.source === "edm") {
+    return <NotaEDMFlexible article={block} />;
   }
 
   const ArticleCard = ARTICLE_CARDS[variant];

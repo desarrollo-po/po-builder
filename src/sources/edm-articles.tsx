@@ -125,6 +125,7 @@ function toSnapshot(node: EdmArticleNode): ArticleSnapshot {
     categoryName: node.categories?.edges?.[0]?.node?.name ?? "EDM Digital",
     categorySlug: node.categories?.edges?.[0]?.node?.slug ?? null,
     volanta,
+    source: "edm",
   };
 }
 

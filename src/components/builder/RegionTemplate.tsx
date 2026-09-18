@@ -19,6 +19,7 @@ import {
   MainRightArticle,
   NotaEDM,
   NotaEDMVertical,
+  NotaEDMFlexible,
   NotaPrincipal,
   SecondaryPhotoArticle,
   SecondarySmallArticle,
@@ -780,8 +781,10 @@ function SlotArticleBody({
       // Article blocks never appear in banner slots (gated by useDragHandlers).
       return null;
     case "code":
-      // code-region slots accept articles too — SecondarySmallArticle is a
-      // reasonable default visual across the region's 1-4 column widths.
-      return <SecondarySmallArticle article={article} />;
+      // code-region slots accept articles from any source — EDM's own card
+      // gets its red style, everything else falls back to the general one.
+      return article.snapshot.source === "edm"
+        ? <NotaEDMFlexible article={article} />
+        : <SecondarySmallArticle article={article} />;
   }
 }
