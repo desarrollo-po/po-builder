@@ -131,7 +131,7 @@ function CodeRegionRender({ region }: { region: Region }) {
   return (
     <section
       data-region-template="code-region"
-      className="flex flex-col @md:flex-row"
+      className="flex flex-col @md:flex-row @md:items-start"
       style={{ gap: "18px" }}
     >
       {Array.from({ length: columns }, (_, i) => (

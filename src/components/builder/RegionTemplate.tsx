@@ -231,7 +231,7 @@ function CodeRegionTemplate({ region }: { region: Region }) {
         </button>
       </div>
 
-      <div className="flex min-h-[120px]">
+      <div className="flex min-h-[120px] items-start">
         {Array.from({ length: columns }, (_, i) => (
           <Fragment key={i}>
             {i > 0 && (
