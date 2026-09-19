@@ -28,9 +28,9 @@ export default function SecondarySmallArticle({ article }: Props) {
         <h2 className="text-[18px] font-extrabold leading-tight text-gray-900 tracking-tight">
           {snapshot.title}
         </h2>
-        {snapshot.descripcionDestacado && (
+        {(snapshot.descripcionDestacado || snapshot.excerpt) && (
           <p className="m-0 text-[15px] leading-tight">
-            {snapshot.descripcionDestacado}
+            {snapshot.descripcionDestacado || snapshot.excerpt}
           </p>
         )}
       </div>

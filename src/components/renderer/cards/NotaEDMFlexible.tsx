@@ -26,6 +26,11 @@ export default function NotaEDMFlexible({ article }: Props) {
         <h2 className="m-0 text-[18px] font-extrabold leading-tight text-white tracking-tight">
           {snapshot.title}
         </h2>
+        {(snapshot.descripcionDestacado || snapshot.excerpt) && (
+          <p className="m-0 text-[15px] leading-tight text-white/90">
+            {snapshot.descripcionDestacado || snapshot.excerpt}
+          </p>
+        )}
         {snapshot.volanta && (
           <span className="mt-auto text-[14px] font-medium text-white/80">
             {snapshot.volanta}
