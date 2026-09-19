@@ -56,6 +56,7 @@ interface LayoutState {
   setBannerHeight: (regionId: string, idx: 0 | 1, height: number) => void;
   setCodeColumns: (regionId: string, count: number) => void;
   removeCodeColumn: (regionId: string, slotIndex: number) => void;
+  setCodeColumnWidths: (regionId: string, widths: number[]) => void;
   updateMetadata: (patch: Partial<Pick<PageLayout, "title" | "meta_description" | "og_image_url">>) => void;
 
   save: () => Promise<{ success: boolean; error?: string }>;
@@ -287,7 +288,11 @@ export const useLayoutStore = create<LayoutState>()(
               const blocks = [...r.blocks];
               while (blocks.length < clamped) blocks.push(null);
               blocks.length = clamped;
-              return { ...r, blocks, codeColumns: clamped };
+              // Widths are per-column-count — stale after adding/removing a
+              // column, so drop back to an even split (codeColumnWidthsFor
+              // already falls back for this, but clearing keeps stored
+              // state from lying about the current shape).
+              return { ...r, blocks, codeColumns: clamped, codeColumnWidths: undefined };
             }),
           );
         },
@@ -300,8 +305,15 @@ export const useLayoutStore = create<LayoutState>()(
               if (r.id !== regionId) return r;
               if (r.blocks.length <= 1) return r;
               const blocks = r.blocks.filter((_, i) => i !== slotIndex);
-              return { ...r, blocks, codeColumns: blocks.length };
+              return { ...r, blocks, codeColumns: blocks.length, codeColumnWidths: undefined };
             }),
+          ),
+
+        // Full weights array, one call per drag frame — same "commit every
+        // pointermove" pattern as setBannerHeight below.
+        setCodeColumnWidths: (regionId, widths) =>
+          updateRegions((regions) =>
+            regions.map((r) => (r.id === regionId ? { ...r, codeColumnWidths: widths } : r)),
           ),
 
         updateMetadata: (patch) => {

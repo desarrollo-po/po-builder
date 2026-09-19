@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { TEMPLATE_SPECS, type Region } from "../../types/layout";
+import { TEMPLATE_SPECS, codeColumnWidthsFor, type Region } from "../../types/layout";
 import BlockRenderer from "./BlockRenderer";
 import logoEdm from "../../assets/logo-edm.png";
 
@@ -124,6 +124,9 @@ function EdmHorizontalRender({ region }: { region: Region }) {
 
 function CodeRegionRender({ region }: { region: Region }) {
   const columns = region.codeColumns ?? 1;
+  const weights = codeColumnWidthsFor(region);
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+  const gapTotal = (columns - 1) * 18;
 
   return (
     <section
@@ -135,7 +138,7 @@ function CodeRegionRender({ region }: { region: Region }) {
         <div
           key={i}
           className="w-full @md:[width:var(--col-width)]"
-          style={{ "--col-width": `calc((100% - ${(columns - 1) * 18}px) / ${columns})` } as CSSProperties}
+          style={{ "--col-width": `calc((100% - ${gapTotal}px) * ${weights[i] / totalWeight})` } as CSSProperties}
         >
           <BlockRenderer block={region.blocks[i] ?? null} variant="code" />
         </div>

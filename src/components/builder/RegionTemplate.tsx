@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { useLayoutStore } from "../../store/layoutStore";
 import { useTapPlaceStore } from "../../store/tapPlaceStore";
@@ -6,6 +6,7 @@ import { applySourceToSlot } from "../../hooks/useDragHandlers";
 import {
   TEMPLATE_SPECS,
   slotAccepts,
+  codeColumnWidthsFor,
   type ArticleBlock,
   type BannerBlock,
   type CodeBlock,
@@ -198,7 +199,11 @@ function EdmHorizontalTemplate({ region }: { region: Region }) {
 function CodeRegionTemplate({ region }: { region: Region }) {
   const setCodeColumns = useLayoutStore((s) => s.setCodeColumns);
   const removeCodeColumn = useLayoutStore((s) => s.removeCodeColumn);
+  const setCodeColumnWidths = useLayoutStore((s) => s.setCodeColumnWidths);
   const columns = region.codeColumns ?? 1;
+  const weights = codeColumnWidthsFor(region);
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+  const gapTotal = (columns - 1) * 10;
 
   return (
     <div className="flex flex-col gap-2.5">
@@ -226,20 +231,85 @@ function CodeRegionTemplate({ region }: { region: Region }) {
         </button>
       </div>
 
-      <div className="flex min-h-[120px] gap-2.5">
+      <div className="flex min-h-[120px]">
         {Array.from({ length: columns }, (_, i) => (
-          <div key={i} style={{ width: `calc((100% - ${(columns - 1) * 10}px) / ${columns})` }}>
-            <SlotCell
-              regionId={region.id}
-              slotIndex={i}
-              variant="code"
-              gridArea=""
-              block={region.blocks[i] ?? null}
-              onRemoveColumn={columns > 1 ? () => removeCodeColumn(region.id, i) : undefined}
-            />
-          </div>
+          <Fragment key={i}>
+            {i > 0 && (
+              <CodeColumnResizeHandle
+                weights={weights}
+                index={i - 1}
+                onResize={(next) => setCodeColumnWidths(region.id, next)}
+              />
+            )}
+            <div style={{ width: `calc((100% - ${gapTotal}px) * ${weights[i] / totalWeight})` }}>
+              <SlotCell
+                regionId={region.id}
+                slotIndex={i}
+                variant="code"
+                gridArea=""
+                block={region.blocks[i] ?? null}
+                onRemoveColumn={columns > 1 ? () => removeCodeColumn(region.id, i) : undefined}
+              />
+            </div>
+          </Fragment>
         ))}
       </div>
+    </div>
+  );
+}
+
+// Drags the boundary between two adjacent columns, redistributing their
+// combined weight — the rest of the row is untouched. Same direct-commit-
+// per-pointermove approach as BannerResizeHandle below (this codebase's
+// established pattern for drag resize, even though it means each frame is
+// its own undo step).
+function CodeColumnResizeHandle({
+  weights,
+  index,
+  onResize,
+}: {
+  weights: number[];
+  index: number;
+  onResize: (next: number[]) => void;
+}) {
+  const drag = useRef({ active: false, startX: 0, startWeights: weights, availablePx: 0 });
+
+  return (
+    <div
+      className="group flex w-[10px] shrink-0 cursor-col-resize items-center justify-center"
+      title="Arrastrar para redimensionar"
+      onPointerDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const container = (e.currentTarget.parentElement as HTMLElement) ?? e.currentTarget;
+        const availablePx = container.getBoundingClientRect().width - (weights.length - 1) * 10;
+        drag.current = { active: true, startX: e.clientX, startWeights: weights, availablePx };
+        (e.target as Element).setPointerCapture(e.pointerId);
+      }}
+      onPointerMove={(e) => {
+        if (!drag.current.active) return;
+        const { startX, startWeights, availablePx } = drag.current;
+        const total = startWeights.reduce((a, b) => a + b, 0);
+        const minWeight = total * 0.15;
+        const deltaWeight = ((e.clientX - startX) / availablePx) * total;
+        const a = startWeights[index] + deltaWeight;
+        const b = startWeights[index + 1] - deltaWeight;
+        if (a < minWeight || b < minWeight) return;
+        const next = [...startWeights];
+        next[index] = a;
+        next[index + 1] = b;
+        onResize(next);
+      }}
+      onPointerUp={(e) => {
+        drag.current.active = false;
+        (e.target as Element).releasePointerCapture(e.pointerId);
+      }}
+      onPointerCancel={(e) => {
+        drag.current.active = false;
+        (e.target as Element).releasePointerCapture(e.pointerId);
+      }}
+    >
+      <div className="h-8 w-[3px] rounded-full bg-surface-inset transition group-hover:bg-accent-primary" />
     </div>
   );
 }

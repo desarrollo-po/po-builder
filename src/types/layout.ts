@@ -66,6 +66,11 @@ export interface Region {
   // code-region-only: active column count (1-4). Per-instance config the
   // static TEMPLATE_SPECS entry can't express.
   codeColumns?: number;
+  // code-region-only: relative width weights, one per column (same length
+  // as codeColumns). Missing, or a length mismatch right after adding/
+  // removing a column, falls back to an even split — see
+  // codeColumnWidthsFor, the single place that resolves this.
+  codeColumnWidths?: number[];
 }
 
 export interface ArticleBlock {
@@ -294,6 +299,15 @@ export function slotVariantAt(
 
 export function slotAcceptsBanner(variant: SlotVariant): boolean {
   return variant === "banner";
+}
+
+// code-region: one weight per active column. Falls back to an even split
+// when codeColumnWidths is absent or stale (its length no longer matches
+// codeColumns, e.g. right after adding/removing a column).
+export function codeColumnWidthsFor(region: Region): number[] {
+  const columns = region.codeColumns ?? 1;
+  const stored = region.codeColumnWidths;
+  return stored && stored.length === columns ? stored : Array(columns).fill(1);
 }
 
 // "code" variant marks code-region slots, which accept any block type
