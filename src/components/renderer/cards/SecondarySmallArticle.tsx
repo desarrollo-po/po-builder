@@ -12,7 +12,7 @@ export default function SecondarySmallArticle({ article }: Props) {
 
   return (
     <article
-      className="@container bg-white flex h-full flex-col shadow-[0_0_15px_0_rgba(0,0,0,0.10)]"
+      className="bg-white flex h-full flex-col shadow-[0_0_15px_0_rgba(0,0,0,0.10)]"
       style={{ borderTop: `3px solid ${accent}` }}
     >
       {snapshot.imageUrl && (

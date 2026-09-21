@@ -1,11 +1,29 @@
 import type { CSSProperties } from "react";
-import { TEMPLATE_SPECS, codeColumnWidthsFor, type Region } from "../../types/layout";
+import { TEMPLATE_SPECS, TEMPLATE_MOBILE_BREAKPOINT, codeColumnWidthsFor, type Region } from "../../types/layout";
 import BlockRenderer from "./BlockRenderer";
 import logoEdm from "../../assets/logo-edm.png";
 
 interface Props {
   region: Region;
 }
+
+// Tailwind needs each full class name literally in the source to generate
+// its CSS, so a per-template pixel value (TEMPLATE_MOBILE_BREAKPOINT) can't
+// be interpolated into an arbitrary-value variant — instead every value that
+// constant actually uses gets a literal entry here.
+const GRID_MOBILE_CLASSES: Record<number, string> = {
+  512: "@max-[512px]:grid-cols-1! @max-[512px]:grid-rows-none! @max-[512px]:[grid-template-areas:none]!",
+  736: "@max-[736px]:grid-cols-1! @max-[736px]:grid-rows-none! @max-[736px]:[grid-template-areas:none]!",
+  960: "@max-[960px]:grid-cols-1! @max-[960px]:grid-rows-none! @max-[960px]:[grid-template-areas:none]!",
+};
+const DEFAULT_GRID_MOBILE_CLASSES = "@max-md:grid-cols-1! @max-md:grid-rows-none! @max-md:[grid-template-areas:none]!";
+
+const SLOT_MOBILE_CLASSES: Record<number, string> = {
+  512: "@max-[512px]:[grid-area:auto]!",
+  736: "@max-[736px]:[grid-area:auto]!",
+  960: "@max-[960px]:[grid-area:auto]!",
+};
+const DEFAULT_SLOT_MOBILE_CLASSES = "@max-md:[grid-area:auto]!";
 
 // A region is just a CSS grid declared by its template, plus N slots that
 // each delegate to BlockRenderer. The renderer has no opinion about whether
@@ -29,11 +47,14 @@ export default function RegionRenderer({ region }: Props) {
   }
 
   const spec = TEMPLATE_SPECS[region.template];
+  const breakpoint = TEMPLATE_MOBILE_BREAKPOINT[region.template];
+  const gridClasses = breakpoint ? GRID_MOBILE_CLASSES[breakpoint] : DEFAULT_GRID_MOBILE_CLASSES;
+  const slotClasses = breakpoint ? SLOT_MOBILE_CLASSES[breakpoint] : DEFAULT_SLOT_MOBILE_CLASSES;
 
   return (
     <section
       data-region-template={region.template}
-      className="grid @max-md:grid-cols-1! @max-md:grid-rows-none! @max-md:[grid-template-areas:none]!"
+      className={`grid ${gridClasses}`}
       style={{
         gap: "18px",
         gridTemplateColumns: spec.gridTemplateColumns,
@@ -44,7 +65,7 @@ export default function RegionRenderer({ region }: Props) {
       {spec.slots.map((slot, slotIndex) => (
         <div
           key={slotIndex}
-          className="@max-md:[grid-area:auto]!"
+          className={slotClasses}
           style={{ gridArea: slot.gridArea }}
         >
           <BlockRenderer
@@ -65,10 +86,10 @@ function MasNotasEdmRender({ region }: { region: Region }) {
   return (
     <section
       data-region-template={region.template}
-      className="flex flex-col gap-[18px] @md:flex-row @md:items-start"
+      className="flex flex-col gap-[18px] @[736px]:flex-row @[736px]:items-start"
     >
       <div
-        className="grid flex-[3] gap-[18px] @max-md:grid-cols-1!"
+        className="grid flex-[3] gap-[18px] @max-[736px]:grid-cols-1!"
         style={{ gridTemplateColumns: "1fr 1fr 1fr" }}
       >
         {leftSlots.map((slot, i) => (
@@ -109,7 +130,7 @@ function EdmHorizontalRender({ region }: { region: Region }) {
         <img src={logoEdm} alt="EDM" width={155} height={47} className="w-auto h-auto" />
       </div>
       <div
-        className="grid gap-4 @max-md:grid-cols-1! p-4"
+        className="grid gap-4 @max-[1100px]:grid-cols-1! p-4"
         style={{ gridTemplateColumns: "repeat(5, 1fr)" }}
       >
         {spec.slots.map((slot, i) => (
@@ -156,10 +177,10 @@ function CuadriculaRender({ region }: { region: Region }) {
   return (
     <section
       data-region-template={region.template}
-      className="flex flex-col gap-[18px] @md:flex-row @md:items-stretch"
+      className="flex flex-col gap-[18px] @[512px]:flex-row @[512px]:items-stretch"
     >
       <div
-        className="grid flex-[2] gap-[18px] @max-md:grid-cols-1!"
+        className="grid flex-[2] gap-[18px] @max-[512px]:grid-cols-1!"
         style={{
           gridTemplateColumns: "1fr 1fr",
           gridTemplateRows: "1fr 1fr",

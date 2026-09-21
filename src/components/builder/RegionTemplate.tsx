@@ -5,6 +5,7 @@ import { useTapPlaceStore } from "../../store/tapPlaceStore";
 import { applySourceToSlot } from "../../hooks/useDragHandlers";
 import {
   TEMPLATE_SPECS,
+  TEMPLATE_MOBILE_BREAKPOINT,
   slotAccepts,
   codeColumnWidthsFor,
   type ArticleBlock,
@@ -31,6 +32,24 @@ interface Props {
   region: Region;
 }
 
+// Tailwind needs each full class name literally in the source to generate
+// its CSS, so a per-template pixel value (TEMPLATE_MOBILE_BREAKPOINT) can't
+// be interpolated into an arbitrary-value variant — instead every value that
+// constant actually uses gets a literal entry here.
+const GRID_MOBILE_CLASSES: Record<number, string> = {
+  512: "@max-[512px]:grid-cols-1! @max-[512px]:[grid-template-rows:none]! @max-[512px]:[grid-template-areas:none]!",
+  736: "@max-[736px]:grid-cols-1! @max-[736px]:[grid-template-rows:none]! @max-[736px]:[grid-template-areas:none]!",
+  960: "@max-[960px]:grid-cols-1! @max-[960px]:[grid-template-rows:none]! @max-[960px]:[grid-template-areas:none]!",
+};
+const DEFAULT_GRID_MOBILE_CLASSES = "@max-md:grid-cols-1! @max-md:[grid-template-rows:none]! @max-md:[grid-template-areas:none]!";
+
+const SLOT_MOBILE_CLASSES: Record<number, string> = {
+  512: "@max-[512px]:[grid-area:auto]!",
+  736: "@max-[736px]:[grid-area:auto]!",
+  960: "@max-[960px]:[grid-area:auto]!",
+};
+const DEFAULT_SLOT_MOBILE_CLASSES = "@max-md:[grid-area:auto]!";
+
 export default function RegionTemplate({ region }: Props) {
   // ponytail: composite layouts handled inline. Extract to a registry when a
   // 4th composite template appears.
@@ -48,10 +67,13 @@ export default function RegionTemplate({ region }: Props) {
   }
 
   const spec = TEMPLATE_SPECS[region.template];
+  const breakpoint = TEMPLATE_MOBILE_BREAKPOINT[region.template];
+  const gridClasses = breakpoint ? GRID_MOBILE_CLASSES[breakpoint] : DEFAULT_GRID_MOBILE_CLASSES;
+  const slotClasses = breakpoint ? SLOT_MOBILE_CLASSES[breakpoint] : DEFAULT_SLOT_MOBILE_CLASSES;
 
   return (
     <div
-      className="grid min-h-[120px] gap-2.5 @max-md:grid-cols-1! @max-md:[grid-template-rows:none]! @max-md:[grid-template-areas:none]!"
+      className={`grid min-h-[120px] gap-2.5 ${gridClasses}`}
       style={{
         gridTemplateColumns: spec.gridTemplateColumns,
         gridTemplateRows: spec.gridTemplateRows,
@@ -66,6 +88,7 @@ export default function RegionTemplate({ region }: Props) {
           variant={slot.variant}
           gridArea={slot.gridArea}
           block={region.blocks[slotIndex]}
+          gridAreaResetClass={slotClasses}
         />
       ))}
     </div>
@@ -81,9 +104,9 @@ function CuadriculaTemplate({ region }: { region: Region }) {
   const bannerSlots = spec.slots.slice(4, 6);
 
   return (
-    <div className="flex min-h-[120px] flex-col gap-2.5 @md:flex-row @md:items-stretch">
+    <div className="flex min-h-[120px] flex-col gap-2.5 @[512px]:flex-row @[512px]:items-stretch">
       <div
-        className="grid flex-2 gap-2.5 @max-md:grid-cols-1!"
+        className="grid flex-2 gap-2.5 @max-[512px]:grid-cols-1!"
         style={{ gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr" }}
       >
         {articleSlots.map((slot, i) => (
@@ -140,8 +163,8 @@ function MasNotasEdmTemplate({ region }: { region: Region }) {
   const rightSlots = spec.slots.slice(9);
 
   return (
-    <div className="flex min-h-[120px] flex-col gap-2.5 @md:flex-row @md:items-stretch">
-      <div className="grid flex-3 gap-2.5 @max-md:grid-cols-1!" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+    <div className="flex min-h-[120px] flex-col gap-2.5 @[736px]:flex-row @[736px]:items-stretch">
+      <div className="grid flex-3 gap-2.5 @max-[736px]:grid-cols-1!" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
         {leftSlots.map((slot, i) => (
           <SlotCell
             key={i}
@@ -180,7 +203,7 @@ function EdmHorizontalTemplate({ region }: { region: Region }) {
       <div className="mb-2">
         <img src={logoEdm} alt="EDM" className="h-7 w-auto brightness-0 invert" />
       </div>
-      <div className="grid gap-2.5" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
+      <div className="grid gap-2.5 @max-[1100px]:grid-cols-1!" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
         {spec.slots.map((slot, i) => (
           <SlotCell
             key={i}
@@ -326,9 +349,14 @@ interface SlotCellProps {
   // code-region only: deletes this column entirely (not just its content).
   // Shown next to the empty-slot "+" — clear the content first to reach it.
   onRemoveColumn?: () => void;
+  // Resets `gridArea` back to auto once the parent grid collapses to a
+  // single column — must fire at the same breakpoint the parent uses, so
+  // callers with a non-default TEMPLATE_MOBILE_BREAKPOINT pass their own
+  // (see SLOT_MOBILE_CLASSES). Defaults to the generic "md" breakpoint.
+  gridAreaResetClass?: string;
 }
 
-function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onRemoveColumn }: SlotCellProps) {
+function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onRemoveColumn, gridAreaResetClass = DEFAULT_SLOT_MOBILE_CLASSES }: SlotCellProps) {
   const layout = useLayoutStore((s) => s.layout);
   const setSlotBlock = useLayoutStore((s) => s.setSlotBlock);
   const updateBannerImageMobile = useLayoutStore((s) => s.updateBannerImageMobile);
@@ -387,7 +415,7 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onR
     <div
       ref={setNodeRef}
       onClick={handleTapPlace}
-      className={`relative overflow-hidden transition @max-md:[grid-area:auto]! ${stateClass} ${sizeClass} ${isSourceOfActiveSlot ? "opacity-40" : "opacity-100"
+      className={`relative overflow-hidden transition ${gridAreaResetClass} ${stateClass} ${sizeClass} ${isSourceOfActiveSlot ? "opacity-40" : "opacity-100"
         }`}
       style={{ gridArea: gridArea || undefined }}
     >

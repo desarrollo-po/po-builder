@@ -127,6 +127,26 @@ export interface DragItem {
   html?: string;
 }
 
+// Mobile-collapse breakpoint (container width in px) per template. A single
+// shared breakpoint for every template (Tailwind's default container "md",
+// 448px) makes wide grids (4-5 columns) flip to multi-column well before
+// there's room to not look squished — see the widths a 2-column split needs
+// vs. a 5-column one. Templates not listed here fall back to that default:
+// single-slot templates (nota-principal, banner), where column count is
+// moot, and code-region, whose column count is a runtime choice (1-4) with
+// no single correct value.
+export const TEMPLATE_MOBILE_BREAKPOINT: Partial<Record<TemplateId, number>> = {
+  "tres-notas-principales": 512,
+  "dos-notas-secundarias": 512,
+  "dos-notas-sin-foto": 512,
+  cuadricula: 512,
+  "tres-notas-secundarias": 736,
+  "mas-notas-edm": 736,
+  "cuatro-notas-secundarias": 960,
+  "cuatro-notas-sin-foto": 960,
+  "edm-horizontal": 1100,
+};
+
 export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
   "nota-principal": {
     label: "Nota principal",

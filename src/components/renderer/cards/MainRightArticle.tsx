@@ -16,7 +16,7 @@ export default function MainRightArticle({ article }: Props) {
       style={{ borderTop: `3px solid ${accent}` }}
     >
       {snapshot.imageUrl && (
-        <div className="h-[150px] @max-md:h-auto @max-md:w-full @max-md:flex-[1_1] w-full flex-shrink-0 overflow-hidden bg-[var(--surface-secondary)]">
+        <div className="h-[150px] @max-[512px]:h-auto @max-[512px]:w-full @max-[512px]:flex-[1_1] w-full flex-shrink-0 overflow-hidden bg-[var(--surface-secondary)]">
           <img
             src={pickImage(snapshot, "medium", "medium_large")}
             alt={snapshot.title}
@@ -33,7 +33,7 @@ export default function MainRightArticle({ article }: Props) {
             {snapshot.volanta}
           </span>
         )}
-        <h2 className="m-0 text-[18px] @max-md:text-[18px] @max-md:font-extrabold @max-md:leading-tight @max-md:tracking-tight font-bold leading-[1.25] text-[var(--text-primary)]">
+        <h2 className="m-0 text-[18px] @max-[512px]:text-[18px] @max-[512px]:font-extrabold @max-[512px]:leading-tight @max-[512px]:tracking-tight font-bold leading-[1.25] text-[var(--text-primary)]">
           {snapshot.title}
         </h2>
         {snapshot.descripcionDestacado && (

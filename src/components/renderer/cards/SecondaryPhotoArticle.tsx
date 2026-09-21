@@ -20,7 +20,7 @@ export default function SecondaryPhotoArticle({ article }: Props) {
         </div>
       )}
       {snapshot.imageUrl && (
-        <div className="w-full h-[420px] @max-md:flex-[1_1_55%] overflow-hidden">
+        <div className="w-full h-[420px] @max-[512px]:flex-[1_1_55%] overflow-hidden">
           <img
             src={pickImage(snapshot, "medium_large", "large")}
             alt={snapshot.title}
@@ -29,7 +29,7 @@ export default function SecondaryPhotoArticle({ article }: Props) {
         </div>
       )}
       <div className="flex flex-col gap-1.5 p-[15px]">
-        <h2 className="text-[30px] @max-md:text-[18px] @max-md:font-extrabold @max-md:leading-tight @max-md:tracking-tight font-bold leading-tight">
+        <h2 className="text-[30px] @max-[512px]:text-[18px] @max-[512px]:font-extrabold @max-[512px]:leading-tight @max-[512px]:tracking-tight font-bold leading-tight">
           {snapshot.title}
         </h2>
         {snapshot.descripcionDestacado && (
