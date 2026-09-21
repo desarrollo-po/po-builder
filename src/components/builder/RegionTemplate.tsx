@@ -137,7 +137,7 @@ function BannerResizeHandle({ height, onResize }: { height: number; onResize: (h
 function MasNotasEdmTemplate({ region }: { region: Region }) {
   const spec = TEMPLATE_SPECS["mas-notas-edm"];
   const leftSlots = spec.slots.slice(0, 9);
-  const rightSlots = spec.slots.slice(9, 15);
+  const rightSlots = spec.slots.slice(9);
 
   return (
     <div className="flex min-h-[120px] flex-col gap-2.5 @md:flex-row @md:items-stretch">

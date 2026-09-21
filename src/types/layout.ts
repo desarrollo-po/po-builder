@@ -232,17 +232,19 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
   },
   "mas-notas-edm": {
     label: "Más notas EDM",
-    slotsCount: 15,
+    slotsCount: 17,
     optionalSlots: true,
     gridTemplateColumns: "1fr 1fr 1fr 1.3fr",
-    gridTemplateRows: "repeat(6, minmax(0, 1fr))",
+    gridTemplateRows: "repeat(8, minmax(0, 1fr))",
     gridTemplateAreas: `
       "a1 a2 a3 r1"
       "a1 a2 a3 r2"
-      "a4 a5 a6 r3"
+      "a1 a2 a3 r3"
       "a4 a5 a6 r4"
-      "a7 a8 a9 r5"
-      "a7 a8 a9 r6"
+      "a4 a5 a6 r5"
+      "a4 a5 a6 r6"
+      "a7 a8 a9 r7"
+      "a7 a8 a9 r8"
     `,
     slots: [
       { variant: "secondary-small", gridArea: "a1" },
@@ -260,6 +262,8 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
       { variant: "nota-edm", gridArea: "r4" },
       { variant: "nota-edm", gridArea: "r5" },
       { variant: "nota-edm", gridArea: "r6" },
+      { variant: "nota-edm", gridArea: "r7" },
+      { variant: "nota-edm", gridArea: "r8" },
     ],
   },
   banner: {

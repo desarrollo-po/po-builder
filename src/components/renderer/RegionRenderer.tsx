@@ -60,7 +60,7 @@ export default function RegionRenderer({ region }: Props) {
 function MasNotasEdmRender({ region }: { region: Region }) {
   const spec = TEMPLATE_SPECS["mas-notas-edm"];
   const leftSlots = spec.slots.slice(0, 9);
-  const rightSlots = spec.slots.slice(9, 15);
+  const rightSlots = spec.slots.slice(9);
 
   return (
     <section
