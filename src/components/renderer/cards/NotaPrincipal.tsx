@@ -43,14 +43,14 @@ const NotaPrincipal = ({ article }: Props) => {
 				</h2>
 
 				{snapshot.descripcionDestacado && (
-					<p className="text-[17px] @max-md:text-[14px] italic text-black font-medium leading-snug">
+					<p className="line-clamp-3 text-[17px] @max-md:text-[14px] italic text-black font-medium leading-snug">
 						{snapshot.descripcionDestacado}
 					</p>
 				)}
 
 				{snapshot.excerpt && (
 					<p
-						className="text-[17px] @max-md:text-[14px] font-light text-gray-700 leading-tight"
+						className="line-clamp-3 text-[17px] @max-md:text-[14px] font-light text-gray-700 leading-tight"
 						dangerouslySetInnerHTML={{ __html: snapshot.excerpt }}
 					/>
 				)}

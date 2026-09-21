@@ -29,7 +29,7 @@ export default function SecondarySmallArticle({ article }: Props) {
           {snapshot.title}
         </h2>
         {(snapshot.descripcionDestacado || snapshot.excerpt) && (
-          <p className="m-0 text-[15px] leading-tight">
+          <p className="m-0 line-clamp-3 text-[15px] leading-tight">
             {snapshot.descripcionDestacado || snapshot.excerpt}
           </p>
         )}
