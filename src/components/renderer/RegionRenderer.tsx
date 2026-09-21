@@ -25,6 +25,16 @@ const SLOT_MOBILE_CLASSES: Record<number, string> = {
 };
 const DEFAULT_SLOT_MOBILE_CLASSES = "@max-md:[grid-area:auto]!";
 
+// code-region's column count is a runtime choice (1-4), so unlike every
+// other template it can't have one fixed entry in TEMPLATE_MOBILE_BREAKPOINT
+// — the breakpoint is picked per-render from the region's actual codeColumns.
+const CODE_REGION_CLASSES: Record<number, { section: string; col: string }> = {
+  1: { section: "@md:flex-row @md:items-start", col: "@md:[width:var(--col-width)]" },
+  2: { section: "@[512px]:flex-row @[512px]:items-start", col: "@[512px]:[width:var(--col-width)]" },
+  3: { section: "@[736px]:flex-row @[736px]:items-start", col: "@[736px]:[width:var(--col-width)]" },
+  4: { section: "@[960px]:flex-row @[960px]:items-start", col: "@[960px]:[width:var(--col-width)]" },
+};
+
 // A region is just a CSS grid declared by its template, plus N slots that
 // each delegate to BlockRenderer. The renderer has no opinion about whether
 // a slot is full or empty — the BlockRenderer handles that by returning
@@ -148,17 +158,18 @@ function CodeRegionRender({ region }: { region: Region }) {
   const weights = codeColumnWidthsFor(region);
   const totalWeight = weights.reduce((a, b) => a + b, 0);
   const gapTotal = (columns - 1) * 18;
+  const classes = CODE_REGION_CLASSES[columns] ?? CODE_REGION_CLASSES[1];
 
   return (
     <section
       data-region-template="code-region"
-      className="flex flex-col @md:flex-row @md:items-start"
+      className={`flex flex-col ${classes.section}`}
       style={{ gap: "18px" }}
     >
       {Array.from({ length: columns }, (_, i) => (
         <div
           key={i}
-          className="w-full @md:[width:var(--col-width)]"
+          className={`w-full ${classes.col}`}
           style={{ "--col-width": `calc((100% - ${gapTotal}px) * ${weights[i] / totalWeight})` } as CSSProperties}
         >
           <BlockRenderer block={region.blocks[i] ?? null} variant="code" />
