@@ -90,6 +90,7 @@ export interface ArticleBlock {
     categoryName: string | null;
     categorySlug: string | null;
     volanta: string | null;
+    author?: string | null;
     // Which ContentSource produced this article. Optional: snapshots saved
     // before this field existed have neither, and are always PO's own site —
     // treat missing as "po". Lets slot-agnostic regions (code-region) pick

@@ -109,10 +109,10 @@ const QUERY_LATEST = /* GraphQL */ `
 `;
 
 function toSnapshot(node: EdmArticleNode): ArticleSnapshot {
-  // EDM has fields PO lacks (author, link). Until ArticleSnapshot grows to
-  // accommodate them, we squeeze the author into the volanta slot as a
-  // fallback so it's not lost on the way to the slot preview.
-  const authorName = node.autores?.edges?.[0]?.node?.name ?? null;
+  const authorNames = node.autores?.edges
+    ?.map((e) => e.node.name?.trim())
+    .filter((name): name is string => Boolean(name && name.length > 0));
+  const authorName = authorNames && authorNames.length > 0 ? authorNames.join(", ") : null;
   const volanta = node.campos_de_entrada?.volanta ?? authorName;
 
   return {
@@ -125,6 +125,7 @@ function toSnapshot(node: EdmArticleNode): ArticleSnapshot {
     categoryName: node.categories?.edges?.[0]?.node?.name ?? "EDM Digital",
     categorySlug: node.categories?.edges?.[0]?.node?.slug ?? null,
     volanta,
+    author: authorName,
     source: "edm",
   };
 }

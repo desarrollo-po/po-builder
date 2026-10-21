@@ -5,10 +5,9 @@ interface Props {
   article: ArticleBlock;
 }
 
-// ponytail: author is squeezed into `snapshot.volanta` by the EDM source
-// adapter (see src/sources/edm-articles.tsx).
 export default function NotaEDMVertical({ article }: Props) {
   const { snapshot } = article;
+  const author = snapshot.author || snapshot.volanta;
 
   return (
     <article className="flex flex-col">
@@ -25,9 +24,9 @@ export default function NotaEDMVertical({ article }: Props) {
         <h2 className="m-0 text-[18px] font-bold leading-tight text-white">
           {snapshot.title}
         </h2>
-        {snapshot.volanta && (
+        {author && (
           <span className="mt-auto text-[14px] font-medium text-white/80">
-            {snapshot.volanta}
+            {author}
           </span>
         )}
       </div>
