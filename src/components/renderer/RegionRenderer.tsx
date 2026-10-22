@@ -14,14 +14,14 @@ interface Props {
 const GRID_MOBILE_CLASSES: Record<number, string> = {
   512: "@max-[512px]:grid-cols-1! @max-[512px]:grid-rows-none! @max-[512px]:[grid-template-areas:none]!",
   736: "@max-[736px]:grid-cols-1! @max-[736px]:grid-rows-none! @max-[736px]:[grid-template-areas:none]!",
-  960: "@max-[960px]:grid-cols-1! @max-[960px]:grid-rows-none! @max-[960px]:[grid-template-areas:none]!",
+  700: "@max-[700px]:grid-cols-1! @max-[700px]:grid-rows-none! @max-[700px]:[grid-template-areas:none]!",
 };
 const DEFAULT_GRID_MOBILE_CLASSES = "@max-md:grid-cols-1! @max-md:grid-rows-none! @max-md:[grid-template-areas:none]!";
 
 const SLOT_MOBILE_CLASSES: Record<number, string> = {
   512: "@max-[512px]:[grid-area:auto]!",
   736: "@max-[736px]:[grid-area:auto]!",
-  960: "@max-[960px]:[grid-area:auto]!",
+  700: "@max-[700px]:[grid-area:auto]!",
 };
 const DEFAULT_SLOT_MOBILE_CLASSES = "@max-md:[grid-area:auto]!";
 

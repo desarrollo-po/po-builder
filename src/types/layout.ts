@@ -143,8 +143,8 @@ export const TEMPLATE_MOBILE_BREAKPOINT: Partial<Record<TemplateId, number>> = {
   cuadricula: 512,
   "tres-notas-secundarias": 736,
   "mas-notas-edm": 736,
-  "cuatro-notas-secundarias": 960,
-  "cuatro-notas-sin-foto": 960,
+  "cuatro-notas-secundarias": 700,
+  "cuatro-notas-sin-foto": 700,
   "edm-horizontal": 1100,
 };
 
