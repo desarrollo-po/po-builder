@@ -36,15 +36,34 @@ const ARTICLE_CARDS: Record<
   "video-destacado-secondary": MainLeftArticle,
 };
 
-function AutoplayYoutubeEmbed({ item }: { item: MultimediaBlock }) {
+function YoutubeFeaturedEmbed({
+  item,
+  autoplay = true,
+}: {
+  item: MultimediaBlock;
+  autoplay?: boolean;
+}) {
   if (!item.videoId) {
     return <MultimediaYoutubeCard item={item} />;
+  }
+
+  const params = new URLSearchParams({
+    autoplay: autoplay ? "1" : "0",
+    playsinline: "1",
+    rel: "0",
+  });
+
+  if (autoplay) {
+    params.set("mute", "1");
+    params.set("loop", "1");
+    params.set("playlist", item.videoId);
   }
 
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-md bg-black shadow-sm">
       <iframe
-        src={`https://www.youtube.com/embed/${item.videoId}?autoplay=1&mute=1&playsinline=1&loop=1&playlist=${item.videoId}&rel=0`}
+        key={`${item.videoId}-${autoplay ? "autoplay" : "static"}`}
+        src={`https://www.youtube.com/embed/${item.videoId}?${params.toString()}`}
         title={item.title || "Video destacado"}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
@@ -57,9 +76,10 @@ function AutoplayYoutubeEmbed({ item }: { item: MultimediaBlock }) {
 interface Props {
   block: Block | null;
   variant: SlotVariant;
+  autoplay?: boolean;
 }
 
-export default function BlockRenderer({ block, variant }: Props) {
+export default function BlockRenderer({ block, variant, autoplay = true }: Props) {
   if (!block) return null;
 
   if (block.type === "banner") {
@@ -75,7 +95,7 @@ export default function BlockRenderer({ block, variant }: Props) {
       return <MultimediaReelCard item={block} />;
     }
     if (variant === "video-destacado-primary") {
-      return <AutoplayYoutubeEmbed item={block} />;
+      return <YoutubeFeaturedEmbed item={block} autoplay={autoplay} />;
     }
     return <MultimediaYoutubeCard item={block} />;
   }

@@ -115,6 +115,7 @@ function VideoDestacadoRender({ region }: { region: Region }) {
 
   const rightBlock = region.blocks[1] ?? null;
   const isRightArticle = rightBlock?.type === "article";
+  const autoplay = region.autoplay ?? true;
 
   const rightCardLayoutClass = isRightArticle
     ? "[&>article]:flex [&>article]:h-full [&>article]:flex-col [&>article]:gap-2.5 [&_a:has(img)]:min-h-0 [&_a:has(img)]:flex-1 [&_a:has(img)]:overflow-hidden [&_img]:h-full [&_img]:max-h-none [&_img]:w-full [&_img]:object-cover"
@@ -129,6 +130,7 @@ function VideoDestacadoRender({ region }: { region: Region }) {
         <BlockRenderer
           block={region.blocks[0] ?? null}
           variant="video-destacado-primary"
+          autoplay={autoplay}
         />
       </div>
 

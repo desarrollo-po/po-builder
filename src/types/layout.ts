@@ -69,6 +69,7 @@ export interface Region {
   bannerHeights?: [number, number];
   codeColumns?: number;
   codeColumnWidths?: number[];
+  autoplay?: boolean;
 }
 
 export interface ArticleBlock {

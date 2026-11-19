@@ -53,6 +53,7 @@ interface LayoutState {
   setCodeColumns: (regionId: string, count: number) => void;
   removeCodeColumn: (regionId: string, slotIndex: number) => void;
   setCodeColumnWidths: (regionId: string, widths: number[]) => void;
+  setRegionAutoplay: (regionId: string, autoplay: boolean) => void;
   updateMetadata: (patch: Partial<Pick<PageLayout, "title" | "meta_description" | "og_image_url">>) => void;
 
   save: () => Promise<{ success: boolean; error?: string }>;
@@ -115,6 +116,7 @@ function createRegion(template: TemplateId): Region {
     template,
     order: 0,
     blocks: Array.from({ length: spec.slotsCount }, () => null),
+    ...(template === "video-destacado" ? { autoplay: true } : {}),
   };
 }
 
@@ -296,6 +298,11 @@ export const useLayoutStore = create<LayoutState>()(
         setCodeColumnWidths: (regionId, widths) =>
           updateRegions((regions) =>
             regions.map((r) => (r.id === regionId ? { ...r, codeColumnWidths: widths } : r)),
+          ),
+
+        setRegionAutoplay: (regionId, autoplay) =>
+          updateRegions((regions) =>
+            regions.map((r) => (r.id === regionId ? { ...r, autoplay } : r)),
           ),
 
         updateMetadata: (patch) => {

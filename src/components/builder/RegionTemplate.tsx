@@ -80,10 +80,12 @@ export default function RegionTemplate({ region }: Props) {
   const slotClasses = breakpoint ? SLOT_MOBILE_CLASSES[breakpoint] : DEFAULT_SLOT_MOBILE_CLASSES;
 
   const isReelsRegion = region.template === "multimedia-reels";
+  const isVideoDestacado = region.template === "video-destacado";
 
   return (
     <div>
       {isReelsRegion && <AutoMultimediaBar region={region} />}
+      {isVideoDestacado && <VideoDestacadoControls region={region} />}
       <div
         className={`grid min-h-[120px] gap-2.5 ${gridClasses}`}
         style={{
@@ -103,6 +105,43 @@ export default function RegionTemplate({ region }: Props) {
             gridAreaResetClass={slotClasses}
           />
         ))}
+      </div>
+    </div>
+  );
+}
+
+function VideoDestacadoControls({ region }: { region: Region }) {
+  const setRegionAutoplay = useLayoutStore((s) => s.setRegionAutoplay);
+  const isAutoplay = region.autoplay ?? true;
+
+  return (
+    <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-surface-inset bg-white px-3 py-1.5 text-xs">
+      <span className="font-semibold text-text-secondary">
+        Modo del video principal:
+      </span>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => setRegionAutoplay(region.id, true)}
+          className={`cursor-pointer rounded px-2.5 py-1 text-[11px] font-semibold transition ${
+            isAutoplay
+              ? "bg-[#9C0015] text-white"
+              : "bg-surface-base text-text-secondary hover:bg-surface-accent"
+          }`}
+        >
+          Autoplay (mute)
+        </button>
+        <button
+          type="button"
+          onClick={() => setRegionAutoplay(region.id, false)}
+          className={`cursor-pointer rounded px-2.5 py-1 text-[11px] font-semibold transition ${
+            !isAutoplay
+              ? "bg-[#9C0015] text-white"
+              : "bg-surface-base text-text-secondary hover:bg-surface-accent"
+          }`}
+        >
+          Estático (sin autoplay)
+        </button>
       </div>
     </div>
   );
@@ -792,7 +831,7 @@ function variantLabel(variant: SlotVariant): string {
     case "multimedia-youtube":
       return "Video YouTube";
     case "video-destacado-primary":
-      return "Video principal (autoplay mute)";
+      return "Video principal";
     case "video-destacado-secondary":
       return "Nota o segundo video";
   }
