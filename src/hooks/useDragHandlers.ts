@@ -8,6 +8,7 @@ import {
   type ArticleBlock,
   type BannerBlock,
   type CodeBlock,
+  type MultimediaBlock,
 } from "../types/layout";
 
 interface SlotTarget {
@@ -21,9 +22,6 @@ interface SlotAssignActions {
   updateBannerImageMobile: (regionId: string, slotIndex: number, imageUrlMobile: string) => void;
 }
 
-// Shared by drag-and-drop (desktop) and tap-to-place (mobile) — both end up
-// with the same { type, ...payload } shape for the source item, they just
-// get there via different input events.
 export function applySourceToSlot(
   layout: PageLayout,
   actions: SlotAssignActions,
@@ -34,7 +32,8 @@ export function applySourceToSlot(
   if (
     sourceData?.type !== "article" &&
     sourceData?.type !== "banner" &&
-    sourceData?.type !== "code"
+    sourceData?.type !== "code" &&
+    sourceData?.type !== "multimedia"
   )
     return;
 
@@ -43,12 +42,8 @@ export function applySourceToSlot(
   const variant = slotVariantAt(region.template, target.slotIndex);
   if (!variant) return;
 
-  // Refuse mismatched payloads (e.g. dropping an article into a banner slot).
-  // Code-variant slots (code-region) accept any block type.
   if (!slotAccepts(variant, sourceData.type)) return;
 
-  // Slot's banner switch is on "mobile" — this drop sets the mobile
-  // image only, the desktop banner (link, alt text, etc.) stays intact.
   if (target.targetMobileImage) {
     if (sourceData.type !== "banner") return;
     actions.updateBannerImageMobile(target.regionId, target.slotIndex, sourceData.bannerData.imageUrl);
@@ -68,6 +63,18 @@ export function applySourceToSlot(
   } else if (sourceData.type === "code") {
     const code: CodeBlock = { type: "code", html: sourceData.html ?? "" };
     actions.setSlotBlock(target.regionId, target.slotIndex, code);
+  } else if (sourceData.type === "multimedia") {
+    const multimedia: MultimediaBlock = {
+      type: "multimedia",
+      platform: sourceData.multimediaData.platform,
+      url: sourceData.multimediaData.url,
+      videoId: sourceData.multimediaData.videoId,
+      title: sourceData.multimediaData.title ?? "",
+      category: sourceData.multimediaData.category ?? "",
+      thumbnailUrl: sourceData.multimediaData.thumbnailUrl ?? "",
+      accentColor: sourceData.multimediaData.accentColor ?? "#3d4451",
+    };
+    actions.setSlotBlock(target.regionId, target.slotIndex, multimedia);
   } else {
     const article: ArticleBlock = {
       type: "article",
@@ -89,11 +96,12 @@ export default function useDragHandlers() {
     const activeData = active.data.current;
     const overData = over.data.current;
 
-    // Sidebar article / banner / code → slot
+    // Sidebar article / banner / code / multimedia → slot
     if (
       (activeData?.type === "article" ||
         activeData?.type === "banner" ||
-        activeData?.type === "code") &&
+        activeData?.type === "code" ||
+        activeData?.type === "multimedia") &&
       overData?.kind === "slot"
     ) {
       applySourceToSlot(
@@ -118,8 +126,6 @@ export default function useDragHandlers() {
         return;
       }
 
-      // Don't allow swapping if either block ends up in a slot that doesn't
-      // accept its type (e.g. moving a banner into an article-only slot).
       const fromRegion = layout.layout.find((r) => r.id === activeData.regionId);
       const toRegion = layout.layout.find((r) => r.id === overData.regionId);
       if (!fromRegion || !toRegion) return;
@@ -140,7 +146,7 @@ export default function useDragHandlers() {
       return;
     }
 
-    // Region reorder (no kind on active or over → it's a region drag)
+    // Region reorder
     if (
       !activeData?.kind &&
       !activeData?.type &&

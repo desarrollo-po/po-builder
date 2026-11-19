@@ -5,6 +5,7 @@ import { useArticleFilterStore } from "../../store/articleFilterStore";
 import { useRegions } from "../../sources/po-articles";
 import SourceBrowser from "./SourceBrowser";
 import MetadataPanel from "./MetadataPanel";
+import MultimediaPanel from "./MultimediaPanel";
 
 interface Props {
   mobileHidden?: boolean;
@@ -16,12 +17,11 @@ export default function Sidebar({ mobileHidden }: Props) {
   );
   const [mode, setMode] = useState<"contenido" | "metadata">("contenido");
 
-  const activeSource =
-    sources.find((s) => s.id === activeSourceId) ?? sources[0];
+  const isMultimediaTab = activeSourceId === "multimedia";
+  const activeSource = isMultimediaTab
+    ? null
+    : sources.find((s) => s.id === activeSourceId) ?? sources[0];
 
-  // Subscribed so the SourceBrowser remounts (via key) when the editor
-  // switches to a page with a different tag — that invalidates react-query's
-  // cache and forces a refetch with the new tag in the GraphQL where clause.
   const pageTagSlug = useLayoutStore((s) => s.layout?.tag_slug ?? "");
   const pageId = useLayoutStore((s) => s.layout?.id ?? "");
   const showTagHint = !!pageTagSlug && activeSource?.id === "po-articles" && mode === "contenido";
@@ -71,17 +71,17 @@ export default function Sidebar({ mobileHidden }: Props) {
 
         {/* Source sub-tabs — only in contenido mode */}
         {mode === "contenido" && (
-          <div style={{ display: "flex", gap: "2px" }}>
+          <div style={{ display: "flex", gap: "2px", overflowX: "auto" }}>
             {sources.map((source) => {
-              const isActive = source.id === activeSource?.id;
+              const isActive = !isMultimediaTab && source.id === activeSource?.id;
               return (
                 <button
                   key={source.id}
                   onClick={() => setActiveSourceId(source.id)}
                   style={{
                     flex: 1,
-                    padding: "5px 10px",
-                    fontSize: "13px",
+                    padding: "5px 8px",
+                    fontSize: "12.5px",
                     fontWeight: 500,
                     border: "none",
                     borderRadius: "4px 4px 0 0",
@@ -90,13 +90,32 @@ export default function Sidebar({ mobileHidden }: Props) {
                     cursor: "pointer",
                     transition: "all 120ms ease-out",
                     borderBottom: isActive ? "2px solid #0070f3" : "2px solid transparent",
-                    letterSpacing: 0,
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {source.label}
                 </button>
               );
             })}
+            <button
+              onClick={() => setActiveSourceId("multimedia")}
+              style={{
+                flex: 1,
+                padding: "5px 8px",
+                fontSize: "12.5px",
+                fontWeight: 500,
+                border: "none",
+                borderRadius: "4px 4px 0 0",
+                background: "transparent",
+                color: isMultimediaTab ? "#0070f3" : "var(--text-tertiary)",
+                cursor: "pointer",
+                transition: "all 120ms ease-out",
+                borderBottom: isMultimediaTab ? "2px solid #0070f3" : "2px solid transparent",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Multimedia
+            </button>
           </div>
         )}
       </div>
@@ -143,6 +162,8 @@ export default function Sidebar({ mobileHidden }: Props) {
       <div style={{ flex: 1, overflow: "auto", background: "var(--surface-base)" }}>
         {mode === "metadata" ? (
           <MetadataPanel key={pageId} />
+        ) : isMultimediaTab ? (
+          <MultimediaPanel />
         ) : (
           activeSource && (
             <SourceBrowser

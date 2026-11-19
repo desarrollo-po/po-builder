@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import type { ArticleBlock, Block, SlotVariant } from "../../types/layout";
+import type { ArticleBlock, Block, MultimediaBlock, SlotVariant } from "../../types/layout";
 import {
   BannerCard,
   CodeCard,
@@ -11,14 +11,11 @@ import {
   SecondaryTextArticle,
   NotaPrincipal,
   NotaEDMVertical,
-  NotaEDMFlexible
+  NotaEDMFlexible,
+  MultimediaReelCard,
+  MultimediaYoutubeCard,
 } from "./cards";
 
-// Article cards per slot variant. Each variant has one visual that the
-// designer locked in Figma — this map is the single point of truth.
-// Adding a new variant = add a SlotVariant to the type, add an entry here.
-// TypeScript will error on any variant left unmapped, so the contract is
-// enforced at compile time and you can't forget a variant in production.
 const ARTICLE_CARDS: Record<
   SlotVariant,
   ComponentType<{ article: ArticleBlock }> | null
@@ -31,18 +28,37 @@ const ARTICLE_CARDS: Record<
   "secondary-text": SecondaryTextArticle,
   "nota-edm": NotaEDM,
   "nota-edm-vertical": NotaEDMVertical,
-  banner: null, // article never lands in a banner slot — gated by useDragHandlers
-  code: SecondarySmallArticle, // code-region slots accept articles too
+  banner: null,
+  code: SecondarySmallArticle,
+  "multimedia-reel": null,
+  "multimedia-youtube": null,
+  "video-destacado-primary": null,
+  "video-destacado-secondary": MainLeftArticle,
 };
+
+function AutoplayYoutubeEmbed({ item }: { item: MultimediaBlock }) {
+  if (!item.videoId) {
+    return <MultimediaYoutubeCard item={item} />;
+  }
+
+  return (
+    <div className="relative aspect-video w-full overflow-hidden rounded-md bg-black shadow-sm">
+      <iframe
+        src={`https://www.youtube.com/embed/${item.videoId}?autoplay=1&mute=1&playsinline=1&loop=1&playlist=${item.videoId}&rel=0`}
+        title={item.title || "Video destacado"}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        className="h-full w-full border-0"
+      />
+    </div>
+  );
+}
 
 interface Props {
   block: Block | null;
   variant: SlotVariant;
 }
 
-// Single dispatch point: by block.type first, then by slot variant for
-// articles. Banners ignore variant — they look the same wherever they land.
-// Empty slots return null so the public view doesn't draw placeholder boxes.
 export default function BlockRenderer({ block, variant }: Props) {
   if (!block) return null;
 
@@ -54,8 +70,16 @@ export default function BlockRenderer({ block, variant }: Props) {
     return <CodeCard code={block} />;
   }
 
-  // code-region slots take articles from any source — give EDM's its own
-  // card instead of the general one, since it carries a distinct red style.
+  if (block.type === "multimedia") {
+    if (variant === "multimedia-reel") {
+      return <MultimediaReelCard item={block} />;
+    }
+    if (variant === "video-destacado-primary") {
+      return <AutoplayYoutubeEmbed item={block} />;
+    }
+    return <MultimediaYoutubeCard item={block} />;
+  }
+
   if (variant === "code" && block.snapshot.source === "edm") {
     return <NotaEDMFlexible article={block} />;
   }

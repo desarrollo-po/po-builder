@@ -1,8 +1,12 @@
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { useLayoutStore } from "../../store/layoutStore";
 import { useTapPlaceStore } from "../../store/tapPlaceStore";
 import { applySourceToSlot } from "../../hooks/useDragHandlers";
+import {
+  fetchLatestYoutubeVideos,
+  fetchLatestInstagramReels,
+} from "../../sources/multimedia-feed";
 import {
   TEMPLATE_SPECS,
   TEMPLATE_MOBILE_BREAKPOINT,
@@ -32,14 +36,11 @@ interface Props {
   region: Region;
 }
 
-// Tailwind needs each full class name literally in the source to generate
-// its CSS, so a per-template pixel value (TEMPLATE_MOBILE_BREAKPOINT) can't
-// be interpolated into an arbitrary-value variant — instead every value that
-// constant actually uses gets a literal entry here.
 const GRID_MOBILE_CLASSES: Record<number, string> = {
   512: "@max-[512px]:grid-cols-1! @max-[512px]:[grid-template-rows:none]! @max-[512px]:[grid-template-areas:none]!",
   736: "@max-[736px]:grid-cols-1! @max-[736px]:[grid-template-rows:none]! @max-[736px]:[grid-template-areas:none]!",
   700: "@max-[700px]:grid-cols-1! @max-[700px]:[grid-template-rows:none]! @max-[700px]:[grid-template-areas:none]!",
+  900: "@max-[900px]:grid-cols-1! @max-[900px]:[grid-template-rows:none]! @max-[900px]:[grid-template-areas:none]!",
 };
 const DEFAULT_GRID_MOBILE_CLASSES = "@max-md:grid-cols-1! @max-md:[grid-template-rows:none]! @max-md:[grid-template-areas:none]!";
 
@@ -47,12 +48,16 @@ const SLOT_MOBILE_CLASSES: Record<number, string> = {
   512: "@max-[512px]:[grid-area:auto]!",
   736: "@max-[736px]:[grid-area:auto]!",
   700: "@max-[700px]:[grid-area:auto]!",
+  900: "@max-[900px]:[grid-area:auto]!",
 };
 const DEFAULT_SLOT_MOBILE_CLASSES = "@max-md:[grid-area:auto]!";
 
+function extractYoutubeId(url: string): string | null {
+  const match = url.match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : null;
+}
+
 export default function RegionTemplate({ region }: Props) {
-  // ponytail: composite layouts handled inline. Extract to a registry when a
-  // 4th composite template appears.
   if (region.template === "cuadricula") {
     return <CuadriculaTemplate region={region} />;
   }
@@ -65,32 +70,180 @@ export default function RegionTemplate({ region }: Props) {
   if (region.template === "code-region") {
     return <CodeRegionTemplate region={region} />;
   }
+  if (region.template === "multimedia-youtube") {
+    return <YoutubeCarouselTemplate region={region} />;
+  }
 
   const spec = TEMPLATE_SPECS[region.template];
   const breakpoint = TEMPLATE_MOBILE_BREAKPOINT[region.template];
   const gridClasses = breakpoint ? GRID_MOBILE_CLASSES[breakpoint] : DEFAULT_GRID_MOBILE_CLASSES;
   const slotClasses = breakpoint ? SLOT_MOBILE_CLASSES[breakpoint] : DEFAULT_SLOT_MOBILE_CLASSES;
 
+  const isReelsRegion = region.template === "multimedia-reels";
+
   return (
-    <div
-      className={`grid min-h-[120px] gap-2.5 ${gridClasses}`}
-      style={{
-        gridTemplateColumns: spec.gridTemplateColumns,
-        gridTemplateRows: spec.gridTemplateRows,
-        gridTemplateAreas: spec.gridTemplateAreas,
-      }}
-    >
-      {spec.slots.map((slot, slotIndex) => (
-        <SlotCell
-          key={slotIndex}
-          regionId={region.id}
-          slotIndex={slotIndex}
-          variant={slot.variant}
-          gridArea={slot.gridArea}
-          block={region.blocks[slotIndex]}
-          gridAreaResetClass={slotClasses}
-        />
-      ))}
+    <div>
+      {isReelsRegion && <AutoMultimediaBar region={region} />}
+      <div
+        className={`grid min-h-[120px] gap-2.5 ${gridClasses}`}
+        style={{
+          gridTemplateColumns: spec.gridTemplateColumns,
+          gridTemplateRows: spec.gridTemplateRows,
+          gridTemplateAreas: spec.gridTemplateAreas,
+        }}
+      >
+        {spec.slots.map((slot, slotIndex) => (
+          <SlotCell
+            key={slotIndex}
+            regionId={region.id}
+            slotIndex={slotIndex}
+            variant={slot.variant}
+            gridArea={slot.gridArea}
+            block={region.blocks[slotIndex]}
+            gridAreaResetClass={slotClasses}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function YoutubeCarouselTemplate({ region }: { region: Region }) {
+  const spec = TEMPLATE_SPECS["multimedia-youtube"];
+  const clearSlot = useLayoutStore((s) => s.clearSlot);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = (direction: "prev" | "next") => {
+    if (!scrollRef.current) return;
+    const offset = direction === "next" ? 560 : -560;
+    scrollRef.current.scrollBy({ left: offset, behavior: "smooth" });
+  };
+
+  const handleClearAll = () => {
+    spec.slots.forEach((_, idx) => {
+      clearSlot(region.id, idx);
+    });
+  };
+
+  return (
+    <div>
+      <AutoMultimediaBar region={region} />
+
+      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+          Carrusel de 10 videos (arrastrá para mover, quitá con × o pegá un link en slots vacíos)
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleClearAll}
+            className="cursor-pointer rounded-md bg-gradient-to-b from-[#d9162e] to-[#9C0015] px-3 py-1 text-[11px] font-bold text-white shadow-[0_0_12px_rgba(217,22,46,0.55)] ring-1 ring-white/30 transition hover:brightness-125 hover:shadow-[0_0_18px_rgba(239,35,60,0.85)] active:scale-95"
+          >
+            Vaciar todos
+          </button>
+          <button
+            type="button"
+            onClick={() => handleScroll("prev")}
+            aria-label="Anterior"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gradient-to-b from-[#e11d38] to-[#9C0015] text-base font-extrabold text-white shadow-[0_0_12px_rgba(225,29,56,0.6)] ring-1 ring-white/35 transition hover:scale-105 hover:brightness-125 hover:shadow-[0_0_18px_rgba(244,63,94,0.9)] active:scale-95"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={() => handleScroll("next")}
+            aria-label="Siguiente"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gradient-to-b from-[#e11d38] to-[#9C0015] text-base font-extrabold text-white shadow-[0_0_12px_rgba(225,29,56,0.6)] ring-1 ring-white/35 transition hover:scale-105 hover:brightness-125 hover:shadow-[0_0_18px_rgba(244,63,94,0.9)] active:scale-95"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="flex gap-2.5 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2"
+      >
+        {spec.slots.map((slot, slotIndex) => (
+          <div
+            key={slotIndex}
+            className="w-[275px] shrink-0 snap-start"
+          >
+            <SlotCell
+              regionId={region.id}
+              slotIndex={slotIndex}
+              variant={slot.variant}
+              gridArea=""
+              block={region.blocks[slotIndex] ?? null}
+              gridAreaResetClass=""
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AutoMultimediaBar({ region }: { region: Region }) {
+  const setSlotBlock = useLayoutStore((s) => s.setSlotBlock);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const didAutoSyncRef = useRef<string | null>(null);
+
+  const isYoutube = region.template === "multimedia-youtube";
+  const isEmpty = region.blocks.every((b) => b === null);
+
+  const syncNow = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const items = isYoutube
+        ? await fetchLatestYoutubeVideos(10)
+        : await fetchLatestInstagramReels(5);
+
+      if (items.length === 0) {
+        setError(
+          isYoutube
+            ? "No se encontraron videos recientes en el canal."
+            : "Falta configurar VITE_PO_INSTAGRAM_FEED_URL con el token de Meta o feed JSON.",
+        );
+        return;
+      }
+
+      items.forEach((block, index) => {
+        setSlotBlock(region.id, index, block);
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al sincronizar");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isEmpty && didAutoSyncRef.current !== region.id) {
+      didAutoSyncRef.current = region.id;
+      syncNow();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [region.id]);
+
+  return (
+    <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2 rounded-md border border-surface-inset bg-white px-3 py-2 text-xs">
+      <div className="flex items-center gap-2">
+        <span className="font-semibold text-text-primary">
+          {isYoutube ? "YouTube (@PrensaObreraCom)" : "Instagram Reels (@prensaobrera)"}
+        </span>
+        {error && <span className="text-amber-700">{error}</span>}
+      </div>
+      <button
+        type="button"
+        onClick={syncNow}
+        disabled={loading}
+        className="rounded bg-[#9C0015] px-2.5 py-1 text-[11px] font-semibold text-white transition hover:brightness-110 disabled:opacity-50"
+      >
+        {loading ? "Sincronizando..." : "↻ Traer últimos automáticamente"}
+      </button>
     </div>
   );
 }
@@ -281,11 +434,6 @@ function CodeRegionTemplate({ region }: { region: Region }) {
   );
 }
 
-// Drags the boundary between two adjacent columns, redistributing their
-// combined weight — the rest of the row is untouched. Same direct-commit-
-// per-pointermove approach as BannerResizeHandle below (this codebase's
-// established pattern for drag resize, even though it means each frame is
-// its own undo step).
 function CodeColumnResizeHandle({
   weights,
   index,
@@ -343,16 +491,8 @@ interface SlotCellProps {
   variant: SlotVariant;
   gridArea: string;
   block: Block | null;
-  // When true, the slot fills its parent (used by composite templates like
-  // cuadricula where the parent dictates height via flex).
   fullSize?: boolean;
-  // code-region only: deletes this column entirely (not just its content).
-  // Shown next to the empty-slot "+" — clear the content first to reach it.
   onRemoveColumn?: () => void;
-  // Resets `gridArea` back to auto once the parent grid collapses to a
-  // single column — must fire at the same breakpoint the parent uses, so
-  // callers with a non-default TEMPLATE_MOBILE_BREAKPOINT pass their own
-  // (see SLOT_MOBILE_CLASSES). Defaults to the generic "md" breakpoint.
   gridAreaResetClass?: string;
 }
 
@@ -361,8 +501,6 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onR
   const setSlotBlock = useLayoutStore((s) => s.setSlotBlock);
   const updateBannerImageMobile = useLayoutStore((s) => s.updateBannerImageMobile);
   const [isCreating, setIsCreating] = useState(false);
-  // Only meaningful for banner blocks; drives both the desktop/mobile switch
-  // inside SlotBannerBody and this slot's drop target below.
   const [bannerPreview, setBannerPreview] = useState<"desktop" | "mobile">("desktop");
   const { active } = useDndContext();
   const isBannerMobileTarget = block?.type === "banner" && bannerPreview === "mobile";
@@ -383,8 +521,6 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onR
     activeData.slotIndex === slotIndex;
 
   const isDropTarget = isOver && !isSourceOfActiveSlot;
-  // Mobile tab with no mobile image yet reads visually as an empty slot so
-  // the user drags one in from the left sidebar, same as any other slot.
   const looksEmpty = !block || (isBannerMobileTarget && block.type === "banner" && !block.imageUrlMobile);
 
   const stateClass = isDropTarget || isArmedTarget
@@ -396,9 +532,6 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onR
   const sizeClass = fullSize ? "h-full w-full" : minHeightClassFor(variant);
 
   const handleTapPlace = () => {
-    // Read via getState() instead of a subscribed value — this is only
-    // needed inside the click callback, not for rendering, so subscribing
-    // to it would re-render every slot on every arm()/disarm().
     const { armed, disarm } = useTapPlaceStore.getState();
     if (!armed || !layout) return;
     if (!slotAccepts(variant, armed.type)) return;
@@ -410,6 +543,12 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onR
     );
     disarm();
   };
+
+  const canQuickAddYoutube =
+    !block &&
+    (variant === "video-destacado-primary" ||
+      variant === "video-destacado-secondary" ||
+      variant === "multimedia-youtube");
 
   return (
     <div
@@ -430,6 +569,23 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onR
         />
       ) : (
         <EmptySlotHint variant={variant} active={isDraggingSomething} isOver={isOver} />
+      )}
+      {canQuickAddYoutube && (
+        <YoutubeQuickInput
+          allowNoteHint={variant === "video-destacado-secondary"}
+          onAddVideo={({ videoId, url, title, publishedAt }) =>
+            setSlotBlock(regionId, slotIndex, {
+              type: "multimedia",
+              platform: "youtube",
+              url,
+              videoId,
+              title,
+              publishedAt,
+              category: "YOUTUBE",
+              thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+            })
+          }
+        />
       )}
       {!block && variant === "code" && (
         <div className="absolute right-1.5 top-1.5 z-[2] flex items-center gap-1">
@@ -473,6 +629,90 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onR
   );
 }
 
+function YoutubeQuickInput({
+  allowNoteHint,
+  onAddVideo,
+}: {
+  allowNoteHint: boolean;
+  onAddVideo: (video: { videoId: string; url: string; title: string; publishedAt: string }) => void;
+}) {
+  const [url, setUrl] = useState("");
+  const [err, setErr] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const cleanUrl = url.trim();
+    const id = extractYoutubeId(cleanUrl);
+    if (!id) {
+      setErr(true);
+      return;
+    }
+
+    setErr(false);
+    setLoading(true);
+
+    let title = "Video destacado Prensa Obrera";
+    try {
+      const watchUrl = `https://www.youtube.com/watch?v=${id}`;
+      const res = await fetch(
+        `https://www.youtube.com/oembed?url=${encodeURIComponent(watchUrl)}&format=json`,
+      );
+      if (res.ok) {
+        const data = (await res.json()) as { title?: string };
+        if (data.title?.trim()) {
+          title = data.title.trim();
+        }
+      }
+    } catch {
+      // Mantiene el título por defecto si falla la consulta oEmbed
+    } finally {
+      setLoading(false);
+    }
+
+    onAddVideo({
+      videoId: id,
+      url: cleanUrl,
+      title,
+      publishedAt: new Date().toISOString(),
+    });
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      className="absolute inset-x-2.5 bottom-2.5 z-[2] flex flex-col gap-1.5 rounded-md border border-surface-inset bg-white/95 p-2 shadow-xs"
+    >
+      <span className="text-[10.5px] font-semibold text-text-secondary">
+        {allowNoteHint
+          ? "Arrastrá una nota o pegá un link de YouTube:"
+          : "Pegá un link de YouTube:"}
+      </span>
+      <div className="flex gap-1">
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://www.youtube.com/watch?v=..."
+          className={`min-w-0 flex-1 rounded border px-2 py-1 text-xs outline-none ${
+            err ? "border-red-500" : "border-surface-inset focus:border-accent-primary"
+          }`}
+        />
+        <button
+          type="submit"
+          disabled={loading}
+          className="rounded bg-[#9C0015] px-2.5 py-1 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+        >
+          {loading ? "..." : "Cargar"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
 function minHeightClassFor(variant: SlotVariant): string {
   switch (variant) {
     case "nota-principal":
@@ -495,6 +735,13 @@ function minHeightClassFor(variant: SlotVariant): string {
       return "min-h-[120px]";
     case "code":
       return "min-h-[200px]";
+    case "multimedia-reel":
+      return "min-h-[260px]";
+    case "multimedia-youtube":
+      return "min-h-[220px]";
+    case "video-destacado-primary":
+    case "video-destacado-secondary":
+      return "min-h-[260px]";
   }
 }
 
@@ -509,7 +756,7 @@ function EmptySlotHint({
 }) {
   return (
     <div
-      className={`flex h-full flex-col items-center justify-center gap-1 p-3 text-center text-xs ${isOver ? "font-semibold text-accent-primary" : "font-medium text-text-tertiary"
+      className={`flex h-full flex-col items-center justify-center gap-1 p-3 pb-16 text-center text-xs ${isOver ? "font-semibold text-accent-primary" : "font-medium text-text-tertiary"
         }`}
     >
       <span>{emptyHintForVariant(variant, active)}</span>
@@ -540,12 +787,28 @@ function variantLabel(variant: SlotVariant): string {
       return "Banner";
     case "code":
       return "Código, nota o banner";
+    case "multimedia-reel":
+      return "Instagram Reel";
+    case "multimedia-youtube":
+      return "Video YouTube";
+    case "video-destacado-primary":
+      return "Video principal (autoplay mute)";
+    case "video-destacado-secondary":
+      return "Nota o segundo video";
   }
 }
 
 function emptyHintForVariant(variant: SlotVariant, isDragging: boolean): string {
   if (!isDragging) return "Slot vacío";
   if (variant === "code") return "Soltar nota, banner o código aquí";
+  if (variant === "video-destacado-secondary") return "Soltar nota o video aquí";
+  if (
+    variant === "multimedia-reel" ||
+    variant === "multimedia-youtube" ||
+    variant === "video-destacado-primary"
+  ) {
+    return "Soltar video aquí";
+  }
   return variant === "banner" ? "Soltar banner o código aquí" : "Soltar nota aquí";
 }
 
@@ -582,6 +845,40 @@ function SlotBlock({ regionId, slotIndex, variant, block, bannerPreview, onBanne
           preview={bannerPreview}
           onPreviewChange={onBannerPreviewChange}
         />
+      ) : block.type === "multimedia" ? (
+        <div className="flex h-full flex-col bg-surface-accent">
+          {block.thumbnailUrl ? (
+            <img
+              src={block.thumbnailUrl}
+              alt={block.title}
+              className="h-32 w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-32 w-full items-center justify-center bg-neutral-800 text-xs text-white/70">
+              Sin miniatura
+            </div>
+          )}
+          <div className="flex flex-1 flex-col justify-between p-2.5">
+            <div>
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-accent-primary">
+                {block.platform === "instagram" ? "Instagram Reel" : "YouTube"}
+                {block.category ? ` · ${block.category}` : ""}
+              </span>
+              <p className="mt-1 line-clamp-2 text-xs font-semibold text-text-primary">
+                {block.title}
+              </p>
+              {block.publishedAt && (
+                <span className="mt-1 block text-[10px] text-text-tertiary">
+                  {new Date(block.publishedAt).toLocaleDateString("es-AR", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
       ) : (
         <SlotCodeBody regionId={regionId} slotIndex={slotIndex} code={block} />
       )}
@@ -597,7 +894,9 @@ function SlotBlock({ regionId, slotIndex, variant, block, bannerPreview, onBanne
             ? "Quitar banner"
             : block.type === "code"
               ? "Quitar código"
-              : "Quitar nota"
+              : block.type === "multimedia"
+                ? "Quitar multimedia"
+                : "Quitar nota"
         }
         className="absolute right-1.5 top-1.5 z-[2] flex h-[26px] w-[26px] items-center justify-center rounded-md border border-surface-inset bg-white/90 p-0 text-lg leading-none text-text-secondary"
       >
@@ -607,8 +906,6 @@ function SlotBlock({ regionId, slotIndex, variant, block, bannerPreview, onBanne
   );
 }
 
-// Inline stroke icons matching this repo's hand-drawn icon style (see the
-// upload icon in supabase-banners.tsx) — no icon library installed.
 function IconMonitor() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -628,10 +925,6 @@ function IconSmartphone() {
   );
 }
 
-// ── Banner: imagen full-width + input para la URL de destino ───────────────
-// El switch Desktop/Mobile sólo cambia qué imagen se está mirando/editando;
-// la fuente de imágenes es siempre el drag-and-drop desde la columna
-// izquierda (mismo droppable que arma SlotCell) — sin upload propio acá.
 function SlotBannerBody({
   regionId,
   slotIndex,
@@ -654,8 +947,6 @@ function SlotBannerBody({
     <div className="flex h-full flex-col">
       <div
         className="min-h-[60px] w-full flex-auto overflow-hidden bg-surface-accent"
-        // Mobile tab: this area only receives sidebar drops, it never starts
-        // a reorder-drag of its own — the slot itself never moves.
         onPointerDown={preview === "mobile" ? (e) => e.stopPropagation() : undefined}
       >
         {showMobileEmpty ? (
@@ -734,8 +1025,6 @@ function SlotBannerBody({
   );
 }
 
-// ── Code: raw HTML/iframe — no live render in-canvas, an embedded iframe
-// would swallow the pointer events drag-and-drop needs. ────────────────────
 function SlotCodeBody({
   regionId,
   slotIndex,
@@ -779,11 +1068,6 @@ function SlotCodeBody({
   );
 }
 
-// Editing/creating happens in a fixed-position modal, not inline in the slot
-// cell — the slot is too small for a usable textarea and a modal can't
-// disturb the region's grid or sibling blocks. Mirrors AddRegionModal's
-// overlay pattern. Shared between the pencil-edit flow (SlotCodeBody) and
-// the empty-slot quick-create flow (SlotCell, code-region only) via onSave.
 function CodeEditModal({
   title,
   initialHtml,
@@ -875,12 +1159,14 @@ function SlotArticleBody({
       return <NotaEDM article={article} />;
     case "nota-edm-vertical":
       return <NotaEDMVertical article={article} />;
+    case "video-destacado-secondary":
+      return <MainLeftArticle article={article} />;
     case "banner":
-      // Article blocks never appear in banner slots (gated by useDragHandlers).
+    case "multimedia-reel":
+    case "multimedia-youtube":
+    case "video-destacado-primary":
       return null;
     case "code":
-      // code-region slots accept articles from any source — EDM's own card
-      // gets its red style, everything else falls back to the general one.
       return article.snapshot.source === "edm"
         ? <NotaEDMFlexible article={article} />
         : <SecondarySmallArticle article={article} />;

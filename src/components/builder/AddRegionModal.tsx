@@ -15,6 +15,9 @@ const TEMPLATE_ORDER: TemplateId[] = [
   "edm-horizontal",
   "banner",
   "code-region",
+  "multimedia-reels",
+  "multimedia-youtube",
+  "video-destacado",
 ];
 
 export default function AddRegionModal() {
@@ -62,7 +65,7 @@ export default function AddRegionModal() {
               Elegir región
             </h2>
             <p className="m-0 text-[13px] text-text-secondary">
-              Cada plantilla tiene un layout fijo y una cantidad determinada de notas.
+              Cada plantilla tiene un layout fijo y una cantidad determinada de elementos.
             </p>
           </div>
           <button
