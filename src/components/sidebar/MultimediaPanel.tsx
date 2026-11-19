@@ -175,9 +175,15 @@ export default function MultimediaPanel() {
           {...attributes}
           {...listeners}
           onClick={() => {
-            if (isArmed) disarm();
-            else arm({ id: "sidebar-multimedia-item", type: "multimedia", data: dragPayload });
-          }}
+  if (isArmed) disarm();
+  else
+    arm({
+      id: "sidebar-multimedia-item",
+      type: "multimedia",
+      label: multimediaData.title,
+      data: dragPayload,
+    });
+}}
           className={`cursor-grab overflow-hidden rounded-lg border bg-white shadow-sm transition ${
             isArmed ? "border-2 border-[#0070f3] ring-2 ring-[#0070f3]/30" : "border-[var(--border-strong)]"
           } ${isDragging ? "opacity-50" : "opacity-100"}`}

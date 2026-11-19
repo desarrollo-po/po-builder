@@ -1,7 +1,8 @@
 import { create } from "zustand";
 
 export interface ArmedContent {
-  type: "article" | "banner" | "code";
+  id?: string;
+  type: "article" | "banner" | "code" | "multimedia";
   label: string;
   data: Record<string, unknown>;
 }
