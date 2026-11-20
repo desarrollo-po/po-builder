@@ -25,10 +25,10 @@ const SLOT_MOBILE_CLASSES: Record<number, string> = {
 const DEFAULT_SLOT_MOBILE_CLASSES = "@max-md:[grid-area:auto]!";
 
 const CODE_REGION_CLASSES: Record<number, { section: string; col: string }> = {
-  1: { section: "@md:flex-row @md:items-start", col: "@md:[width:var(--col-width)]" },
-  2: { section: "@[512px]:flex-row @[512px]:items-start", col: "@[512px]:[width:var(--col-width)]" },
-  3: { section: "@[736px]:flex-row @[736px]:items-start", col: "@[736px]:[width:var(--col-width)]" },
-  4: { section: "@[960px]:flex-row @[960px]:items-start", col: "@[960px]:[width:var(--col-width)]" },
+  1: { section: "@md:flex-row @md:items-stretch", col: "@md:[width:var(--col-width)]" },
+  2: { section: "@[512px]:flex-row @[512px]:items-stretch", col: "@[512px]:[width:var(--col-width)]" },
+  3: { section: "@[736px]:flex-row @[736px]:items-stretch", col: "@[736px]:[width:var(--col-width)]" },
+  4: { section: "@[960px]:flex-row @[960px]:items-stretch", col: "@[960px]:[width:var(--col-width)]" },
 };
 
 export default function RegionRenderer({ region }: Props) {
@@ -115,11 +115,15 @@ function VideoDestacadoRender({ region }: { region: Region }) {
 
   const rightBlock = region.blocks[1] ?? null;
   const isRightArticle = rightBlock?.type === "article";
+  const isRightEdmArticle =
+    rightBlock?.type === "article" && rightBlock.snapshot.source === "edm";
   const autoplay = region.autoplay ?? true;
 
-  const rightCardLayoutClass = isRightArticle
-    ? "[&>article]:flex [&>article]:h-full [&>article]:flex-col [&>article]:gap-2.5 [&_a:has(img)]:min-h-0 [&_a:has(img)]:flex-1 [&_a:has(img)]:overflow-hidden [&_img]:h-full [&_img]:max-h-none [&_img]:w-full [&_img]:object-cover"
-    : "[&>div]:h-full [&>button]:flex [&>button]:h-full [&>button]:w-full [&>button]:flex-col [&>button>div:first-child]:flex [&>button>div:first-child]:w-full [&>button>div:first-child]:shrink-0 [&>button>div:first-child]:flex-row [&>button>div:first-child]:items-center [&>button>div:first-child]:justify-between [&>button>div:last-child]:min-h-0 [&>button>div:last-child]:w-full [&>button>div:last-child]:flex-1 [&_img]:h-full [&_img]:w-full [&_img]:object-cover";
+  const rightCardLayoutClass = isRightEdmArticle
+    ? "[&>div]:h-full"
+    : isRightArticle
+      ? "[&>article]:flex [&>article]:h-full [&>article]:flex-col [&>article]:gap-2.5 [&_a:has(img)]:min-h-0 [&_a:has(img)]:flex-1 [&_a:has(img)]:overflow-hidden [&_img]:h-full [&_img]:max-h-none [&_img]:w-full [&_img]:object-cover"
+      : "[&>div]:h-full [&>button]:flex [&>button]:h-full [&>button]:w-full [&>button]:flex-col [&>button>div:first-child]:flex [&>button>div:first-child]:w-full [&>button>div:first-child]:shrink-0 [&>button>div:first-child]:flex-row [&>button>div:first-child]:items-center [&>button>div:first-child]:justify-between [&>button>div:last-child]:min-h-0 [&>button>div:last-child]:w-full [&>button>div:last-child]:flex-1 [&_img]:h-full [&_img]:w-full [&_img]:object-cover";
 
   return (
     <section
@@ -255,13 +259,13 @@ function CodeRegionRender({ region }: { region: Region }) {
   return (
     <section
       data-region-template="code-region"
-      className={`flex flex-col ${classes.section}`}
+      className={`flex flex-col items-stretch ${classes.section}`}
       style={{ gap: "18px" }}
     >
       {Array.from({ length: columns }, (_, i) => (
         <div
           key={i}
-          className={`w-full ${classes.col}`}
+          className={`flex w-full flex-col [&>div]:flex-1 ${classes.col}`}
           style={{ "--col-width": `calc((100% - ${gapTotal}px) * ${weights[i] / totalWeight})` } as CSSProperties}
         >
           <BlockRenderer block={region.blocks[i] ?? null} variant="code" />

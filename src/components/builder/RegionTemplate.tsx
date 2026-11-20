@@ -25,7 +25,6 @@ import {
   MainRightArticle,
   NotaEDM,
   NotaEDMVertical,
-  NotaEDMFlexible,
   NotaPrincipal,
   SecondaryPhotoArticle,
   SecondarySmallArticle,
@@ -55,6 +54,162 @@ const DEFAULT_SLOT_MOBILE_CLASSES = "@max-md:[grid-area:auto]!";
 function extractYoutubeId(url: string): string | null {
   const match = url.match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([a-zA-Z0-9_-]{11})/);
   return match ? match[1] : null;
+}
+
+function getSnapshotImageUrl(snapshot: ArticleBlock["snapshot"]): string {
+  const snap = snapshot as Record<string, unknown>;
+  const candidates = [
+    snap.imageUrl,
+    snap.thumbnailUrl,
+    snap.image,
+    snap.cover,
+    snap.coverUrl,
+  ];
+  for (const val of candidates) {
+    if (typeof val === "string" && val.trim()) {
+      return val.trim();
+    }
+  }
+  return "";
+}
+
+function getSnapshotEdition(snapshot: ArticleBlock["snapshot"]): string {
+  const snap = snapshot as Record<string, unknown>;
+  const raw =
+    snap.edition ??
+    snap.edicion ??
+    snap.editionLabel ??
+    snap.edicionLabel ??
+    snap.issue ??
+    snap.editionNumber ??
+    snap.numero;
+
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return `EDM Digital #${raw}`;
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    const trimmed = raw.trim();
+    return /^\d+$/.test(trimmed) ? `EDM Digital #${trimmed}` : trimmed;
+  }
+  return "";
+}
+
+function formatDateDdMmYyyy(raw: string): string {
+  const trimmed = raw.trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+    return trimmed;
+  }
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
+  }
+  const parsed = new Date(trimmed);
+  if (!Number.isNaN(parsed.getTime())) {
+    const day = String(parsed.getUTCDate()).padStart(2, "0");
+    const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+    const year = parsed.getUTCFullYear();
+    return `${day}/${month}/${year}`;
+  }
+  return trimmed;
+}
+
+function getSnapshotDate(snapshot: ArticleBlock["snapshot"]): string {
+  const snap = snapshot as Record<string, unknown>;
+  const raw =
+    snap.date ??
+    snap.fecha ??
+    snap.publishedAt ??
+    snap.createdAt;
+
+  if (typeof raw === "string" && raw.trim()) {
+    return formatDateDdMmYyyy(raw);
+  }
+  return "";
+}
+
+function EdmHomogenizedCard({
+  article,
+  compact = false,
+  equalHeight = false,
+}: {
+  article: ArticleBlock;
+  compact?: boolean;
+  equalHeight?: boolean;
+}) {
+  const snap = article.snapshot as {
+    title?: string;
+    author?: string;
+    authors?: string[];
+  };
+  const title = snap.title ?? "";
+  const author =
+    snap.author ??
+    (Array.isArray(snap.authors) ? snap.authors.join(", ") : "");
+  const imageUrl = getSnapshotImageUrl(article.snapshot);
+  const edition = getSnapshotEdition(article.snapshot);
+  const date = getSnapshotDate(article.snapshot);
+
+  return (
+    <div className="flex h-full w-full flex-col justify-start overflow-hidden bg-[#191919] text-white">
+      {imageUrl && (
+        <div
+          className={
+            equalHeight
+              ? "max-h-[210px] w-full shrink-0 overflow-hidden sm:max-h-[235px]"
+              : "min-h-0 flex-1 overflow-hidden"
+          }
+        >
+          <img
+            src={imageUrl}
+            alt={title || "Nota EDM"}
+            className={
+              equalHeight
+                ? "h-full max-h-[210px] w-full object-cover sm:max-h-[235px]"
+                : "h-full w-full object-cover"
+            }
+          />
+        </div>
+      )}
+      <div
+        className={`flex flex-1 flex-col justify-start ${
+          equalHeight ? "px-4 pt-3 pb-4" : "px-4 pt-3 pb-5"
+        }`}
+      >
+        {(edition || date) && (
+          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+            {edition && (
+              <span className="edm-meta-cascadia rounded-full bg-[#3a1614] px-2 py-0.5 text-[10.5px] tracking-wide text-[#ff6b57]">
+                {edition}
+              </span>
+            )}
+            {date && (
+              <span className="edm-date-inter rounded-full border border-neutral-700 bg-[#222225] px-2.5 py-0.5 text-[11px] tracking-tight text-neutral-100">
+                {date}
+              </span>
+            )}
+          </div>
+        )}
+        <h3
+          className={`edm-title-oswald ${
+            compact || equalHeight
+              ? "text-xl leading-snug sm:text-2xl"
+              : "text-2xl leading-tight sm:text-[28px]"
+          } tracking-tight text-white`}
+        >
+          {title}
+        </h3>
+        {author && (
+          <span
+            className={`edm-meta-cascadia ${
+              equalHeight || compact ? "mt-2" : "mt-3"
+            } block text-[13px] uppercase tracking-wider text-red-500`}
+          >
+            {author}
+          </span>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function RegionTemplate({ region }: Props) {
@@ -446,7 +601,7 @@ function CodeRegionTemplate({ region }: { region: Region }) {
         </button>
       </div>
 
-      <div className="flex min-h-[120px] items-start">
+      <div className="flex min-h-[120px] items-stretch">
         {Array.from({ length: columns }, (_, i) => (
           <Fragment key={i}>
             {i > 0 && (
@@ -456,13 +611,17 @@ function CodeRegionTemplate({ region }: { region: Region }) {
                 onResize={(next) => setCodeColumnWidths(region.id, next)}
               />
             )}
-            <div style={{ width: `calc((100% - ${gapTotal}px) * ${weights[i] / totalWeight})` }}>
+            <div
+              className="flex flex-col"
+              style={{ width: `calc((100% - ${gapTotal}px) * ${weights[i] / totalWeight})` }}
+            >
               <SlotCell
                 regionId={region.id}
                 slotIndex={i}
                 variant="code"
                 gridArea=""
                 block={region.blocks[i] ?? null}
+                fullSize
                 onRemoveColumn={columns > 1 ? () => removeCodeColumn(region.id, i) : undefined}
               />
             </div>
@@ -1198,16 +1357,22 @@ function SlotArticleBody({
       return <NotaEDM article={article} />;
     case "nota-edm-vertical":
       return <NotaEDMVertical article={article} />;
-    case "video-destacado-secondary":
+    case "video-destacado-secondary": {
+      if (article.snapshot.source === "edm") {
+        return <EdmHomogenizedCard article={article} />;
+      }
       return <MainLeftArticle article={article} />;
+    }
     case "banner":
     case "multimedia-reel":
     case "multimedia-youtube":
     case "video-destacado-primary":
       return null;
-    case "code":
-      return article.snapshot.source === "edm"
-        ? <NotaEDMFlexible article={article} />
-        : <SecondarySmallArticle article={article} />;
+    case "code": {
+      if (article.snapshot.source === "edm") {
+        return <EdmHomogenizedCard article={article} compact equalHeight />;
+      }
+      return <SecondarySmallArticle article={article} />;
+    }
   }
 }

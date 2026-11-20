@@ -5,11 +5,24 @@ interface Props {
   article: ArticleBlock;
 }
 
+function formatEdmDate(isoDate?: string | null): string | null {
+  if (!isoDate) return null;
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
 // code-region (Bloque flexible) columns can mix general articles with EDM
 // ones, and don't carry the red background NotaEDM/NotaEDMVertical rely on —
 // so this card paints its own red box instead of assuming the parent does.
 export default function NotaEDMFlexible({ article }: Props) {
   const { snapshot } = article;
+  const edition = snapshot.categoryName;
+  const formattedDate = formatEdmDate(snapshot.publishedAt);
 
   return (
     <article className="flex h-full w-full flex-col overflow-hidden bg-[#e23b1a]">
@@ -23,6 +36,18 @@ export default function NotaEDMFlexible({ article }: Props) {
         </div>
       )}
       <div className="flex flex-1 flex-col gap-[10px] p-[15px]">
+        {(edition || formattedDate) && (
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
+            {edition && (
+              <span className="rounded-full bg-black/25 px-2 py-0.5 text-white">
+                {edition}
+              </span>
+            )}
+            {formattedDate && (
+              <span className="text-white/80">{formattedDate}</span>
+            )}
+          </div>
+        )}
         <h2 className="m-0 text-[18px] font-extrabold leading-tight text-white tracking-tight">
           {snapshot.title}
         </h2>
