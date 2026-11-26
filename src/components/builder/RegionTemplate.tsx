@@ -1,8 +1,9 @@
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { useLayoutStore } from "../../store/layoutStore";
 import { useTapPlaceStore } from "../../store/tapPlaceStore";
 import { applySourceToSlot } from "../../hooks/useDragHandlers";
+import { edmArticles } from "../../sources/edm-articles";
 import {
   TEMPLATE_SPECS,
   TEMPLATE_MOBILE_BREAKPOINT,
@@ -15,7 +16,7 @@ import {
   type Region,
   type SlotVariant,
 } from "../../types/layout";
-import logoEdm from "../../assets/logo-edm.png";
+import logoEdm from "../../assets/logo-edm.svg";
 import {
   MainLeftArticle,
   MainRightArticle,
@@ -32,10 +33,6 @@ interface Props {
   region: Region;
 }
 
-// Tailwind needs each full class name literally in the source to generate
-// its CSS, so a per-template pixel value (TEMPLATE_MOBILE_BREAKPOINT) can't
-// be interpolated into an arbitrary-value variant — instead every value that
-// constant actually uses gets a literal entry here.
 const GRID_MOBILE_CLASSES: Record<number, string> = {
   512: "@max-[512px]:grid-cols-1! @max-[512px]:[grid-template-rows:none]! @max-[512px]:[grid-template-areas:none]!",
   736: "@max-[736px]:grid-cols-1! @max-[736px]:[grid-template-rows:none]! @max-[736px]:[grid-template-areas:none]!",
@@ -51,8 +48,6 @@ const SLOT_MOBILE_CLASSES: Record<number, string> = {
 const DEFAULT_SLOT_MOBILE_CLASSES = "@max-md:[grid-area:auto]!";
 
 export default function RegionTemplate({ region }: Props) {
-  // ponytail: composite layouts handled inline. Extract to a registry when a
-  // 4th composite template appears.
   if (region.template === "cuadricula") {
     return <CuadriculaTemplate region={region} />;
   }
@@ -61,6 +56,9 @@ export default function RegionTemplate({ region }: Props) {
   }
   if (region.template === "edm-horizontal") {
     return <EdmHorizontalTemplate region={region} />;
+  }
+  if (region.template === "edm-carrusel") {
+    return <EdmCarruselTemplate region={region} />;
   }
   if (region.template === "code-region") {
     return <CodeRegionTemplate region={region} />;
@@ -159,8 +157,56 @@ function BannerResizeHandle({ height, onResize }: { height: number; onResize: (h
 
 function MasNotasEdmTemplate({ region }: { region: Region }) {
   const spec = TEMPLATE_SPECS["mas-notas-edm"];
+  const clearSlot = useLayoutStore((s) => s.clearSlot);
   const leftSlots = spec.slots.slice(0, 9);
   const rightSlots = spec.slots.slice(9);
+  const [autoBlocks, setAutoBlocks] = useState<ArticleBlock[]>([]);
+  const [isLoadingAuto, setIsLoadingAuto] = useState(false);
+
+  const fetchLatestEdm = async (signal?: AbortSignal) => {
+    setIsLoadingAuto(true);
+    try {
+      const res = await edmArticles.fetchPage("", null, 7, signal);
+      const blocks: ArticleBlock[] = res.items.slice(0, 7).map((item) => ({
+        type: "article",
+        articleId: item.id,
+        snapshot: item.snapshot,
+      }));
+      setAutoBlocks(blocks);
+    } catch {
+      // Ignorar errores de abort o red
+    } finally {
+      setIsLoadingAuto(false);
+    }
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    edmArticles
+      .fetchPage("", null, 7, controller.signal)
+      .then((res) => {
+        const blocks: ArticleBlock[] = res.items.slice(0, 7).map((item) => ({
+          type: "article",
+          articleId: item.id,
+          snapshot: item.snapshot,
+        }));
+        setAutoBlocks(blocks);
+      })
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, []);
+
+  const hasManualEdmOverrides = rightSlots.some((_, i) => region.blocks[9 + i] !== null);
+
+  const handleResetEdmToAuto = () => {
+    rightSlots.forEach((_, i) => {
+      if (region.blocks[9 + i]) {
+        clearSlot(region.id, 9 + i);
+      }
+    });
+    fetchLatestEdm();
+  };
 
   return (
     <div className="flex min-h-[120px] flex-col gap-2.5 @[736px]:flex-row @[736px]:items-stretch">
@@ -176,20 +222,85 @@ function MasNotasEdmTemplate({ region }: { region: Region }) {
           />
         ))}
       </div>
-      <div className="flex flex-[1.3] flex-col gap-2 bg-red-600 p-2">
-        {rightSlots.map((slot, i) => {
-          const slotIndex = 9 + i;
-          return (
-            <SlotCell
-              key={slotIndex}
-              regionId={region.id}
-              slotIndex={slotIndex}
-              variant={slot.variant}
-              gridArea=""
-              block={region.blocks[slotIndex]}
-            />
-          );
-        })}
+
+      <div className="flex flex-[1.3] flex-col gap-2.5 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#19191d] via-[#131316] to-[#0d0d10] p-3 shadow-[0_14px_36px_-10px_rgba(0,0,0,0.6)]">
+        <div className="flex flex-wrap items-center justify-between gap-1.5 px-1 pt-0.5">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <img src={logoEdm} alt="EDM" className="h-5 w-auto" />
+            <span className="border-l border-white/15 pl-2.5 font-mono text-[11px] font-light uppercase tracking-[0.22em] text-[#e23b1a]">
+              [ÚLTIMOS ARTÍCULOS]
+            </span>
+            <span className="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-neutral-200 backdrop-blur-md">
+              {hasManualEdmOverrides ? "Mixto" : "Auto · 7"}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => fetchLatestEdm()}
+              disabled={isLoadingAuto}
+              title="Refrescar últimas 7 notas de EDM"
+              className="rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-md transition hover:bg-white/20 disabled:opacity-50"
+            >
+              {isLoadingAuto ? "…" : "Actualizar"}
+            </button>
+            {hasManualEdmOverrides && (
+              <button
+                type="button"
+                onClick={handleResetEdmToAuto}
+                title="Quitar notas fijadas manualmente y volver al modo 100% automático"
+                className="rounded-full bg-[#e23b1a] px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-[0_0_15px_rgba(226,59,26,0.6)] transition hover:bg-[#ff4621]"
+              >
+                Volver a auto
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-1 flex-col justify-between gap-2">
+          {rightSlots.map((slot, i) => {
+            const slotIndex = 9 + i;
+            const manualBlock = region.blocks[slotIndex] ?? null;
+            const autoBlock = autoBlocks[i] ?? null;
+
+            return (
+              <div key={slotIndex} className="relative flex-1 overflow-hidden rounded-xl">
+                {manualBlock ? (
+                  <SlotCell
+                    regionId={region.id}
+                    slotIndex={slotIndex}
+                    variant={slot.variant}
+                    gridArea=""
+                    block={manualBlock}
+                    fullSize
+                    borderless
+                  />
+                ) : (
+                  <div className="relative h-full">
+                    <SlotCell
+                      regionId={region.id}
+                      slotIndex={slotIndex}
+                      variant={slot.variant}
+                      gridArea=""
+                      block={null}
+                      fullSize
+                      borderless
+                    />
+                    {autoBlock && (
+                      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
+                        <NotaEDM article={autoBlock} />
+                        <span className="absolute bottom-1.5 right-2 rounded-full border border-white/20 bg-black/70 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-md">
+                          Auto #{i + 1}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -214,6 +325,172 @@ function EdmHorizontalTemplate({ region }: { region: Region }) {
             block={region.blocks[i]}
           />
         ))}
+      </div>
+    </div>
+  );
+}
+
+function EdmCarruselTemplate({ region }: { region: Region }) {
+  const spec = TEMPLATE_SPECS["edm-carrusel"];
+  const clearSlot = useLayoutStore((s) => s.clearSlot);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [autoBlocks, setAutoBlocks] = useState<ArticleBlock[]>([]);
+  const [isLoadingAuto, setIsLoadingAuto] = useState(false);
+
+  const fetchLatestEdm = async (signal?: AbortSignal) => {
+    setIsLoadingAuto(true);
+    try {
+      const res = await edmArticles.fetchPage("", null, 7, signal);
+      const blocks: ArticleBlock[] = res.items.slice(0, 7).map((item) => ({
+        type: "article",
+        articleId: item.id,
+        snapshot: item.snapshot,
+      }));
+      setAutoBlocks(blocks);
+    } catch {
+      // Ignorar errores de abort o red
+    } finally {
+      setIsLoadingAuto(false);
+    }
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    edmArticles
+      .fetchPage("", null, 7, controller.signal)
+      .then((res) => {
+        const blocks: ArticleBlock[] = res.items.slice(0, 7).map((item) => ({
+          type: "article",
+          articleId: item.id,
+          snapshot: item.snapshot,
+        }));
+        setAutoBlocks(blocks);
+      })
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, []);
+
+  const hasManualOverrides = region.blocks.some((b) => b !== null);
+
+  const handleResetToAuto = () => {
+    spec.slots.forEach((_, i) => {
+      if (region.blocks[i]) {
+        clearSlot(region.id, i);
+      }
+    });
+    fetchLatestEdm();
+  };
+
+  const scrollLeftEdm = () => {
+    carouselRef.current?.scrollBy({ left: -270, behavior: "smooth" });
+  };
+
+  const scrollRightEdm = () => {
+    carouselRef.current?.scrollBy({ left: 270, behavior: "smooth" });
+  };
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#19191d] via-[#131316] to-[#0d0d10] py-4 shadow-[0_14px_36px_-10px_rgba(0,0,0,0.6)]">
+      {/* Cabecera oscura con logo rojo, [ÚLTIMOS ARTÍCULOS], controles y flechas arriba a la derecha */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <img src={logoEdm} alt="EDM" className="h-6 w-auto" />
+          <span className="border-l border-white/15 pl-3 font-mono text-xs font-light uppercase tracking-[0.22em] text-[#e23b1a]">
+            [ÚLTIMOS ARTÍCULOS]
+          </span>
+          <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-neutral-200 backdrop-blur-md">
+            {hasManualOverrides ? "Mixto (manual + auto)" : "Automático · últimas 7"}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => fetchLatestEdm()}
+            disabled={isLoadingAuto}
+            title="Refrescar últimas 7 notas de EDM"
+            className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur-md transition hover:bg-white/20 disabled:opacity-50"
+          >
+            {isLoadingAuto ? "Cargando…" : "Actualizar"}
+          </button>
+          {hasManualOverrides && (
+            <button
+              type="button"
+              onClick={handleResetToAuto}
+              title="Quitar notas fijadas manualmente y volver al modo 100% automático"
+              className="rounded-full bg-[#e23b1a] px-3 py-1 text-xs font-semibold text-white shadow-[0_0_15px_rgba(226,59,26,0.6)] transition hover:bg-[#ff4621]"
+            >
+              Volver a auto
+            </button>
+          )}
+          <div className="ml-1 flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={scrollLeftEdm}
+              title="Desplazar a la izquierda"
+              className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[#e23b1a] text-base leading-none text-white shadow-[0_0_14px_rgba(226,59,26,0.65)] backdrop-blur-md transition hover:scale-105 hover:bg-[#ff4621] hover:shadow-[0_0_22px_rgba(255,70,33,0.9)]"
+            >
+              &#8249;
+            </button>
+            <button
+              type="button"
+              onClick={scrollRightEdm}
+              title="Desplazar a la derecha"
+              className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[#e23b1a] text-base leading-none text-white shadow-[0_0_14px_rgba(226,59,26,0.65)] backdrop-blur-md transition hover:scale-105 hover:bg-[#ff4621] hover:shadow-[0_0_22px_rgba(255,70,33,0.9)]"
+            >
+              &#8250;
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Pista del carrusel */}
+      <div
+        ref={carouselRef}
+        className="flex gap-3.5 overflow-x-auto px-5 pb-2 scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:mx-5 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-white/5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#e23b1a]/50 hover:[&::-webkit-scrollbar-thumb]:bg-[#ff4621]/80"
+      >
+        {spec.slots.map((slot, i) => {
+          const manualBlock = region.blocks[i] ?? null;
+          const autoBlock = autoBlocks[i] ?? null;
+
+          return (
+            <div
+              key={i}
+              className="relative min-w-[235px] max-w-[255px] shrink-0 overflow-hidden rounded-xl shadow-md"
+            >
+              {manualBlock ? (
+                <SlotCell
+                  regionId={region.id}
+                  slotIndex={i}
+                  variant={slot.variant}
+                  gridArea=""
+                  block={manualBlock}
+                  borderless
+                />
+              ) : (
+                <div className="relative h-full">
+                  <SlotCell
+                    regionId={region.id}
+                    slotIndex={i}
+                    variant={slot.variant}
+                    gridArea=""
+                    block={null}
+                    borderless
+                  />
+                  {autoBlock && (
+                    <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
+                      <NotaEDMVertical article={autoBlock} />
+                      <span className="absolute left-2 top-2 rounded-full border border-white/20 bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-md">
+                        Auto #{i + 1}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -281,11 +558,6 @@ function CodeRegionTemplate({ region }: { region: Region }) {
   );
 }
 
-// Drags the boundary between two adjacent columns, redistributing their
-// combined weight — the rest of the row is untouched. Same direct-commit-
-// per-pointermove approach as BannerResizeHandle below (this codebase's
-// established pattern for drag resize, even though it means each frame is
-// its own undo step).
 function CodeColumnResizeHandle({
   weights,
   index,
@@ -343,26 +615,27 @@ interface SlotCellProps {
   variant: SlotVariant;
   gridArea: string;
   block: Block | null;
-  // When true, the slot fills its parent (used by composite templates like
-  // cuadricula where the parent dictates height via flex).
   fullSize?: boolean;
-  // code-region only: deletes this column entirely (not just its content).
-  // Shown next to the empty-slot "+" — clear the content first to reach it.
+  borderless?: boolean;
   onRemoveColumn?: () => void;
-  // Resets `gridArea` back to auto once the parent grid collapses to a
-  // single column — must fire at the same breakpoint the parent uses, so
-  // callers with a non-default TEMPLATE_MOBILE_BREAKPOINT pass their own
-  // (see SLOT_MOBILE_CLASSES). Defaults to the generic "md" breakpoint.
   gridAreaResetClass?: string;
 }
 
-function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onRemoveColumn, gridAreaResetClass = DEFAULT_SLOT_MOBILE_CLASSES }: SlotCellProps) {
+function SlotCell({
+  regionId,
+  slotIndex,
+  variant,
+  gridArea,
+  block,
+  fullSize,
+  borderless,
+  onRemoveColumn,
+  gridAreaResetClass = DEFAULT_SLOT_MOBILE_CLASSES,
+}: SlotCellProps) {
   const layout = useLayoutStore((s) => s.layout);
   const setSlotBlock = useLayoutStore((s) => s.setSlotBlock);
   const updateBannerImageMobile = useLayoutStore((s) => s.updateBannerImageMobile);
   const [isCreating, setIsCreating] = useState(false);
-  // Only meaningful for banner blocks; drives both the desktop/mobile switch
-  // inside SlotBannerBody and this slot's drop target below.
   const [bannerPreview, setBannerPreview] = useState<"desktop" | "mobile">("desktop");
   const { active } = useDndContext();
   const isBannerMobileTarget = block?.type === "banner" && bannerPreview === "mobile";
@@ -383,22 +656,19 @@ function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onR
     activeData.slotIndex === slotIndex;
 
   const isDropTarget = isOver && !isSourceOfActiveSlot;
-  // Mobile tab with no mobile image yet reads visually as an empty slot so
-  // the user drags one in from the left sidebar, same as any other slot.
   const looksEmpty = !block || (isBannerMobileTarget && block.type === "banner" && !block.imageUrlMobile);
 
   const stateClass = isDropTarget || isArmedTarget
-    ? "border-2 border-accent-primary bg-accent-light ring-2 ring-accent-primary/40"
-    : looksEmpty
-      ? "border-2 border-dashed border-surface-inset bg-surface-base"
-      : "border border-surface-inset";
+    ? "rounded-xl ring-2 ring-[#e23b1a] bg-white/15 backdrop-blur-md"
+    : borderless
+      ? "rounded-xl border-none bg-white/5"
+      : looksEmpty
+        ? "border-2 border-dashed border-surface-inset bg-surface-base"
+        : "border border-surface-inset";
 
   const sizeClass = fullSize ? "h-full w-full" : minHeightClassFor(variant);
 
   const handleTapPlace = () => {
-    // Read via getState() instead of a subscribed value — this is only
-    // needed inside the click callback, not for rendering, so subscribing
-    // to it would re-render every slot on every arm()/disarm().
     const { armed, disarm } = useTapPlaceStore.getState();
     if (!armed || !layout) return;
     if (!slotAccepts(variant, armed.type)) return;
@@ -599,7 +869,7 @@ function SlotBlock({ regionId, slotIndex, variant, block, bannerPreview, onBanne
               ? "Quitar código"
               : "Quitar nota"
         }
-        className="absolute right-1.5 top-1.5 z-[2] flex h-[26px] w-[26px] items-center justify-center rounded-md border border-surface-inset bg-white/90 p-0 text-lg leading-none text-text-secondary"
+        className="absolute right-2 top-2 z-[2] flex h-6 w-6 items-center justify-center rounded-full border border-black/10 bg-white/85 p-0 text-base leading-none text-text-secondary shadow-sm backdrop-blur-md transition hover:bg-white"
       >
         ×
       </button>
@@ -607,8 +877,6 @@ function SlotBlock({ regionId, slotIndex, variant, block, bannerPreview, onBanne
   );
 }
 
-// Inline stroke icons matching this repo's hand-drawn icon style (see the
-// upload icon in supabase-banners.tsx) — no icon library installed.
 function IconMonitor() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -628,10 +896,6 @@ function IconSmartphone() {
   );
 }
 
-// ── Banner: imagen full-width + input para la URL de destino ───────────────
-// El switch Desktop/Mobile sólo cambia qué imagen se está mirando/editando;
-// la fuente de imágenes es siempre el drag-and-drop desde la columna
-// izquierda (mismo droppable que arma SlotCell) — sin upload propio acá.
 function SlotBannerBody({
   regionId,
   slotIndex,
@@ -654,8 +918,6 @@ function SlotBannerBody({
     <div className="flex h-full flex-col">
       <div
         className="min-h-[60px] w-full flex-auto overflow-hidden bg-surface-accent"
-        // Mobile tab: this area only receives sidebar drops, it never starts
-        // a reorder-drag of its own — the slot itself never moves.
         onPointerDown={preview === "mobile" ? (e) => e.stopPropagation() : undefined}
       >
         {showMobileEmpty ? (
@@ -734,8 +996,6 @@ function SlotBannerBody({
   );
 }
 
-// ── Code: raw HTML/iframe — no live render in-canvas, an embedded iframe
-// would swallow the pointer events drag-and-drop needs. ────────────────────
 function SlotCodeBody({
   regionId,
   slotIndex,
@@ -779,11 +1039,6 @@ function SlotCodeBody({
   );
 }
 
-// Editing/creating happens in a fixed-position modal, not inline in the slot
-// cell — the slot is too small for a usable textarea and a modal can't
-// disturb the region's grid or sibling blocks. Mirrors AddRegionModal's
-// overlay pattern. Shared between the pencil-edit flow (SlotCodeBody) and
-// the empty-slot quick-create flow (SlotCell, code-region only) via onSave.
 function CodeEditModal({
   title,
   initialHtml,
@@ -876,11 +1131,8 @@ function SlotArticleBody({
     case "nota-edm-vertical":
       return <NotaEDMVertical article={article} />;
     case "banner":
-      // Article blocks never appear in banner slots (gated by useDragHandlers).
       return null;
     case "code":
-      // code-region slots accept articles from any source — EDM's own card
-      // gets its red style, everything else falls back to the general one.
       return article.snapshot.source === "edm"
         ? <NotaEDMFlexible article={article} />
         : <SecondarySmallArticle article={article} />;
