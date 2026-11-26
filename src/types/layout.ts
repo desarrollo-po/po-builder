@@ -24,6 +24,7 @@ export type TemplateId =
   | "cuadricula"
   | "mas-notas-edm"
   | "edm-horizontal"
+  | "edm-carrusel"
   | "banner"
   | "code-region";
 
@@ -60,16 +61,8 @@ export interface Region {
   template: TemplateId;
   order: number;
   blocks: (Block | null)[];
-  // ponytail: cuadricula-only banner heights in px. Independent so shrinking
-  // one doesn't grow the other. Generalize when a 2nd composite template appears.
   bannerHeights?: [number, number];
-  // code-region-only: active column count (1-4). Per-instance config the
-  // static TEMPLATE_SPECS entry can't express.
   codeColumns?: number;
-  // code-region-only: relative width weights, one per column (same length
-  // as codeColumns). Missing, or a length mismatch right after adding/
-  // removing a column, falls back to an even split — see
-  // codeColumnWidthsFor, the single place that resolves this.
   codeColumnWidths?: number[];
 }
 
@@ -83,18 +76,12 @@ export interface ArticleBlock {
     descripcionDestacado?: string | null;
     slug: string;
     imageUrl: string | null;
-    // WP `mediaDetails.sizes` keyed by name (medium, medium_large, large, full…).
-    // Optional: old snapshots in Supabase only have imageUrl.
     imageSizes?: Record<string, string> | null;
     publishedAt: string;
     categoryName: string | null;
     categorySlug: string | null;
     volanta: string | null;
     author?: string | null;
-    // Which ContentSource produced this article. Optional: snapshots saved
-    // before this field existed have neither, and are always PO's own site —
-    // treat missing as "po". Lets slot-agnostic regions (code-region) pick
-    // EDM's own card instead of the general one.
     source?: "po" | "edm";
   };
 }
@@ -103,16 +90,12 @@ export interface BannerBlock {
   type: "banner";
   mediaId?: string;
   imageUrl: string;
-  // Optional mobile-specific image. Falls back to `imageUrl` when unset.
   imageUrlMobile?: string;
   linkUrl: string;
   altText: string;
   openInNewTab: boolean;
 }
 
-// Raw HTML/iframe embed. Legacy banner-variant slots accept it alongside
-// banners (see slotAcceptsBanner); "code"-variant slots (code-region) accept
-// it alongside articles and banners — see slotAccepts.
 export interface CodeBlock {
   type: "code";
   html: string;
@@ -128,14 +111,6 @@ export interface DragItem {
   html?: string;
 }
 
-// Mobile-collapse breakpoint (container width in px) per template. A single
-// shared breakpoint for every template (Tailwind's default container "md",
-// 448px) makes wide grids (4-5 columns) flip to multi-column well before
-// there's room to not look squished — see the widths a 2-column split needs
-// vs. a 5-column one. Templates not listed here fall back to that default:
-// single-slot templates (nota-principal, banner), where column count is
-// moot, and code-region, whose column count is a runtime choice (1-4) with
-// no single correct value.
 export const TEMPLATE_MOBILE_BREAKPOINT: Partial<Record<TemplateId, number>> = {
   "tres-notas-principales": 512,
   "dos-notas-secundarias": 512,
@@ -251,21 +226,36 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
       { variant: "nota-edm-vertical", gridArea: "e" },
     ],
   },
+  "edm-carrusel": {
+    label: "Carrusel EDM (7 notas)",
+    slotsCount: 7,
+    optionalSlots: true,
+    gridTemplateColumns: "repeat(7, 1fr)",
+    gridTemplateAreas: `"a b c d e f g"`,
+    slots: [
+      { variant: "nota-edm-vertical", gridArea: "a" },
+      { variant: "nota-edm-vertical", gridArea: "b" },
+      { variant: "nota-edm-vertical", gridArea: "c" },
+      { variant: "nota-edm-vertical", gridArea: "d" },
+      { variant: "nota-edm-vertical", gridArea: "e" },
+      { variant: "nota-edm-vertical", gridArea: "f" },
+      { variant: "nota-edm-vertical", gridArea: "g" },
+    ],
+  },
   "mas-notas-edm": {
     label: "Más notas EDM",
-    slotsCount: 17,
+    slotsCount: 16,
     optionalSlots: true,
     gridTemplateColumns: "1fr 1fr 1fr 1.3fr",
-    gridTemplateRows: "repeat(8, minmax(0, 1fr))",
+    gridTemplateRows: "repeat(7, minmax(0, 1fr))",
     gridTemplateAreas: `
       "a1 a2 a3 r1"
       "a1 a2 a3 r2"
       "a1 a2 a3 r3"
       "a4 a5 a6 r4"
       "a4 a5 a6 r5"
-      "a4 a5 a6 r6"
+      "a7 a8 a9 r6"
       "a7 a8 a9 r7"
-      "a7 a8 a9 r8"
     `,
     slots: [
       { variant: "secondary-small", gridArea: "a1" },
@@ -284,7 +274,6 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
       { variant: "nota-edm", gridArea: "r5" },
       { variant: "nota-edm", gridArea: "r6" },
       { variant: "nota-edm", gridArea: "r7" },
-      { variant: "nota-edm", gridArea: "r8" },
     ],
   },
   banner: {
@@ -294,10 +283,6 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
     gridTemplateAreas: `"banner"`,
     slots: [{ variant: "banner", gridArea: "banner" }],
   },
-  // Instance actually renders `Region.codeColumns` (1-4) slots, computed
-  // layout in CodeRegionTemplate/CodeRegionRender — this spec exists so
-  // slotVariantAt resolves for indices up to 3 regardless of the instance's
-  // active column count, and so AddRegionModal's generic preview works.
   "code-region": {
     label: "Bloque flexible: código, notas o banners (1 a 4 columnas)",
     slotsCount: 4,
@@ -313,8 +298,6 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
   },
 };
 
-// Returns the variant a region's slot exposes, used to know which BlockType
-// is acceptable in that slot.
 export function slotVariantAt(
   template: TemplateId,
   slotIndex: number,
@@ -326,23 +309,16 @@ export function slotAcceptsBanner(variant: SlotVariant): boolean {
   return variant === "banner";
 }
 
-// code-region: one weight per active column. Falls back to an even split
-// when codeColumnWidths is absent or stale (its length no longer matches
-// codeColumns, e.g. right after adding/removing a column).
 export function codeColumnWidthsFor(region: Region): number[] {
   const columns = region.codeColumns ?? 1;
   const stored = region.codeColumnWidths;
   return stored && stored.length === columns ? stored : Array(columns).fill(1);
 }
 
-// "code" variant marks code-region slots, which accept any block type
-// (article, banner, or code) — see slotAccepts.
 export function slotAcceptsCode(variant: SlotVariant): boolean {
   return variant === "code";
 }
 
-// Single gate for drag-and-drop: does this slot variant accept a block of
-// this type? Article-only variants (the default) fall through at the end.
 export function slotAccepts(variant: SlotVariant, blockType: Block["type"]): boolean {
   if (slotAcceptsCode(variant)) return true;
   if (slotAcceptsBanner(variant)) return blockType === "banner" || blockType === "code";
