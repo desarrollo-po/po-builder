@@ -204,7 +204,7 @@ export default function BuilderToolbar() {
           <button
             onClick={handlePublish}
             disabled={isPublishing || isDirty || layout?.is_published}
-            className="rounded-lg border border-button-publish-hover bg-button-publish px-2.5 py-[7px] text-[13px] font-medium text-white transition enabled:hover:border-button-publish-hover enabled:hover:bg-button-publish-hover disabled:cursor-not-allowed disabled:opacity-60 md:px-3.5"
+            className="rounded-lg border border-emerald-700 bg-emerald-600 px-2.5 py-[7px] text-[13px] font-medium text-white transition enabled:hover:border-emerald-800 enabled:hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 md:px-3.5"
           >
             {isPublishing ? "Publicando…" : layout?.is_published ? "Publicado" : "Publicar"}
           </button>

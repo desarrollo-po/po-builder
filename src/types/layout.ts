@@ -24,6 +24,7 @@ export type TemplateId =
   | "cuadricula"
   | "mas-notas-edm"
   | "edm-horizontal"
+  | "edm-carrusel"
   | "banner"
   | "code-region"
   | "multimedia-reels"
@@ -248,21 +249,36 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
       { variant: "nota-edm-vertical", gridArea: "e" },
     ],
   },
+  "edm-carrusel": {
+    label: "Carrusel EDM (7 notas)",
+    slotsCount: 7,
+    optionalSlots: true,
+    gridTemplateColumns: "repeat(7, 1fr)",
+    gridTemplateAreas: `"a b c d e f g"`,
+    slots: [
+      { variant: "nota-edm-vertical", gridArea: "a" },
+      { variant: "nota-edm-vertical", gridArea: "b" },
+      { variant: "nota-edm-vertical", gridArea: "c" },
+      { variant: "nota-edm-vertical", gridArea: "d" },
+      { variant: "nota-edm-vertical", gridArea: "e" },
+      { variant: "nota-edm-vertical", gridArea: "f" },
+      { variant: "nota-edm-vertical", gridArea: "g" },
+    ],
+  },
   "mas-notas-edm": {
     label: "Más notas EDM",
-    slotsCount: 17,
+    slotsCount: 16,
     optionalSlots: true,
     gridTemplateColumns: "1fr 1fr 1fr 1.3fr",
-    gridTemplateRows: "repeat(8, minmax(0, 1fr))",
+    gridTemplateRows: "repeat(7, minmax(0, 1fr))",
     gridTemplateAreas: `
       "a1 a2 a3 r1"
       "a1 a2 a3 r2"
       "a1 a2 a3 r3"
       "a4 a5 a6 r4"
       "a4 a5 a6 r5"
-      "a4 a5 a6 r6"
+      "a7 a8 a9 r6"
       "a7 a8 a9 r7"
-      "a7 a8 a9 r8"
     `,
     slots: [
       { variant: "secondary-small", gridArea: "a1" },
@@ -281,7 +297,6 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
       { variant: "nota-edm", gridArea: "r5" },
       { variant: "nota-edm", gridArea: "r6" },
       { variant: "nota-edm", gridArea: "r7" },
-      { variant: "nota-edm", gridArea: "r8" },
     ],
   },
   banner: {

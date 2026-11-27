@@ -3,6 +3,7 @@ import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { useLayoutStore } from "../../store/layoutStore";
 import { useTapPlaceStore } from "../../store/tapPlaceStore";
 import { applySourceToSlot } from "../../hooks/useDragHandlers";
+import { edmArticles } from "../../sources/edm-articles";
 import {
   fetchLatestYoutubeVideos,
   fetchLatestInstagramReels,
@@ -19,7 +20,7 @@ import {
   type Region,
   type SlotVariant,
 } from "../../types/layout";
-import logoEdm from "../../assets/logo-edm.png";
+import logoEdm from "../../assets/logo-edm.svg";
 import {
   MainLeftArticle,
   MainRightArticle,
@@ -221,6 +222,9 @@ export default function RegionTemplate({ region }: Props) {
   }
   if (region.template === "edm-horizontal") {
     return <EdmHorizontalTemplate region={region} />;
+  }
+  if (region.template === "edm-carrusel") {
+    return <EdmCarruselTemplate region={region} />;
   }
   if (region.template === "code-region") {
     return <CodeRegionTemplate region={region} />;
@@ -523,7 +527,7 @@ function MasNotasEdmTemplate({ region }: { region: Region }) {
           />
         ))}
       </div>
-      <div className="flex flex-[1.3] flex-col gap-2 bg-red-600 p-2">
+      <div className="flex flex-[1.3] flex-col gap-2 rounded-xl bg-neutral-900 p-2.5">
         {rightSlots.map((slot, i) => {
           const slotIndex = 9 + i;
           return (
@@ -561,6 +565,123 @@ function EdmHorizontalTemplate({ region }: { region: Region }) {
             block={region.blocks[i]}
           />
         ))}
+      </div>
+    </div>
+  );
+}
+
+function EdmCarruselTemplate({ region }: { region: Region }) {
+  const spec = TEMPLATE_SPECS["edm-carrusel"];
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [autoBlocks, setAutoBlocks] = useState<ArticleBlock[]>([]);
+  const [loadingAuto, setLoadingAuto] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    edmArticles
+      .fetchPage("", null, 7, controller.signal)
+      .then((res) => {
+        const blocks: ArticleBlock[] = res.items.slice(0, 7).map((item) => ({
+          type: "article",
+          articleId: item.id,
+          snapshot: item.snapshot,
+        }));
+        setAutoBlocks(blocks);
+      })
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, []);
+
+  const loadAutoEdm = () => {
+    setLoadingAuto(true);
+    edmArticles
+      .fetchPage("", null, 7)
+      .then((res) => {
+        const blocks: ArticleBlock[] = res.items.slice(0, 7).map((item) => ({
+          type: "article",
+          articleId: item.id,
+          snapshot: item.snapshot,
+        }));
+        setAutoBlocks(blocks);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingAuto(false));
+  };
+
+  const scrollLeft = () => {
+    carouselRef.current?.scrollBy({ left: -260, behavior: "smooth" });
+  };
+
+  const scrollRight = () => {
+    carouselRef.current?.scrollBy({ left: 260, behavior: "smooth" });
+  };
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#19191d] via-[#131316] to-[#0d0d10] p-4 shadow-lg">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
+        <div className="flex items-center gap-3">
+          <img src={logoEdm} alt="EDM" className="h-6 w-auto" />
+          <span className="border-l border-white/15 pl-3 font-mono text-[11px] uppercase tracking-[0.2em] text-[#e23b1a]">
+            [ÚLTIMOS ARTÍCULOS]
+          </span>
+          <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] text-white/75">
+            Automático · últimas 7
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={loadAutoEdm}
+            disabled={loadingAuto}
+            className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white hover:bg-white/20"
+          >
+            {loadingAuto ? "Cargando..." : "Actualizar"}
+          </button>
+          <button
+            type="button"
+            onClick={scrollLeft}
+            aria-label="Anterior"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e23b1a] text-sm font-bold text-white"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={scrollRight}
+            aria-label="Siguiente"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e23b1a] text-sm font-bold text-white"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+
+      <div
+        ref={carouselRef}
+        className="flex gap-3 overflow-x-auto pb-2 scroll-smooth"
+      >
+        {spec.slots.map((slot, i) => {
+          const manualBlock = region.blocks[i] ?? null;
+          const previewAuto = !manualBlock ? autoBlocks[i] ?? null : null;
+
+          return (
+            <div key={i} className="relative min-w-[235px] max-w-[250px] shrink-0">
+              <SlotCell
+                regionId={region.id}
+                slotIndex={i}
+                variant={slot.variant}
+                gridArea=""
+                block={manualBlock ?? previewAuto}
+              />
+              {!manualBlock && previewAuto && (
+                <span className="pointer-events-none absolute left-2 top-2 z-[3] rounded-full bg-black/75 px-2 py-0.5 text-[10px] font-semibold text-white">
+                  Auto #{i + 1}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

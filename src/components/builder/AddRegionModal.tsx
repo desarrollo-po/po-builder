@@ -13,6 +13,7 @@ const TEMPLATE_ORDER: TemplateId[] = [
   "cuadricula",
   "mas-notas-edm",
   "edm-horizontal",
+  "edm-carrusel",
   "banner",
   "code-region",
   "multimedia-reels",

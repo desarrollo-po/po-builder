@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { TEMPLATE_SPECS, TEMPLATE_MOBILE_BREAKPOINT, codeColumnWidthsFor, type Region } from "../../types/layout";
+import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
+import { TEMPLATE_SPECS, TEMPLATE_MOBILE_BREAKPOINT, codeColumnWidthsFor, type ArticleBlock, type Region } from "../../types/layout";
+import { edmArticles } from "../../sources/edm-articles";
 import BlockRenderer from "./BlockRenderer";
 import YoutubeCarouselSection from "./YoutubeCarouselSection";
-import logoEdm from "../../assets/logo-edm.png";
+import logoEdm from "../../assets/logo-edm.svg";
 
 interface Props {
   region: Region;
@@ -40,6 +41,9 @@ export default function RegionRenderer({ region }: Props) {
   }
   if (region.template === "edm-horizontal") {
     return <EdmHorizontalRender region={region} />;
+  }
+  if (region.template === "edm-carrusel") {
+    return <EdmCarruselRender region={region} />;
   }
   if (region.template === "code-region") {
     return <CodeRegionRender region={region} />;
@@ -189,11 +193,29 @@ function MasNotasEdmRender({ region }: { region: Region }) {
   const spec = TEMPLATE_SPECS["mas-notas-edm"];
   const leftSlots = spec.slots.slice(0, 9);
   const rightSlots = spec.slots.slice(9);
+  const [autoBlocks, setAutoBlocks] = useState<ArticleBlock[]>([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    edmArticles
+      .fetchPage("", null, 8, controller.signal)
+      .then((res) => {
+        const blocks: ArticleBlock[] = res.items.slice(0, 8).map((item) => ({
+          type: "article",
+          articleId: item.id,
+          snapshot: item.snapshot,
+        }));
+        setAutoBlocks(blocks);
+      })
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, []);
 
   return (
     <section
       data-region-template={region.template}
-      className="flex flex-col gap-[18px] @[736px]:flex-row @[736px]:items-start"
+      className="flex flex-col gap-[18px] @[736px]:flex-row @[736px]:items-stretch"
     >
       <div
         className="grid flex-[3] gap-[18px] @max-[736px]:grid-cols-1!"
@@ -205,17 +227,33 @@ function MasNotasEdmRender({ region }: { region: Region }) {
           </div>
         ))}
       </div>
-      <div className="flex flex-[1.3] flex-col">
-        <div className="flex justify-center items-start flex-col bg-white p-3 py-5">
-          <img src={logoEdm} alt="EDM" width={155} height={47} className="w-auto h-auto" />
+
+      <div className="flex flex-[1.3] flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#19191d] via-[#131316] to-[#0d0d10] p-4 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.65)]">
+        <div className="mb-3 flex shrink-0 items-center justify-between gap-2 px-1">
+          <a
+            href="https://revistaedm.com.ar"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-3 transition-opacity hover:opacity-85"
+          >
+            <img
+              src={logoEdm}
+              alt="En defensa del marxismo"
+              className="h-6 w-auto"
+            />
+            <span className="border-l border-white/15 pl-3 font-mono text-xs font-light uppercase tracking-[0.22em] text-[#e23b1a]">
+              [ÚLTIMOS ARTÍCULOS]
+            </span>
+          </a>
         </div>
-        <div className="flex flex-[1.3] flex-col gap-3 bg-[#e23b1a] p-3">
+        <div className="flex flex-1 flex-col justify-between gap-2.5">
           {rightSlots.map((slot, i) => {
             const slotIndex = 9 + i;
+            const resolvedBlock = region.blocks[slotIndex] ?? autoBlocks[i] ?? null;
             return (
-              <div key={slotIndex}>
+              <div key={slotIndex} className="flex-1">
                 <BlockRenderer
-                  block={region.blocks[slotIndex] ?? null}
+                  block={resolvedBlock}
                   variant={slot.variant}
                 />
               </div>
@@ -242,6 +280,132 @@ function EdmHorizontalRender({ region }: { region: Region }) {
         {spec.slots.map((slot, i) => (
           <div key={i}>
             <BlockRenderer block={region.blocks[i] ?? null} variant={slot.variant} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function EdmCarruselRender({ region }: { region: Region }) {
+  const spec = TEMPLATE_SPECS["edm-carrusel"];
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragState = useRef({ isDown: false, startX: 0, scrollLeft: 0 });
+  const [autoBlocks, setAutoBlocks] = useState<ArticleBlock[]>([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    edmArticles
+      .fetchPage("", null, 7, controller.signal)
+      .then((res) => {
+        const blocks: ArticleBlock[] = res.items.slice(0, 7).map((item) => ({
+          type: "article",
+          articleId: item.id,
+          snapshot: item.snapshot,
+        }));
+        setAutoBlocks(blocks);
+      })
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, []);
+
+  const resolvedBlocks = spec.slots.map(
+    (_, i) => region.blocks[i] ?? autoBlocks[i] ?? null,
+  );
+
+  const scrollLeftEdm = () => {
+    carouselRef.current?.scrollBy({ left: -270, behavior: "smooth" });
+  };
+
+  const scrollRightEdm = () => {
+    carouselRef.current?.scrollBy({ left: 270, behavior: "smooth" });
+  };
+
+  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+    const slider = carouselRef.current;
+    if (!slider) return;
+    dragState.current = {
+      isDown: true,
+      startX: e.pageX - slider.offsetLeft,
+      scrollLeft: slider.scrollLeft,
+    };
+    setIsDragging(true);
+  };
+
+  const handleMouseLeaveOrUp = () => {
+    dragState.current.isDown = false;
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    const slider = carouselRef.current;
+    if (!dragState.current.isDown || !slider) return;
+    e.preventDefault();
+    const x = e.pageX - slider.offsetLeft;
+    const walk = (x - dragState.current.startX) * 1.5;
+    slider.scrollLeft = dragState.current.scrollLeft - walk;
+  };
+
+  return (
+    <section
+      data-region-template={region.template}
+      className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#19191d] via-[#131316] to-[#0d0d10] pt-4 pb-4 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.65)]"
+    >
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3 px-5">
+        <a
+          href="https://revistaedm.com.ar"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-3 transition-opacity hover:opacity-85"
+        >
+          <img
+            src={logoEdm}
+            alt="En defensa del marxismo"
+            className="h-6 w-auto"
+          />
+          <span className="border-l border-white/15 pl-3 font-mono text-xs font-light uppercase tracking-[0.22em] text-[#e23b1a]">
+            [ÚLTIMOS ARTÍCULOS]
+          </span>
+        </a>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={scrollLeftEdm}
+            aria-label="Anterior artículo EDM"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[#e23b1a] text-lg leading-none text-white shadow-[0_0_16px_rgba(226,59,26,0.65)] backdrop-blur-md transition-all hover:scale-105 hover:bg-[#ff4621] hover:shadow-[0_0_24px_rgba(255,70,33,0.9)]"
+          >
+            &#8249;
+          </button>
+          <button
+            type="button"
+            onClick={scrollRightEdm}
+            aria-label="Siguiente artículo EDM"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[#e23b1a] text-lg leading-none text-white shadow-[0_0_16px_rgba(226,59,26,0.65)] backdrop-blur-md transition-all hover:scale-105 hover:bg-[#ff4621] hover:shadow-[0_0_24px_rgba(255,70,33,0.9)]"
+          >
+            &#8250;
+          </button>
+        </div>
+      </div>
+
+      <div
+        ref={carouselRef}
+        onMouseDown={handleMouseDown}
+        onMouseLeave={handleMouseLeaveOrUp}
+        onMouseUp={handleMouseLeaveOrUp}
+        onMouseMove={handleMouseMove}
+        className={`flex gap-4 overflow-x-auto px-5 pb-2 scroll-smooth select-none [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:mx-5 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-white/5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#e23b1a]/50 hover:[&::-webkit-scrollbar-thumb]:bg-[#ff4621]/80 ${
+          isDragging ? "cursor-grabbing" : "cursor-grab"
+        }`}
+      >
+        {spec.slots.map((slot, i) => (
+          <div
+            key={i}
+            className="min-w-[240px] max-w-[260px] shrink-0 overflow-hidden rounded-xl transition-transform duration-200 hover:-translate-y-0.5"
+          >
+            <BlockRenderer block={resolvedBlocks[i]} variant={slot.variant} />
           </div>
         ))}
       </div>
