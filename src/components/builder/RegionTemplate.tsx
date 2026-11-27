@@ -512,10 +512,48 @@ function MasNotasEdmTemplate({ region }: { region: Region }) {
   const spec = TEMPLATE_SPECS["mas-notas-edm"];
   const leftSlots = spec.slots.slice(0, 9);
   const rightSlots = spec.slots.slice(9);
+  const [autoBlocks, setAutoBlocks] = useState<ArticleBlock[]>([]);
+  const [loadingAuto, setLoadingAuto] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    edmArticles
+      .fetchPage("", null, 8, controller.signal)
+      .then((res) => {
+        const blocks: ArticleBlock[] = res.items.slice(0, 8).map((item) => ({
+          type: "article",
+          articleId: item.id,
+          snapshot: item.snapshot,
+        }));
+        setAutoBlocks(blocks);
+      })
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, []);
+
+  const loadAutoEdm = () => {
+    setLoadingAuto(true);
+    edmArticles
+      .fetchPage("", null, 8)
+      .then((res) => {
+        const blocks: ArticleBlock[] = res.items.slice(0, 8).map((item) => ({
+          type: "article",
+          articleId: item.id,
+          snapshot: item.snapshot,
+        }));
+        setAutoBlocks(blocks);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingAuto(false));
+  };
 
   return (
     <div className="flex min-h-[120px] flex-col gap-2.5 @[736px]:flex-row @[736px]:items-stretch">
-      <div className="grid flex-3 gap-2.5 @max-[736px]:grid-cols-1!" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+      <div
+        className="grid flex-3 gap-2.5 @max-[736px]:grid-cols-1!"
+        style={{ gridTemplateColumns: "1fr 1fr 1fr" }}
+      >
         {leftSlots.map((slot, i) => (
           <SlotCell
             key={i}
@@ -527,20 +565,54 @@ function MasNotasEdmTemplate({ region }: { region: Region }) {
           />
         ))}
       </div>
-      <div className="flex flex-[1.3] flex-col gap-2 rounded-xl bg-neutral-900 p-2.5">
-        {rightSlots.map((slot, i) => {
-          const slotIndex = 9 + i;
-          return (
-            <SlotCell
-              key={slotIndex}
-              regionId={region.id}
-              slotIndex={slotIndex}
-              variant={slot.variant}
-              gridArea=""
-              block={region.blocks[slotIndex]}
-            />
-          );
-        })}
+
+      <div className="flex flex-[1.3] flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#19191d] via-[#131316] to-[#0d0d10] p-4 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.65)]">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
+          <div className="flex items-center gap-2.5">
+            <img src={logoEdm} alt="En defensa del marxismo" className="h-5 w-auto" />
+            <span className="border-l border-white/15 pl-2.5 font-mono text-[10px] uppercase tracking-[0.18em] text-[#e23b1a]">
+              [ÚLTIMOS ARTÍCULOS]
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/75">
+              Auto · 8
+            </span>
+            <button
+              type="button"
+              onClick={loadAutoEdm}
+              disabled={loadingAuto}
+              className="rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-white hover:bg-white/20"
+            >
+              {loadingAuto ? "..." : "Actualizar"}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-1 flex-col justify-between gap-2">
+          {rightSlots.map((slot, i) => {
+            const slotIndex = 9 + i;
+            const manualBlock = region.blocks[slotIndex] ?? null;
+            const previewAuto = !manualBlock ? autoBlocks[i] ?? null : null;
+
+            return (
+              <div key={slotIndex} className="relative flex-1">
+                <SlotCell
+                  regionId={region.id}
+                  slotIndex={slotIndex}
+                  variant={slot.variant}
+                  gridArea=""
+                  block={manualBlock ?? previewAuto}
+                />
+                {!manualBlock && previewAuto && (
+                  <span className="pointer-events-none absolute right-2 bottom-1.5 z-[3] rounded-full bg-black/75 px-2 py-0.5 text-[9.5px] font-semibold text-white">
+                    Auto #{i + 1}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
