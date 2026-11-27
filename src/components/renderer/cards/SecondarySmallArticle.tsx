@@ -6,9 +6,22 @@ interface Props {
   article: ArticleBlock;
 }
 
+function formatEdmDate(isoDate?: string | null): string | null {
+  if (!isoDate) return null;
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
 export default function SecondarySmallArticle({ article }: Props) {
   const { snapshot } = article;
   const accent = getSectionColor(snapshot.categorySlug ?? snapshot.categoryName);
+  const edition = snapshot.source === "edm" ? snapshot.categoryName : null;
+  const formattedDate = formatEdmDate(snapshot.publishedAt);
 
   return (
     <article
@@ -25,6 +38,18 @@ export default function SecondarySmallArticle({ article }: Props) {
         </div>
       )}
       <div className="flex flex-col gap-[10px] p-[15px]">
+        {(edition || formattedDate) && (
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
+            {edition && (
+              <span className="rounded-full bg-[#e23b1a]/20 px-2 py-0.5 text-[#c93012]">
+                {edition}
+              </span>
+            )}
+            {formattedDate && (
+              <span className="text-neutral-500">{formattedDate}</span>
+            )}
+          </div>
+        )}
         <h2 className="text-[18px] font-extrabold leading-tight text-gray-900 tracking-tight">
           {snapshot.title}
         </h2>

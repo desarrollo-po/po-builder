@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from
 import { TEMPLATE_SPECS, TEMPLATE_MOBILE_BREAKPOINT, codeColumnWidthsFor, type ArticleBlock, type Region } from "../../types/layout";
 import { edmArticles } from "../../sources/edm-articles";
 import BlockRenderer from "./BlockRenderer";
+import YoutubeCarouselSection from "./YoutubeCarouselSection";
 import logoEdm from "../../assets/logo-edm.svg";
 
 interface Props {
@@ -12,6 +13,7 @@ const GRID_MOBILE_CLASSES: Record<number, string> = {
   512: "@max-[512px]:grid-cols-1! @max-[512px]:grid-rows-none! @max-[512px]:[grid-template-areas:none]!",
   736: "@max-[736px]:grid-cols-1! @max-[736px]:grid-rows-none! @max-[736px]:[grid-template-areas:none]!",
   700: "@max-[700px]:grid-cols-1! @max-[700px]:grid-rows-none! @max-[700px]:[grid-template-areas:none]!",
+  900: "@max-[900px]:grid-cols-1! @max-[900px]:grid-rows-none! @max-[900px]:[grid-template-areas:none]!",
 };
 const DEFAULT_GRID_MOBILE_CLASSES = "@max-md:grid-cols-1! @max-md:grid-rows-none! @max-md:[grid-template-areas:none]!";
 
@@ -19,14 +21,15 @@ const SLOT_MOBILE_CLASSES: Record<number, string> = {
   512: "@max-[512px]:[grid-area:auto]!",
   736: "@max-[736px]:[grid-area:auto]!",
   700: "@max-[700px]:[grid-area:auto]!",
+  900: "@max-[900px]:[grid-area:auto]!",
 };
 const DEFAULT_SLOT_MOBILE_CLASSES = "@max-md:[grid-area:auto]!";
 
 const CODE_REGION_CLASSES: Record<number, { section: string; col: string }> = {
-  1: { section: "@md:flex-row @md:items-start", col: "@md:[width:var(--col-width)]" },
-  2: { section: "@[512px]:flex-row @[512px]:items-start", col: "@[512px]:[width:var(--col-width)]" },
-  3: { section: "@[736px]:flex-row @[736px]:items-start", col: "@[736px]:[width:var(--col-width)]" },
-  4: { section: "@[960px]:flex-row @[960px]:items-start", col: "@[960px]:[width:var(--col-width)]" },
+  1: { section: "@md:flex-row @md:items-stretch", col: "@md:[width:var(--col-width)]" },
+  2: { section: "@[512px]:flex-row @[512px]:items-stretch", col: "@[512px]:[width:var(--col-width)]" },
+  3: { section: "@[736px]:flex-row @[736px]:items-stretch", col: "@[736px]:[width:var(--col-width)]" },
+  4: { section: "@[960px]:flex-row @[960px]:items-stretch", col: "@[960px]:[width:var(--col-width)]" },
 };
 
 export default function RegionRenderer({ region }: Props) {
@@ -44,6 +47,15 @@ export default function RegionRenderer({ region }: Props) {
   }
   if (region.template === "code-region") {
     return <CodeRegionRender region={region} />;
+  }
+  if (region.template === "multimedia-youtube") {
+    return <YoutubeCarouselSection blocks={region.blocks} />;
+  }
+  if (region.template === "multimedia-reels") {
+    return <InstagramReelsRender region={region} />;
+  }
+  if (region.template === "video-destacado") {
+    return <VideoDestacadoRender region={region} />;
   }
 
   const spec = TEMPLATE_SPECS[region.template];
@@ -78,6 +90,105 @@ export default function RegionRenderer({ region }: Props) {
   );
 }
 
+function VideoDestacadoRender({ region }: { region: Region }) {
+  const leftRef = useRef<HTMLDivElement>(null);
+  const [targetHeight, setTargetHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const el = leftRef.current;
+    if (!el) return;
+
+    const update = () => {
+      if (window.innerWidth >= 736) {
+        setTargetHeight(el.offsetHeight || null);
+      } else {
+        setTargetHeight(null);
+      }
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    window.addEventListener("resize", update);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
+  const rightBlock = region.blocks[1] ?? null;
+  const isRightArticle = rightBlock?.type === "article";
+  const isRightEdmArticle =
+    rightBlock?.type === "article" && rightBlock.snapshot.source === "edm";
+  const autoplay = region.autoplay ?? true;
+
+  const rightCardLayoutClass = isRightEdmArticle
+    ? "[&>div]:h-full"
+    : isRightArticle
+      ? "[&>article]:flex [&>article]:h-full [&>article]:flex-col [&>article]:gap-2.5 [&_a:has(img)]:min-h-0 [&_a:has(img)]:flex-1 [&_a:has(img)]:overflow-hidden [&_img]:h-full [&_img]:max-h-none [&_img]:w-full [&_img]:object-cover"
+      : "[&>div]:h-full [&>button]:flex [&>button]:h-full [&>button]:w-full [&>button]:flex-col [&>button>div:first-child]:flex [&>button>div:first-child]:w-full [&>button>div:first-child]:shrink-0 [&>button>div:first-child]:flex-row [&>button>div:first-child]:items-center [&>button>div:first-child]:justify-between [&>button>div:last-child]:min-h-0 [&>button>div:last-child]:w-full [&>button>div:last-child]:flex-1 [&_img]:h-full [&_img]:w-full [&_img]:object-cover";
+
+  return (
+    <section
+      data-region-template="video-destacado"
+      className="grid grid-cols-1 items-start gap-[18px] @[736px]:grid-cols-[1.4fr_1fr]"
+    >
+      <div ref={leftRef} className="min-w-0">
+        <BlockRenderer
+          block={region.blocks[0] ?? null}
+          variant="video-destacado-primary"
+          autoplay={autoplay}
+        />
+      </div>
+
+      <div
+        style={targetHeight ? { height: `${targetHeight}px` } : undefined}
+        className={`min-w-0 overflow-hidden ${rightCardLayoutClass}`}
+      >
+        <BlockRenderer
+          block={rightBlock}
+          variant="video-destacado-secondary"
+        />
+      </div>
+    </section>
+  );
+}
+
+function InstagramReelsRender({ region }: { region: Region }) {
+  const spec = TEMPLATE_SPECS["multimedia-reels"];
+  const hasAny = region.blocks.some((b) => b !== null);
+  if (!hasAny) return null;
+
+  return (
+    <section data-region-template={region.template} className="w-full">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-base font-extrabold uppercase tracking-wider text-neutral-900">
+          Reels · @prensaobrera
+        </h2>
+        <a
+          href="https://www.instagram.com/prensaobrera/reels/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-semibold text-[#9C0015] hover:underline"
+        >
+          Ver más en Instagram →
+        </a>
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {spec.slots.map((slot, slotIndex) => (
+          <div key={slotIndex}>
+            <BlockRenderer
+              block={region.blocks[slotIndex] ?? null}
+              variant={slot.variant}
+            />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function MasNotasEdmRender({ region }: { region: Region }) {
   const spec = TEMPLATE_SPECS["mas-notas-edm"];
   const leftSlots = spec.slots.slice(0, 9);
@@ -87,9 +198,9 @@ function MasNotasEdmRender({ region }: { region: Region }) {
   useEffect(() => {
     const controller = new AbortController();
     edmArticles
-      .fetchPage("", null, 7, controller.signal)
+      .fetchPage("", null, 8, controller.signal)
       .then((res) => {
-        const blocks: ArticleBlock[] = res.items.slice(0, 7).map((item) => ({
+        const blocks: ArticleBlock[] = res.items.slice(0, 8).map((item) => ({
           type: "article",
           articleId: item.id,
           snapshot: item.snapshot,
@@ -242,7 +353,6 @@ function EdmCarruselRender({ region }: { region: Region }) {
       data-region-template={region.template}
       className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#19191d] via-[#131316] to-[#0d0d10] pt-4 pb-4 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.65)]"
     >
-      {/* Cabecera con logo, [ÚLTIMOS ARTÍCULOS] y flechas arriba a la derecha */}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3 px-5">
         <a
           href="https://revistaedm.com.ar"
@@ -280,7 +390,6 @@ function EdmCarruselRender({ region }: { region: Region }) {
         </div>
       </div>
 
-      {/* Pista del carrusel */}
       <div
         ref={carouselRef}
         onMouseDown={handleMouseDown}
@@ -314,13 +423,13 @@ function CodeRegionRender({ region }: { region: Region }) {
   return (
     <section
       data-region-template="code-region"
-      className={`flex flex-col ${classes.section}`}
+      className={`flex flex-col items-stretch ${classes.section}`}
       style={{ gap: "18px" }}
     >
       {Array.from({ length: columns }, (_, i) => (
         <div
           key={i}
-          className={`w-full ${classes.col}`}
+          className={`flex w-full flex-col [&>div]:flex-1 ${classes.col}`}
           style={{ "--col-width": `calc((100% - ${gapTotal}px) * ${weights[i] / totalWeight})` } as CSSProperties}
         >
           <BlockRenderer block={region.blocks[i] ?? null} variant="code" />

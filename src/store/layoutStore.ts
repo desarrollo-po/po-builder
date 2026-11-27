@@ -17,11 +17,7 @@ interface LayoutState {
   historyIndex: number;
   slug: string;
 
-  // Autosave bookkeeping
   lastLocalSave: string | null;
-  // True when initializeLayout kept a local (dirty) draft instead of the
-  // remote version. The UI uses this to offer the user a "discard local draft"
-  // option.
   draftRestored: boolean;
 
   initializeLayout: (slug: string, existingLayout?: PageLayout | null) => void;
@@ -57,6 +53,7 @@ interface LayoutState {
   setCodeColumns: (regionId: string, count: number) => void;
   removeCodeColumn: (regionId: string, slotIndex: number) => void;
   setCodeColumnWidths: (regionId: string, widths: number[]) => void;
+  setRegionAutoplay: (regionId: string, autoplay: boolean) => void;
   updateMetadata: (patch: Partial<Pick<PageLayout, "title" | "meta_description" | "og_image_url">>) => void;
 
   save: () => Promise<{ success: boolean; error?: string }>;
@@ -70,8 +67,6 @@ interface LayoutState {
 }
 
 const MAX_HISTORY = 5;
-// Single rolling draft for the currently-open page. Switching pages clears
-// it implicitly via the slug-mismatch branch in initializeLayout.
 const PERSIST_KEY = "po-builder:layout:current";
 
 function createEmptyLayout(
@@ -121,6 +116,7 @@ function createRegion(template: TemplateId): Region {
     template,
     order: 0,
     blocks: Array.from({ length: spec.slotsCount }, () => null),
+    ...(template === "video-destacado" ? { autoplay: true } : {}),
   };
 }
 
@@ -166,14 +162,10 @@ export const useLayoutStore = create<LayoutState>()(
 
         initializeLayout: (slug, existingLayout) => {
           const state = get();
-          // The persisted draft belongs to whichever slug was last edited.
-          // If the user opens a different page, discard the draft outright
-          // so we never paint slug A's content under slug B.
           const localValid =
             isValidTemplateLayout(state.layout) && state.slug === slug;
           const remoteValid = isValidTemplateLayout(existingLayout ?? null);
 
-          // No usable local draft → load remote (or empty).
           if (!localValid) {
             const layout = remoteValid
               ? (existingLayout as PageLayout)
@@ -190,8 +182,6 @@ export const useLayoutStore = create<LayoutState>()(
             return;
           }
 
-          // Local draft exists. Keep it only if it's dirty and at least as
-          // recent as the remote version — otherwise the remote wins.
           const local = state.layout as PageLayout;
           const localTs = state.lastLocalSave;
           const remoteTs = remoteValid
@@ -261,8 +251,10 @@ export const useLayoutStore = create<LayoutState>()(
           updateRegions((regions) =>
             regions.map((r) => {
               if (r.id !== regionId) return r;
-              if (slotIndex < 0 || slotIndex >= r.blocks.length) return r;
+              const maxSlots = TEMPLATE_SPECS[r.template]?.slotsCount ?? r.blocks.length;
+              if (slotIndex < 0 || slotIndex >= maxSlots) return r;
               const blocks = [...r.blocks];
+              while (blocks.length < maxSlots) blocks.push(null);
               blocks[slotIndex] = block;
               return { ...r, blocks };
             }),
@@ -288,17 +280,11 @@ export const useLayoutStore = create<LayoutState>()(
               const blocks = [...r.blocks];
               while (blocks.length < clamped) blocks.push(null);
               blocks.length = clamped;
-              // Widths are per-column-count — stale after adding/removing a
-              // column, so drop back to an even split (codeColumnWidthsFor
-              // already falls back for this, but clearing keeps stored
-              // state from lying about the current shape).
               return { ...r, blocks, codeColumns: clamped, codeColumnWidths: undefined };
             }),
           );
         },
 
-        // Removes one specific column (not just the last one, unlike
-        // setCodeColumns) — shifts the remaining columns left.
         removeCodeColumn: (regionId, slotIndex) =>
           updateRegions((regions) =>
             regions.map((r) => {
@@ -309,11 +295,14 @@ export const useLayoutStore = create<LayoutState>()(
             }),
           ),
 
-        // Full weights array, one call per drag frame — same "commit every
-        // pointermove" pattern as setBannerHeight below.
         setCodeColumnWidths: (regionId, widths) =>
           updateRegions((regions) =>
             regions.map((r) => (r.id === regionId ? { ...r, codeColumnWidths: widths } : r)),
+          ),
+
+        setRegionAutoplay: (regionId, autoplay) =>
+          updateRegions((regions) =>
+            regions.map((r) => (r.id === regionId ? { ...r, autoplay } : r)),
           ),
 
         updateMetadata: (patch) => {
@@ -475,8 +464,6 @@ export const useLayoutStore = create<LayoutState>()(
           }
         },
 
-        // Drops the local draft and reloads the latest remote version. Used by
-        // the "Cargar versión guardada" button in the draft-restored banner.
         discardLocalDraft: async () => {
           const state = get();
           const slug = state.slug;
@@ -534,8 +521,6 @@ export const useLayoutStore = create<LayoutState>()(
     {
       name: PERSIST_KEY,
       version: 1,
-      // History is intentionally excluded — undo/redo is a session-only
-      // feature and persisting it would bloat localStorage on every change.
       partialize: (state) => ({
         layout: state.layout,
         slug: state.slug,

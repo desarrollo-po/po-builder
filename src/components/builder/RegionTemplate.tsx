@@ -5,6 +5,10 @@ import { useTapPlaceStore } from "../../store/tapPlaceStore";
 import { applySourceToSlot } from "../../hooks/useDragHandlers";
 import { edmArticles } from "../../sources/edm-articles";
 import {
+  fetchLatestYoutubeVideos,
+  fetchLatestInstagramReels,
+} from "../../sources/multimedia-feed";
+import {
   TEMPLATE_SPECS,
   TEMPLATE_MOBILE_BREAKPOINT,
   slotAccepts,
@@ -22,7 +26,6 @@ import {
   MainRightArticle,
   NotaEDM,
   NotaEDMVertical,
-  NotaEDMFlexible,
   NotaPrincipal,
   SecondaryPhotoArticle,
   SecondarySmallArticle,
@@ -37,6 +40,7 @@ const GRID_MOBILE_CLASSES: Record<number, string> = {
   512: "@max-[512px]:grid-cols-1! @max-[512px]:[grid-template-rows:none]! @max-[512px]:[grid-template-areas:none]!",
   736: "@max-[736px]:grid-cols-1! @max-[736px]:[grid-template-rows:none]! @max-[736px]:[grid-template-areas:none]!",
   700: "@max-[700px]:grid-cols-1! @max-[700px]:[grid-template-rows:none]! @max-[700px]:[grid-template-areas:none]!",
+  900: "@max-[900px]:grid-cols-1! @max-[900px]:[grid-template-rows:none]! @max-[900px]:[grid-template-areas:none]!",
 };
 const DEFAULT_GRID_MOBILE_CLASSES = "@max-md:grid-cols-1! @max-md:[grid-template-rows:none]! @max-md:[grid-template-areas:none]!";
 
@@ -44,8 +48,170 @@ const SLOT_MOBILE_CLASSES: Record<number, string> = {
   512: "@max-[512px]:[grid-area:auto]!",
   736: "@max-[736px]:[grid-area:auto]!",
   700: "@max-[700px]:[grid-area:auto]!",
+  900: "@max-[900px]:[grid-area:auto]!",
 };
 const DEFAULT_SLOT_MOBILE_CLASSES = "@max-md:[grid-area:auto]!";
+
+function extractYoutubeId(url: string): string | null {
+  const match = url.match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : null;
+}
+
+function getSnapshotImageUrl(snapshot: ArticleBlock["snapshot"]): string {
+  const snap = snapshot as Record<string, unknown>;
+  const candidates = [
+    snap.imageUrl,
+    snap.thumbnailUrl,
+    snap.image,
+    snap.cover,
+    snap.coverUrl,
+  ];
+  for (const val of candidates) {
+    if (typeof val === "string" && val.trim()) {
+      return val.trim();
+    }
+  }
+  return "";
+}
+
+function getSnapshotEdition(snapshot: ArticleBlock["snapshot"]): string {
+  const snap = snapshot as Record<string, unknown>;
+  const raw =
+    snap.edition ??
+    snap.edicion ??
+    snap.editionLabel ??
+    snap.edicionLabel ??
+    snap.issue ??
+    snap.editionNumber ??
+    snap.numero;
+
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return `EDM Digital #${raw}`;
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    const trimmed = raw.trim();
+    return /^\d+$/.test(trimmed) ? `EDM Digital #${trimmed}` : trimmed;
+  }
+  return "";
+}
+
+function formatDateDdMmYyyy(raw: string): string {
+  const trimmed = raw.trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+    return trimmed;
+  }
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
+  }
+  const parsed = new Date(trimmed);
+  if (!Number.isNaN(parsed.getTime())) {
+    const day = String(parsed.getUTCDate()).padStart(2, "0");
+    const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+    const year = parsed.getUTCFullYear();
+    return `${day}/${month}/${year}`;
+  }
+  return trimmed;
+}
+
+function getSnapshotDate(snapshot: ArticleBlock["snapshot"]): string {
+  const snap = snapshot as Record<string, unknown>;
+  const raw =
+    snap.date ??
+    snap.fecha ??
+    snap.publishedAt ??
+    snap.createdAt;
+
+  if (typeof raw === "string" && raw.trim()) {
+    return formatDateDdMmYyyy(raw);
+  }
+  return "";
+}
+
+function EdmHomogenizedCard({
+  article,
+  compact = false,
+  equalHeight = false,
+}: {
+  article: ArticleBlock;
+  compact?: boolean;
+  equalHeight?: boolean;
+}) {
+  const snap = article.snapshot as {
+    title?: string;
+    author?: string;
+    authors?: string[];
+  };
+  const title = snap.title ?? "";
+  const author =
+    snap.author ??
+    (Array.isArray(snap.authors) ? snap.authors.join(", ") : "");
+  const imageUrl = getSnapshotImageUrl(article.snapshot);
+  const edition = getSnapshotEdition(article.snapshot);
+  const date = getSnapshotDate(article.snapshot);
+
+  return (
+    <div className="flex h-full w-full flex-col justify-start overflow-hidden bg-[#191919] text-white">
+      {imageUrl && (
+        <div
+          className={
+            equalHeight
+              ? "max-h-[210px] w-full shrink-0 overflow-hidden sm:max-h-[235px]"
+              : "min-h-0 flex-1 overflow-hidden"
+          }
+        >
+          <img
+            src={imageUrl}
+            alt={title || "Nota EDM"}
+            className={
+              equalHeight
+                ? "h-full max-h-[210px] w-full object-cover sm:max-h-[235px]"
+                : "h-full w-full object-cover"
+            }
+          />
+        </div>
+      )}
+      <div
+        className={`flex flex-1 flex-col justify-start ${
+          equalHeight ? "px-4 pt-3 pb-4" : "px-4 pt-3 pb-5"
+        }`}
+      >
+        {(edition || date) && (
+          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+            {edition && (
+              <span className="edm-meta-cascadia rounded-full bg-[#3a1614] px-2 py-0.5 text-[10.5px] tracking-wide text-[#ff6b57]">
+                {edition}
+              </span>
+            )}
+            {date && (
+              <span className="edm-date-inter rounded-full border border-neutral-700 bg-[#222225] px-2.5 py-0.5 text-[11px] tracking-tight text-neutral-100">
+                {date}
+              </span>
+            )}
+          </div>
+        )}
+        <h3
+          className={`edm-title-oswald ${
+            compact || equalHeight
+              ? "text-xl leading-snug sm:text-2xl"
+              : "text-2xl leading-tight sm:text-[28px]"
+          } tracking-tight text-white`}
+        >
+          {title}
+        </h3>
+        {author && (
+          <span
+            className={`edm-meta-cascadia ${
+              equalHeight || compact ? "mt-2" : "mt-3"
+            } block text-[13px] uppercase tracking-wider text-red-500`}
+          >
+            {author}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function RegionTemplate({ region }: Props) {
   if (region.template === "cuadricula") {
@@ -63,32 +229,219 @@ export default function RegionTemplate({ region }: Props) {
   if (region.template === "code-region") {
     return <CodeRegionTemplate region={region} />;
   }
+  if (region.template === "multimedia-youtube") {
+    return <YoutubeCarouselTemplate region={region} />;
+  }
 
   const spec = TEMPLATE_SPECS[region.template];
   const breakpoint = TEMPLATE_MOBILE_BREAKPOINT[region.template];
   const gridClasses = breakpoint ? GRID_MOBILE_CLASSES[breakpoint] : DEFAULT_GRID_MOBILE_CLASSES;
   const slotClasses = breakpoint ? SLOT_MOBILE_CLASSES[breakpoint] : DEFAULT_SLOT_MOBILE_CLASSES;
 
+  const isReelsRegion = region.template === "multimedia-reels";
+  const isVideoDestacado = region.template === "video-destacado";
+
   return (
-    <div
-      className={`grid min-h-[120px] gap-2.5 ${gridClasses}`}
-      style={{
-        gridTemplateColumns: spec.gridTemplateColumns,
-        gridTemplateRows: spec.gridTemplateRows,
-        gridTemplateAreas: spec.gridTemplateAreas,
-      }}
-    >
-      {spec.slots.map((slot, slotIndex) => (
-        <SlotCell
-          key={slotIndex}
-          regionId={region.id}
-          slotIndex={slotIndex}
-          variant={slot.variant}
-          gridArea={slot.gridArea}
-          block={region.blocks[slotIndex]}
-          gridAreaResetClass={slotClasses}
-        />
-      ))}
+    <div>
+      {isReelsRegion && <AutoMultimediaBar region={region} />}
+      {isVideoDestacado && <VideoDestacadoControls region={region} />}
+      <div
+        className={`grid min-h-[120px] gap-2.5 ${gridClasses}`}
+        style={{
+          gridTemplateColumns: spec.gridTemplateColumns,
+          gridTemplateRows: spec.gridTemplateRows,
+          gridTemplateAreas: spec.gridTemplateAreas,
+        }}
+      >
+        {spec.slots.map((slot, slotIndex) => (
+          <SlotCell
+            key={slotIndex}
+            regionId={region.id}
+            slotIndex={slotIndex}
+            variant={slot.variant}
+            gridArea={slot.gridArea}
+            block={region.blocks[slotIndex]}
+            gridAreaResetClass={slotClasses}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function VideoDestacadoControls({ region }: { region: Region }) {
+  const setRegionAutoplay = useLayoutStore((s) => s.setRegionAutoplay);
+  const isAutoplay = region.autoplay ?? true;
+
+  return (
+    <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-surface-inset bg-white px-3 py-1.5 text-xs">
+      <span className="font-semibold text-text-secondary">
+        Modo del video principal:
+      </span>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => setRegionAutoplay(region.id, true)}
+          className={`cursor-pointer rounded px-2.5 py-1 text-[11px] font-semibold transition ${
+            isAutoplay
+              ? "bg-[#9C0015] text-white"
+              : "bg-surface-base text-text-secondary hover:bg-surface-accent"
+          }`}
+        >
+          Autoplay (mute)
+        </button>
+        <button
+          type="button"
+          onClick={() => setRegionAutoplay(region.id, false)}
+          className={`cursor-pointer rounded px-2.5 py-1 text-[11px] font-semibold transition ${
+            !isAutoplay
+              ? "bg-[#9C0015] text-white"
+              : "bg-surface-base text-text-secondary hover:bg-surface-accent"
+          }`}
+        >
+          Estático (sin autoplay)
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function YoutubeCarouselTemplate({ region }: { region: Region }) {
+  const spec = TEMPLATE_SPECS["multimedia-youtube"];
+  const clearSlot = useLayoutStore((s) => s.clearSlot);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = (direction: "prev" | "next") => {
+    if (!scrollRef.current) return;
+    const offset = direction === "next" ? 560 : -560;
+    scrollRef.current.scrollBy({ left: offset, behavior: "smooth" });
+  };
+
+  const handleClearAll = () => {
+    spec.slots.forEach((_, idx) => {
+      clearSlot(region.id, idx);
+    });
+  };
+
+  return (
+    <div>
+      <AutoMultimediaBar region={region} />
+
+      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+          Carrusel de 10 videos (arrastrá para mover, quitá con × o pegá un link en slots vacíos)
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleClearAll}
+            className="cursor-pointer rounded-md bg-gradient-to-b from-[#d9162e] to-[#9C0015] px-3 py-1 text-[11px] font-bold text-white shadow-[0_0_12px_rgba(217,22,46,0.55)] ring-1 ring-white/30 transition hover:brightness-125 hover:shadow-[0_0_18px_rgba(239,35,60,0.85)] active:scale-95"
+          >
+            Vaciar todos
+          </button>
+          <button
+            type="button"
+            onClick={() => handleScroll("prev")}
+            aria-label="Anterior"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gradient-to-b from-[#e11d38] to-[#9C0015] text-base font-extrabold text-white shadow-[0_0_12px_rgba(225,29,56,0.6)] ring-1 ring-white/35 transition hover:scale-105 hover:brightness-125 hover:shadow-[0_0_18px_rgba(244,63,94,0.9)] active:scale-95"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={() => handleScroll("next")}
+            aria-label="Siguiente"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gradient-to-b from-[#e11d38] to-[#9C0015] text-base font-extrabold text-white shadow-[0_0_12px_rgba(225,29,56,0.6)] ring-1 ring-white/35 transition hover:scale-105 hover:brightness-125 hover:shadow-[0_0_18px_rgba(244,63,94,0.9)] active:scale-95"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="flex gap-2.5 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2"
+      >
+        {spec.slots.map((slot, slotIndex) => (
+          <div
+            key={slotIndex}
+            className="w-[275px] shrink-0 snap-start"
+          >
+            <SlotCell
+              regionId={region.id}
+              slotIndex={slotIndex}
+              variant={slot.variant}
+              gridArea=""
+              block={region.blocks[slotIndex] ?? null}
+              gridAreaResetClass=""
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AutoMultimediaBar({ region }: { region: Region }) {
+  const setSlotBlock = useLayoutStore((s) => s.setSlotBlock);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const didAutoSyncRef = useRef<string | null>(null);
+
+  const isYoutube = region.template === "multimedia-youtube";
+  const isEmpty = region.blocks.every((b) => b === null);
+
+  const syncNow = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const items = isYoutube
+        ? await fetchLatestYoutubeVideos(10)
+        : await fetchLatestInstagramReels(5);
+
+      if (items.length === 0) {
+        setError(
+          isYoutube
+            ? "No se encontraron videos recientes en el canal."
+            : "Falta configurar VITE_PO_INSTAGRAM_FEED_URL con el token de Meta o feed JSON.",
+        );
+        return;
+      }
+
+      items.forEach((block, index) => {
+        setSlotBlock(region.id, index, block);
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al sincronizar");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isEmpty && didAutoSyncRef.current !== region.id) {
+      didAutoSyncRef.current = region.id;
+      syncNow();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [region.id]);
+
+  return (
+    <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2 rounded-md border border-surface-inset bg-white px-3 py-2 text-xs">
+      <div className="flex items-center gap-2">
+        <span className="font-semibold text-text-primary">
+          {isYoutube ? "YouTube (@PrensaObreraCom)" : "Instagram Reels (@prensaobrera)"}
+        </span>
+        {error && <span className="text-amber-700">{error}</span>}
+      </div>
+      <button
+        type="button"
+        onClick={syncNow}
+        disabled={loading}
+        className="rounded bg-[#9C0015] px-2.5 py-1 text-[11px] font-semibold text-white transition hover:brightness-110 disabled:opacity-50"
+      >
+        {loading ? "Sincronizando..." : "↻ Traer últimos automáticamente"}
+      </button>
     </div>
   );
 }
@@ -157,56 +510,8 @@ function BannerResizeHandle({ height, onResize }: { height: number; onResize: (h
 
 function MasNotasEdmTemplate({ region }: { region: Region }) {
   const spec = TEMPLATE_SPECS["mas-notas-edm"];
-  const clearSlot = useLayoutStore((s) => s.clearSlot);
   const leftSlots = spec.slots.slice(0, 9);
   const rightSlots = spec.slots.slice(9);
-  const [autoBlocks, setAutoBlocks] = useState<ArticleBlock[]>([]);
-  const [isLoadingAuto, setIsLoadingAuto] = useState(false);
-
-  const fetchLatestEdm = async (signal?: AbortSignal) => {
-    setIsLoadingAuto(true);
-    try {
-      const res = await edmArticles.fetchPage("", null, 7, signal);
-      const blocks: ArticleBlock[] = res.items.slice(0, 7).map((item) => ({
-        type: "article",
-        articleId: item.id,
-        snapshot: item.snapshot,
-      }));
-      setAutoBlocks(blocks);
-    } catch {
-      // Ignorar errores de abort o red
-    } finally {
-      setIsLoadingAuto(false);
-    }
-  };
-
-  useEffect(() => {
-    const controller = new AbortController();
-    edmArticles
-      .fetchPage("", null, 7, controller.signal)
-      .then((res) => {
-        const blocks: ArticleBlock[] = res.items.slice(0, 7).map((item) => ({
-          type: "article",
-          articleId: item.id,
-          snapshot: item.snapshot,
-        }));
-        setAutoBlocks(blocks);
-      })
-      .catch(() => {});
-
-    return () => controller.abort();
-  }, []);
-
-  const hasManualEdmOverrides = rightSlots.some((_, i) => region.blocks[9 + i] !== null);
-
-  const handleResetEdmToAuto = () => {
-    rightSlots.forEach((_, i) => {
-      if (region.blocks[9 + i]) {
-        clearSlot(region.id, 9 + i);
-      }
-    });
-    fetchLatestEdm();
-  };
 
   return (
     <div className="flex min-h-[120px] flex-col gap-2.5 @[736px]:flex-row @[736px]:items-stretch">
@@ -222,85 +527,20 @@ function MasNotasEdmTemplate({ region }: { region: Region }) {
           />
         ))}
       </div>
-
-      <div className="flex flex-[1.3] flex-col gap-2.5 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#19191d] via-[#131316] to-[#0d0d10] p-3 shadow-[0_14px_36px_-10px_rgba(0,0,0,0.6)]">
-        <div className="flex flex-wrap items-center justify-between gap-1.5 px-1 pt-0.5">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <img src={logoEdm} alt="EDM" className="h-5 w-auto" />
-            <span className="border-l border-white/15 pl-2.5 font-mono text-[11px] font-light uppercase tracking-[0.22em] text-[#e23b1a]">
-              [ÚLTIMOS ARTÍCULOS]
-            </span>
-            <span className="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-neutral-200 backdrop-blur-md">
-              {hasManualEdmOverrides ? "Mixto" : "Auto · 7"}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => fetchLatestEdm()}
-              disabled={isLoadingAuto}
-              title="Refrescar últimas 7 notas de EDM"
-              className="rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-md transition hover:bg-white/20 disabled:opacity-50"
-            >
-              {isLoadingAuto ? "…" : "Actualizar"}
-            </button>
-            {hasManualEdmOverrides && (
-              <button
-                type="button"
-                onClick={handleResetEdmToAuto}
-                title="Quitar notas fijadas manualmente y volver al modo 100% automático"
-                className="rounded-full bg-[#e23b1a] px-2.5 py-0.5 text-[11px] font-semibold text-white shadow-[0_0_15px_rgba(226,59,26,0.6)] transition hover:bg-[#ff4621]"
-              >
-                Volver a auto
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-1 flex-col justify-between gap-2">
-          {rightSlots.map((slot, i) => {
-            const slotIndex = 9 + i;
-            const manualBlock = region.blocks[slotIndex] ?? null;
-            const autoBlock = autoBlocks[i] ?? null;
-
-            return (
-              <div key={slotIndex} className="relative flex-1 overflow-hidden rounded-xl">
-                {manualBlock ? (
-                  <SlotCell
-                    regionId={region.id}
-                    slotIndex={slotIndex}
-                    variant={slot.variant}
-                    gridArea=""
-                    block={manualBlock}
-                    fullSize
-                    borderless
-                  />
-                ) : (
-                  <div className="relative h-full">
-                    <SlotCell
-                      regionId={region.id}
-                      slotIndex={slotIndex}
-                      variant={slot.variant}
-                      gridArea=""
-                      block={null}
-                      fullSize
-                      borderless
-                    />
-                    {autoBlock && (
-                      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
-                        <NotaEDM article={autoBlock} />
-                        <span className="absolute bottom-1.5 right-2 rounded-full border border-white/20 bg-black/70 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-md">
-                          Auto #{i + 1}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+      <div className="flex flex-[1.3] flex-col gap-2 rounded-xl bg-neutral-900 p-2.5">
+        {rightSlots.map((slot, i) => {
+          const slotIndex = 9 + i;
+          return (
+            <SlotCell
+              key={slotIndex}
+              regionId={region.id}
+              slotIndex={slotIndex}
+              variant={slot.variant}
+              gridArea=""
+              block={region.blocks[slotIndex]}
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -332,27 +572,9 @@ function EdmHorizontalTemplate({ region }: { region: Region }) {
 
 function EdmCarruselTemplate({ region }: { region: Region }) {
   const spec = TEMPLATE_SPECS["edm-carrusel"];
-  const clearSlot = useLayoutStore((s) => s.clearSlot);
   const carouselRef = useRef<HTMLDivElement>(null);
   const [autoBlocks, setAutoBlocks] = useState<ArticleBlock[]>([]);
-  const [isLoadingAuto, setIsLoadingAuto] = useState(false);
-
-  const fetchLatestEdm = async (signal?: AbortSignal) => {
-    setIsLoadingAuto(true);
-    try {
-      const res = await edmArticles.fetchPage("", null, 7, signal);
-      const blocks: ArticleBlock[] = res.items.slice(0, 7).map((item) => ({
-        type: "article",
-        articleId: item.id,
-        snapshot: item.snapshot,
-      }));
-      setAutoBlocks(blocks);
-    } catch {
-      // Ignorar errores de abort o red
-    } finally {
-      setIsLoadingAuto(false);
-    }
-  };
+  const [loadingAuto, setLoadingAuto] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -371,122 +593,91 @@ function EdmCarruselTemplate({ region }: { region: Region }) {
     return () => controller.abort();
   }, []);
 
-  const hasManualOverrides = region.blocks.some((b) => b !== null);
-
-  const handleResetToAuto = () => {
-    spec.slots.forEach((_, i) => {
-      if (region.blocks[i]) {
-        clearSlot(region.id, i);
-      }
-    });
-    fetchLatestEdm();
+  const loadAutoEdm = () => {
+    setLoadingAuto(true);
+    edmArticles
+      .fetchPage("", null, 7)
+      .then((res) => {
+        const blocks: ArticleBlock[] = res.items.slice(0, 7).map((item) => ({
+          type: "article",
+          articleId: item.id,
+          snapshot: item.snapshot,
+        }));
+        setAutoBlocks(blocks);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingAuto(false));
   };
 
-  const scrollLeftEdm = () => {
-    carouselRef.current?.scrollBy({ left: -270, behavior: "smooth" });
+  const scrollLeft = () => {
+    carouselRef.current?.scrollBy({ left: -260, behavior: "smooth" });
   };
 
-  const scrollRightEdm = () => {
-    carouselRef.current?.scrollBy({ left: 270, behavior: "smooth" });
+  const scrollRight = () => {
+    carouselRef.current?.scrollBy({ left: 260, behavior: "smooth" });
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#19191d] via-[#131316] to-[#0d0d10] py-4 shadow-[0_14px_36px_-10px_rgba(0,0,0,0.6)]">
-      {/* Cabecera oscura con logo rojo, [ÚLTIMOS ARTÍCULOS], controles y flechas arriba a la derecha */}
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-5">
-        <div className="flex flex-wrap items-center gap-3">
+    <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#19191d] via-[#131316] to-[#0d0d10] p-4 shadow-lg">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
+        <div className="flex items-center gap-3">
           <img src={logoEdm} alt="EDM" className="h-6 w-auto" />
-          <span className="border-l border-white/15 pl-3 font-mono text-xs font-light uppercase tracking-[0.22em] text-[#e23b1a]">
+          <span className="border-l border-white/15 pl-3 font-mono text-[11px] uppercase tracking-[0.2em] text-[#e23b1a]">
             [ÚLTIMOS ARTÍCULOS]
           </span>
-          <span className="rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-neutral-200 backdrop-blur-md">
-            {hasManualOverrides ? "Mixto (manual + auto)" : "Automático · últimas 7"}
+          <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] text-white/75">
+            Automático · últimas 7
           </span>
         </div>
-
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => fetchLatestEdm()}
-            disabled={isLoadingAuto}
-            title="Refrescar últimas 7 notas de EDM"
-            className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur-md transition hover:bg-white/20 disabled:opacity-50"
+            onClick={loadAutoEdm}
+            disabled={loadingAuto}
+            className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-white hover:bg-white/20"
           >
-            {isLoadingAuto ? "Cargando…" : "Actualizar"}
+            {loadingAuto ? "Cargando..." : "Actualizar"}
           </button>
-          {hasManualOverrides && (
-            <button
-              type="button"
-              onClick={handleResetToAuto}
-              title="Quitar notas fijadas manualmente y volver al modo 100% automático"
-              className="rounded-full bg-[#e23b1a] px-3 py-1 text-xs font-semibold text-white shadow-[0_0_15px_rgba(226,59,26,0.6)] transition hover:bg-[#ff4621]"
-            >
-              Volver a auto
-            </button>
-          )}
-          <div className="ml-1 flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={scrollLeftEdm}
-              title="Desplazar a la izquierda"
-              className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[#e23b1a] text-base leading-none text-white shadow-[0_0_14px_rgba(226,59,26,0.65)] backdrop-blur-md transition hover:scale-105 hover:bg-[#ff4621] hover:shadow-[0_0_22px_rgba(255,70,33,0.9)]"
-            >
-              &#8249;
-            </button>
-            <button
-              type="button"
-              onClick={scrollRightEdm}
-              title="Desplazar a la derecha"
-              className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[#e23b1a] text-base leading-none text-white shadow-[0_0_14px_rgba(226,59,26,0.65)] backdrop-blur-md transition hover:scale-105 hover:bg-[#ff4621] hover:shadow-[0_0_22px_rgba(255,70,33,0.9)]"
-            >
-              &#8250;
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={scrollLeft}
+            aria-label="Anterior"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e23b1a] text-sm font-bold text-white"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={scrollRight}
+            aria-label="Siguiente"
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e23b1a] text-sm font-bold text-white"
+          >
+            ›
+          </button>
         </div>
       </div>
 
-      {/* Pista del carrusel */}
       <div
         ref={carouselRef}
-        className="flex gap-3.5 overflow-x-auto px-5 pb-2 scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:mx-5 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-white/5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#e23b1a]/50 hover:[&::-webkit-scrollbar-thumb]:bg-[#ff4621]/80"
+        className="flex gap-3 overflow-x-auto pb-2 scroll-smooth"
       >
         {spec.slots.map((slot, i) => {
           const manualBlock = region.blocks[i] ?? null;
-          const autoBlock = autoBlocks[i] ?? null;
+          const previewAuto = !manualBlock ? autoBlocks[i] ?? null : null;
 
           return (
-            <div
-              key={i}
-              className="relative min-w-[235px] max-w-[255px] shrink-0 overflow-hidden rounded-xl shadow-md"
-            >
-              {manualBlock ? (
-                <SlotCell
-                  regionId={region.id}
-                  slotIndex={i}
-                  variant={slot.variant}
-                  gridArea=""
-                  block={manualBlock}
-                  borderless
-                />
-              ) : (
-                <div className="relative h-full">
-                  <SlotCell
-                    regionId={region.id}
-                    slotIndex={i}
-                    variant={slot.variant}
-                    gridArea=""
-                    block={null}
-                    borderless
-                  />
-                  {autoBlock && (
-                    <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
-                      <NotaEDMVertical article={autoBlock} />
-                      <span className="absolute left-2 top-2 rounded-full border border-white/20 bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-md">
-                        Auto #{i + 1}
-                      </span>
-                    </div>
-                  )}
-                </div>
+            <div key={i} className="relative min-w-[235px] max-w-[250px] shrink-0">
+              <SlotCell
+                regionId={region.id}
+                slotIndex={i}
+                variant={slot.variant}
+                gridArea=""
+                block={manualBlock ?? previewAuto}
+              />
+              {!manualBlock && previewAuto && (
+                <span className="pointer-events-none absolute left-2 top-2 z-[3] rounded-full bg-black/75 px-2 py-0.5 text-[10px] font-semibold text-white">
+                  Auto #{i + 1}
+                </span>
               )}
             </div>
           );
@@ -531,7 +722,7 @@ function CodeRegionTemplate({ region }: { region: Region }) {
         </button>
       </div>
 
-      <div className="flex min-h-[120px] items-start">
+      <div className="flex min-h-[120px] items-stretch">
         {Array.from({ length: columns }, (_, i) => (
           <Fragment key={i}>
             {i > 0 && (
@@ -541,13 +732,17 @@ function CodeRegionTemplate({ region }: { region: Region }) {
                 onResize={(next) => setCodeColumnWidths(region.id, next)}
               />
             )}
-            <div style={{ width: `calc((100% - ${gapTotal}px) * ${weights[i] / totalWeight})` }}>
+            <div
+              className="flex flex-col"
+              style={{ width: `calc((100% - ${gapTotal}px) * ${weights[i] / totalWeight})` }}
+            >
               <SlotCell
                 regionId={region.id}
                 slotIndex={i}
                 variant="code"
                 gridArea=""
                 block={region.blocks[i] ?? null}
+                fullSize
                 onRemoveColumn={columns > 1 ? () => removeCodeColumn(region.id, i) : undefined}
               />
             </div>
@@ -616,22 +811,11 @@ interface SlotCellProps {
   gridArea: string;
   block: Block | null;
   fullSize?: boolean;
-  borderless?: boolean;
   onRemoveColumn?: () => void;
   gridAreaResetClass?: string;
 }
 
-function SlotCell({
-  regionId,
-  slotIndex,
-  variant,
-  gridArea,
-  block,
-  fullSize,
-  borderless,
-  onRemoveColumn,
-  gridAreaResetClass = DEFAULT_SLOT_MOBILE_CLASSES,
-}: SlotCellProps) {
+function SlotCell({ regionId, slotIndex, variant, gridArea, block, fullSize, onRemoveColumn, gridAreaResetClass = DEFAULT_SLOT_MOBILE_CLASSES }: SlotCellProps) {
   const layout = useLayoutStore((s) => s.layout);
   const setSlotBlock = useLayoutStore((s) => s.setSlotBlock);
   const updateBannerImageMobile = useLayoutStore((s) => s.updateBannerImageMobile);
@@ -659,12 +843,10 @@ function SlotCell({
   const looksEmpty = !block || (isBannerMobileTarget && block.type === "banner" && !block.imageUrlMobile);
 
   const stateClass = isDropTarget || isArmedTarget
-    ? "rounded-xl ring-2 ring-[#e23b1a] bg-white/15 backdrop-blur-md"
-    : borderless
-      ? "rounded-xl border-none bg-white/5"
-      : looksEmpty
-        ? "border-2 border-dashed border-surface-inset bg-surface-base"
-        : "border border-surface-inset";
+    ? "border-2 border-accent-primary bg-accent-light ring-2 ring-accent-primary/40"
+    : looksEmpty
+      ? "border-2 border-dashed border-surface-inset bg-surface-base"
+      : "border border-surface-inset";
 
   const sizeClass = fullSize ? "h-full w-full" : minHeightClassFor(variant);
 
@@ -680,6 +862,12 @@ function SlotCell({
     );
     disarm();
   };
+
+  const canQuickAddYoutube =
+    !block &&
+    (variant === "video-destacado-primary" ||
+      variant === "video-destacado-secondary" ||
+      variant === "multimedia-youtube");
 
   return (
     <div
@@ -700,6 +888,23 @@ function SlotCell({
         />
       ) : (
         <EmptySlotHint variant={variant} active={isDraggingSomething} isOver={isOver} />
+      )}
+      {canQuickAddYoutube && (
+        <YoutubeQuickInput
+          allowNoteHint={variant === "video-destacado-secondary"}
+          onAddVideo={({ videoId, url, title, publishedAt }) =>
+            setSlotBlock(regionId, slotIndex, {
+              type: "multimedia",
+              platform: "youtube",
+              url,
+              videoId,
+              title,
+              publishedAt,
+              category: "YOUTUBE",
+              thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+            })
+          }
+        />
       )}
       {!block && variant === "code" && (
         <div className="absolute right-1.5 top-1.5 z-[2] flex items-center gap-1">
@@ -743,6 +948,90 @@ function SlotCell({
   );
 }
 
+function YoutubeQuickInput({
+  allowNoteHint,
+  onAddVideo,
+}: {
+  allowNoteHint: boolean;
+  onAddVideo: (video: { videoId: string; url: string; title: string; publishedAt: string }) => void;
+}) {
+  const [url, setUrl] = useState("");
+  const [err, setErr] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const cleanUrl = url.trim();
+    const id = extractYoutubeId(cleanUrl);
+    if (!id) {
+      setErr(true);
+      return;
+    }
+
+    setErr(false);
+    setLoading(true);
+
+    let title = "Video destacado Prensa Obrera";
+    try {
+      const watchUrl = `https://www.youtube.com/watch?v=${id}`;
+      const res = await fetch(
+        `https://www.youtube.com/oembed?url=${encodeURIComponent(watchUrl)}&format=json`,
+      );
+      if (res.ok) {
+        const data = (await res.json()) as { title?: string };
+        if (data.title?.trim()) {
+          title = data.title.trim();
+        }
+      }
+    } catch {
+      // Mantiene el título por defecto si falla la consulta oEmbed
+    } finally {
+      setLoading(false);
+    }
+
+    onAddVideo({
+      videoId: id,
+      url: cleanUrl,
+      title,
+      publishedAt: new Date().toISOString(),
+    });
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      className="absolute inset-x-2.5 bottom-2.5 z-[2] flex flex-col gap-1.5 rounded-md border border-surface-inset bg-white/95 p-2 shadow-xs"
+    >
+      <span className="text-[10.5px] font-semibold text-text-secondary">
+        {allowNoteHint
+          ? "Arrastrá una nota o pegá un link de YouTube:"
+          : "Pegá un link de YouTube:"}
+      </span>
+      <div className="flex gap-1">
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="https://www.youtube.com/watch?v=..."
+          className={`min-w-0 flex-1 rounded border px-2 py-1 text-xs outline-none ${
+            err ? "border-red-500" : "border-surface-inset focus:border-accent-primary"
+          }`}
+        />
+        <button
+          type="submit"
+          disabled={loading}
+          className="rounded bg-[#9C0015] px-2.5 py-1 text-xs font-semibold text-white hover:brightness-110 disabled:opacity-50"
+        >
+          {loading ? "..." : "Cargar"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
 function minHeightClassFor(variant: SlotVariant): string {
   switch (variant) {
     case "nota-principal":
@@ -765,6 +1054,13 @@ function minHeightClassFor(variant: SlotVariant): string {
       return "min-h-[120px]";
     case "code":
       return "min-h-[200px]";
+    case "multimedia-reel":
+      return "min-h-[260px]";
+    case "multimedia-youtube":
+      return "min-h-[220px]";
+    case "video-destacado-primary":
+    case "video-destacado-secondary":
+      return "min-h-[260px]";
   }
 }
 
@@ -779,7 +1075,7 @@ function EmptySlotHint({
 }) {
   return (
     <div
-      className={`flex h-full flex-col items-center justify-center gap-1 p-3 text-center text-xs ${isOver ? "font-semibold text-accent-primary" : "font-medium text-text-tertiary"
+      className={`flex h-full flex-col items-center justify-center gap-1 p-3 pb-16 text-center text-xs ${isOver ? "font-semibold text-accent-primary" : "font-medium text-text-tertiary"
         }`}
     >
       <span>{emptyHintForVariant(variant, active)}</span>
@@ -810,12 +1106,28 @@ function variantLabel(variant: SlotVariant): string {
       return "Banner";
     case "code":
       return "Código, nota o banner";
+    case "multimedia-reel":
+      return "Instagram Reel";
+    case "multimedia-youtube":
+      return "Video YouTube";
+    case "video-destacado-primary":
+      return "Video principal";
+    case "video-destacado-secondary":
+      return "Nota o segundo video";
   }
 }
 
 function emptyHintForVariant(variant: SlotVariant, isDragging: boolean): string {
   if (!isDragging) return "Slot vacío";
   if (variant === "code") return "Soltar nota, banner o código aquí";
+  if (variant === "video-destacado-secondary") return "Soltar nota o video aquí";
+  if (
+    variant === "multimedia-reel" ||
+    variant === "multimedia-youtube" ||
+    variant === "video-destacado-primary"
+  ) {
+    return "Soltar video aquí";
+  }
   return variant === "banner" ? "Soltar banner o código aquí" : "Soltar nota aquí";
 }
 
@@ -852,6 +1164,40 @@ function SlotBlock({ regionId, slotIndex, variant, block, bannerPreview, onBanne
           preview={bannerPreview}
           onPreviewChange={onBannerPreviewChange}
         />
+      ) : block.type === "multimedia" ? (
+        <div className="flex h-full flex-col bg-surface-accent">
+          {block.thumbnailUrl ? (
+            <img
+              src={block.thumbnailUrl}
+              alt={block.title}
+              className="h-32 w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-32 w-full items-center justify-center bg-neutral-800 text-xs text-white/70">
+              Sin miniatura
+            </div>
+          )}
+          <div className="flex flex-1 flex-col justify-between p-2.5">
+            <div>
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-accent-primary">
+                {block.platform === "instagram" ? "Instagram Reel" : "YouTube"}
+                {block.category ? ` · ${block.category}` : ""}
+              </span>
+              <p className="mt-1 line-clamp-2 text-xs font-semibold text-text-primary">
+                {block.title}
+              </p>
+              {block.publishedAt && (
+                <span className="mt-1 block text-[10px] text-text-tertiary">
+                  {new Date(block.publishedAt).toLocaleDateString("es-AR", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
       ) : (
         <SlotCodeBody regionId={regionId} slotIndex={slotIndex} code={block} />
       )}
@@ -867,9 +1213,11 @@ function SlotBlock({ regionId, slotIndex, variant, block, bannerPreview, onBanne
             ? "Quitar banner"
             : block.type === "code"
               ? "Quitar código"
-              : "Quitar nota"
+              : block.type === "multimedia"
+                ? "Quitar multimedia"
+                : "Quitar nota"
         }
-        className="absolute right-2 top-2 z-[2] flex h-6 w-6 items-center justify-center rounded-full border border-black/10 bg-white/85 p-0 text-base leading-none text-text-secondary shadow-sm backdrop-blur-md transition hover:bg-white"
+        className="absolute right-1.5 top-1.5 z-[2] flex h-[26px] w-[26px] items-center justify-center rounded-md border border-surface-inset bg-white/90 p-0 text-lg leading-none text-text-secondary"
       >
         ×
       </button>
@@ -1130,11 +1478,22 @@ function SlotArticleBody({
       return <NotaEDM article={article} />;
     case "nota-edm-vertical":
       return <NotaEDMVertical article={article} />;
+    case "video-destacado-secondary": {
+      if (article.snapshot.source === "edm") {
+        return <EdmHomogenizedCard article={article} />;
+      }
+      return <MainLeftArticle article={article} />;
+    }
     case "banner":
+    case "multimedia-reel":
+    case "multimedia-youtube":
+    case "video-destacado-primary":
       return null;
-    case "code":
-      return article.snapshot.source === "edm"
-        ? <NotaEDMFlexible article={article} />
-        : <SecondarySmallArticle article={article} />;
+    case "code": {
+      if (article.snapshot.source === "edm") {
+        return <EdmHomogenizedCard article={article} compact equalHeight />;
+      }
+      return <SecondarySmallArticle article={article} />;
+    }
   }
 }

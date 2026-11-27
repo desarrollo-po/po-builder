@@ -26,7 +26,10 @@ export type TemplateId =
   | "edm-horizontal"
   | "edm-carrusel"
   | "banner"
-  | "code-region";
+  | "code-region"
+  | "multimedia-reels"
+  | "multimedia-youtube"
+  | "video-destacado";
 
 export type SlotVariant =
   | "nota-principal"
@@ -38,7 +41,11 @@ export type SlotVariant =
   | "nota-edm"
   | "nota-edm-vertical"
   | "banner"
-  | "code";
+  | "code"
+  | "multimedia-reel"
+  | "multimedia-youtube"
+  | "video-destacado-primary"
+  | "video-destacado-secondary";
 
 export interface SlotSpec {
   variant: SlotVariant;
@@ -51,7 +58,6 @@ export interface TemplateSpec {
   gridTemplateColumns: string;
   gridTemplateRows?: string;
   gridTemplateAreas?: string;
-  // When true, null slots don't block publication.
   optionalSlots?: boolean;
   slots: SlotSpec[];
 }
@@ -64,6 +70,7 @@ export interface Region {
   bannerHeights?: [number, number];
   codeColumns?: number;
   codeColumnWidths?: number[];
+  autoplay?: boolean;
 }
 
 export interface ArticleBlock {
@@ -101,14 +108,27 @@ export interface CodeBlock {
   html: string;
 }
 
-export type Block = ArticleBlock | BannerBlock | CodeBlock;
+export interface MultimediaBlock {
+  type: "multimedia";
+  platform: "youtube" | "instagram";
+  url: string;
+  videoId?: string;
+  title: string;
+  category?: string;
+  thumbnailUrl: string;
+  accentColor?: string;
+  publishedAt?: string;
+}
+
+export type Block = ArticleBlock | BannerBlock | CodeBlock | MultimediaBlock;
 
 export interface DragItem {
-  type: "article" | "banner" | "code";
+  type: "article" | "banner" | "code" | "multimedia";
   articleId?: string;
   snapshot?: ArticleBlock["snapshot"];
   bannerData?: Omit<BannerBlock, "type">;
   html?: string;
+  multimediaData?: Omit<MultimediaBlock, "type">;
 }
 
 export const TEMPLATE_MOBILE_BREAKPOINT: Partial<Record<TemplateId, number>> = {
@@ -118,8 +138,11 @@ export const TEMPLATE_MOBILE_BREAKPOINT: Partial<Record<TemplateId, number>> = {
   cuadricula: 512,
   "tres-notas-secundarias": 736,
   "mas-notas-edm": 736,
+  "video-destacado": 736,
   "cuatro-notas-secundarias": 700,
   "cuatro-notas-sin-foto": 700,
+  "multimedia-reels": 900,
+  "multimedia-youtube": 900,
   "edm-horizontal": 1100,
 };
 
@@ -296,6 +319,42 @@ export const TEMPLATE_SPECS: Record<TemplateId, TemplateSpec> = {
       { variant: "code", gridArea: "d" },
     ],
   },
+  "multimedia-reels": {
+    label: "Multimedia: Instagram Reels (5)",
+    slotsCount: 5,
+    optionalSlots: true,
+    gridTemplateColumns: "repeat(5, 1fr)",
+    gridTemplateAreas: `"r1 r2 r3 r4 r5"`,
+    slots: [
+      { variant: "multimedia-reel", gridArea: "r1" },
+      { variant: "multimedia-reel", gridArea: "r2" },
+      { variant: "multimedia-reel", gridArea: "r3" },
+      { variant: "multimedia-reel", gridArea: "r4" },
+      { variant: "multimedia-reel", gridArea: "r5" },
+    ],
+  },
+  "multimedia-youtube": {
+    label: "Multimedia: YouTube / Programas (10)",
+    slotsCount: 10,
+    optionalSlots: true,
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gridTemplateAreas: `"y1 y2 y3 y4"`,
+    slots: Array.from({ length: 10 }, (_, i) => ({
+      variant: "multimedia-youtube" as const,
+      gridArea: i < 4 ? `y${i + 1}` : "",
+    })),
+  },
+  "video-destacado": {
+    label: "Video + Nota o Video + Video (Autoplay)",
+    slotsCount: 2,
+    optionalSlots: true,
+    gridTemplateColumns: "1.4fr 1fr",
+    gridTemplateAreas: `"video-main companion"`,
+    slots: [
+      { variant: "video-destacado-primary", gridArea: "video-main" },
+      { variant: "video-destacado-secondary", gridArea: "companion" },
+    ],
+  },
 };
 
 export function slotVariantAt(
@@ -321,6 +380,15 @@ export function slotAcceptsCode(variant: SlotVariant): boolean {
 
 export function slotAccepts(variant: SlotVariant, blockType: Block["type"]): boolean {
   if (slotAcceptsCode(variant)) return true;
+  if (variant === "video-destacado-primary") {
+    return blockType === "multimedia";
+  }
+  if (variant === "video-destacado-secondary") {
+    return blockType === "article" || blockType === "multimedia" || blockType === "code";
+  }
+  if (variant === "multimedia-reel" || variant === "multimedia-youtube") {
+    return blockType === "multimedia";
+  }
   if (slotAcceptsBanner(variant)) return blockType === "banner" || blockType === "code";
   return blockType === "article";
 }
